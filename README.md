@@ -1,19 +1,5 @@
 # PARS SUMOLAB
 
-## v0.20.0 – Motor ve lastik fiziği
-
-- Her robot için motor torku, redüksiyon oranı, motor devri, tahrik tekerleği çapı ve lastik-dohyo sürtünmesi ayarlanabilir.
-- Hız, ivmelenme ve çekiş kuvveti bu parametrelerden türetilir.
-- Temas anındaki itme kuvveti motor torku ve lastik tutuşuyla sınırlandırılır.
-- Oyuncu ve rakip tahrik sistemi bağımsızdır; ayarlar proje kaydında saklanır.
-
-## v0.15.1 ring-out düzeltmesi
-
-- Robotun kenara yaklaşması veya beyaz sınır bandına girmesi artık otomatik galibiyet oluşturmaz.
-- Maç, robotun merkezi dohyonun fiziksel dış kenarını geçtiğinde biter.
-- İki robot aynı anda dışarı çıkarsa beraberlik gösterilir.
-
-
 PARS SUMOLAB, sumo robotlarını tasarlamak, programlamak ve sanal dohyo üzerinde karşılaştırmak için hazırlanmış React + Vite + Three.js tabanlı eğitim simülatörüdür.
 
 ## v0.14.0 yenilikleri
@@ -121,31 +107,3 @@ Simülasyon eğitim amaçlı yaklaşık bir fizik modelidir. Robot ölçüleri v
 - Ring-out kontrolü robot merkezinden değil, gövde/kama dış sınırından yapılır.
 
 **Model notu:** Bu, eğitim amaçlı basitleştirilmiş 2B itiş ve açısal denge modelidir; gerçek motor tork eğrileri, lastik sürtünme haritaları, temas deformasyonu ve tam 3B rijit-cisim dinamiği içermez. Resmî kurallar organizasyona göre değişebilir.
-
-
-## v0.15.0 yenilikleri
-- Kazanan robotun adı maç bittiğinde doğrudan dohyo üzerinde gösterilir.
-- Rakip robotun adı, sınıfı, şasi ağırlığı, rengi, kama tipi ve bileşenleri bağımsız düzenlenebilir.
-- İki robotun sınıf ve kütle değerleri simülasyon fiziğinde ayrı kullanılır.
-
-### v0.17.0 – Gerçekçi sumo robot gövdeleri ve sivri bıçak
-
-- Yuvarlatılmış alçak şasi, üst elektronik kapağı, motor yuvaları ve tekerlek detayları.
-- Zemine yakın, düz alt yüzeyli ve sivri uçlu metal sumo bıçağı.
-- Sivri bıçak ucuna uygun ayrı çarpışma hacimleri.
-
-### v0.16.1 – Temas fiziği hassasiyeti
-- Görünür tekerlek, şasi ve kama geometrileriyle eşleşen çarpışma hacimleri kullanılır.
-- En derin SAT teması doğrulanmadan itme, momentum aktarımı veya kama kaldırması uygulanmaz.
-- Rakip sensörlerinin algılama mesafesi fiziksel kuvvet üretmez.
-- Her iki robot için 2–7 adet rakip IR sensörü seçilebilir.
-- Sensörler ön ve yan görüş alanını kapsar; otonom arama, hedefe dönme ve Arduino sensör verisi bu algılamayı kullanır.
-
-
-## v0.20.2
-- Simülasyon kontrol modu varsayılan olarak Otonom başlar. Simülasyonu başlatma düğmesi yine kullanıcı kontrolündedir.
-- Robotların arka çizgi sensörleri kaldırıldı; her robotta yalnızca ön-sol, ön-orta ve ön-sağ çizgi sensörü bulunur.
-- Otonom kenar kaçış algoritması ve Arduino örnek kodu üç ön sensöre göre güncellendi.
-
-### Rakip sensörü görüş mesafesi (v0.20.5)
-Oyuncu ve rakip robotun rakip algılama mesafeleri birbirinden bağımsız ayarlanabilir. Tasarım panelindeki **Rakip sensörü görüş mesafesi** kaydırıcısı 10–100 cm aralığında, 5 cm adımlarla çalışır (varsayılan 40 cm). Bu değer sensör algılamasını ve otonom hedef aramayı etkiler; fiziksel temas, çarpışma veya itme kuvveti oluşturmaz. Ayarlar proje kaydına dahil edilir.

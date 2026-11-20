@@ -1,77 +1,3 @@
-## v0.20.5
-- Robotlar uygulama her açıldığında standart başlangıç yerleşimine döner.
-- Bıçak malzemesi parlak gümüş çelik olarak güncellendi.
-- Simülasyon animasyon hızı 0,25×–2,5× arasında ayarlanabilir.
-
-## v0.20.3 – Motor devri aralığı ve parlak çelik bıçak
-
-- Oyuncu ve rakip robot motor devri ayarları 200–1000 RPM aralığına alındı; varsayılan değer 600 RPM.
-- Önceden kaydedilmiş proje ayarlarında eski motor devri değerleri güvenli aralığa sınırlandırılır.
-- Rakip robot için bağımsız motor devri kaydırıcısı eklendi.
-- Ön bıçak parlak gri çelik görünümü için daha açık metalik malzeme ve parlak kesici ağız ile güncellendi.
-
-# Changelog
-
-## v0.20.1 – Düz ön ağızlı, zemine sıfır bıçak
-- Geliştirme tabanı v0.20.0 olarak korundu; sonraki sürümlerdeki robot gövde/üçgen burun değişiklikleri alınmadı.
-- Sivri üçgen planlı kama kaldırıldı; yerine robotun önünde tam genişlikte, düz kesici ağızlı metal bıçak eklendi.
-- Bıçak üst yüzeyi gövdeden ön ağza doğru eğimli, alt yüzeyi düzdür.
-- Bıçağın alt kotu siyah dohyo yüzeyinin üst kotuna (.0955 Three.js birimi) eşitlendi.
-- Çarpışma geometrisi görsel bıçakla aynı dikdörtgen plan şekline getirildi; ön ağız boyunca temas algılanır.
-
-## v0.20.0 – Motor ve lastik temelli sürüş fiziği
-- Oyuncu ve rakip robot için motor torku (mNm), redüksiyon oranı, motor devri, tekerlek çapı ve lastik sürtünme katsayısı bağımsız ayarlanabilir.
-- İvmelenme, iki motorun redüksiyon sonrası tekerlek torkundan hesaplanan çekiş kuvveti ile lastik tutuşunun izin verdiği kuvvetin küçüğüne göre hesaplanır.
-- Azami hız, motor devri / redüksiyon oranı / tekerlek çevresinden hesaplanır.
-- Fiziksel temas doğrulandığında motor torku ve lastik tutuşuna bağlı sürekli itme kuvveti uygulanır.
-- Tekerlek çapı görsel tekerlek ve çarpışma geometrisine de yansıtılır.
-- Proje kaydına iki robotun ayrı tahrik sistemi parametreleri eklenir.
-
-## v0.19.0
-- Robot kütlesi sürüş ivmesine ve tekerlek tutuşuna dahil edildi.
-- Oyuncu ve rakip robotun gerçek toplam ağırlıkları bağımsız fizik parametresi olarak kullanılıyor.
-- Çarpışma impulsu kütleye göre hesaplanıyor; ağır robot aynı darbede daha az hız değiştiriyor.
-- Kama ile kaldırma ve yandan devrilme etkileri hedef/saldırgan kütle oranına göre ölçekleniyor.
-
-## v0.18.0
-- Realistic low-profile sumo chassis with exposed drive wheels and motor pods.
-- Rebuilt wedge as a full-width triangular blade with an exact pointed nose and near-zero ground clearance.
-- Collision polygons now match the visible chassis, wheels, and triangular blade.
-
-## v0.17.0 – Gerçekçi sumo robot gövdeleri ve sivri, zemine yakın bıçak
-
-- Robot şasileri yuvarlatılmış, alçak profilli metal gövde görünümüne geçirildi.
-- Üst elektronik kapağı, kontrol kartı, bağlantı vidaları, motor yuvaları ve detaylı tekerlek göbekleri eklendi.
-- Bıçak geometrisi düz alt yüzeyli, üstten incelen ve ön ucu sivrilen metal kama olarak yeniden modellendi.
-- Bıçağın ön kesici ağzı dohyo yüzeyine yaklaşık 0,3 mm boşlukla konumlandırıldı.
-- Bıçak çarpışma alanı geniş taban ve dar sivri uç olarak ayrıldı.
-
-## v0.16.1
-- Görünür tekerleklerin dış sınırları çarpışma modeline eklendi; şasi temas ölçüleri 3B modelle eşleştirildi.
-- Kama çarpışma hacminin uzunluk ve genişliği 3B modeldeki gerçek ölçek katsayılarıyla eşitlendi.
-- Temas tespiti, bileşik şekiller arasındaki en derin doğrulanmış SAT örtüşmesini kullanır; sensör algılama menzili kuvvet üretmez.
-- İtme, momentum aktarımı, kama kaldırması ve çarpışma sayacı yalnızca fiziksel temas doğrulandıktan sonra çalışır.
-
-## v0.16.0
-- Şasi ve kama için ayrı OBB/SAT temas hacimleri.
-- Oyuncu ve rakip robot için bağımsız 2–7 IR rakip sensörü seçimi.
-- Sensörler 3B modelde görünür; yan görüş algısı, otonom hedef takibi ve Arduino sensör köprüsüne bağlandı.
-
-# Değişiklik günlüğü
-
-## v0.15.1 — 20 Kasım 2026
-- Hatalı erken ring-out kontrolü düzeltildi: robotun gövde/kama yarıçapı artık merkez konumuna eklenerek erken galibiyet oluşturmaz.
-- Galibiyet için robotun merkezi dohyonun fiziksel dış kenarını güvenlik payıyla geçmelidir.
-- Beyaz sınır bandına yaklaşmak veya temas etmek tek başına maç bitirmez.
-- İki robot aynı anda dohyo dışına çıkarsa sonuç beraberlik olur.
-
-
-## v0.15.0 — 20 Kasım 2026
-- Maç sonucu ve kazanan robotun adı dohyo üzerinde görünür bir etiket olarak gösterilir.
-- Rakip robot için bağımsız ad, sınıf, gövde ağırlığı, renk, kama tipi ve donanım bileşeni ayarları eklendi.
-- Rakip robotun sınıfına ve tahmini ağırlığına göre 3B gövde ölçüsü, kütle ve hareket hızı ayrı hesaplanır.
-- Rakip ayarları yerel proje kaydına dahil edildi.
-
 # Sürüm notları
 
 ## v0.11.0 — Sürükle-bırak robot yerleşimi
@@ -121,12 +47,10 @@
 
 **Ölçek:** Simülasyonda 1 Three.js birimi 20 cm'dir. Robot ölçüleri milimetre profillerinden, dohyo çapı santimetre cinsinden dönüştürülür.
 
-## v0.20.2
-- Varsayılan kontrol modu Otonom olarak ayarlandı.
-- Arka çizgi sensörleri kaldırıldı; üç ön çizgi sensörü bırakıldı.
-- Kenar algılama ve kaçış algoritması, Arduino örnek kodu dahil, ön sensörlerle sınırlandı.
 
-## v0.20.5
-- Added independent opponent-sensor detection distance controls for player and rival robots (10–100 cm, 5 cm steps; default 40 cm).
-- Applied each robot's configured range directly to opponent detection in the simulation; range changes affect sensing only, not pushing or collision forces.
-- Persisted both range settings in saved projects and restored/clamped them when loading older or edited configurations.
+## v0.20.7
+- Rakip robotun motor gücü, torku, RPM, redüksiyon, tekerlek, lastik, sınıf, bıçak, sensör ve ağırlık ayarları bağımsız fizik parametrelerine bağlandı.
+- Rakip otonom algoritması DIP anahtarlarından bağımsız çalışır; kendi sensör sayısı ve görüş mesafesini kullanır.
+- Çarpışma sırasında sürekli itme kuvveti motor torku, redüksiyon, tekerlek yarıçapı, lastik tutuşu ve iki robotun kütlesine göre hesaplanır.
+- Robotların başlangıç konum ve yönleri tam ayna simetrisi olmayacak şekilde değiştirildi.
+- Tüm robot ayarlarını kaydetmek için tek ana kayıt düğmesi bırakıldı.

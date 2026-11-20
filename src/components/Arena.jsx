@@ -299,41 +299,44 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
         const playerDrive=drive(state,pF,pT,dt,maxSpeed*playerSpeedScale,playerMassKg,p.driveSpec,p.playerMotorPower);
         const rivalDrive=drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,rivalCls.maxSpeed*.88,rivalMassKg,p.rivalDriveSpec,p.rivalMotorPower);
 
-        // Fiziksel temas: görünür gövde, iki lastik ve düz ön ağızlı bıçak için ayrı çokgenler.
-        // Sensör menzili veya yaklaşık büyük dikdörtgenler çarpışma sayılmaz.
+        // Fiziksel temas: her robotun gövde, bıçak ve tekerlek ayak izleri tek bir
+        // dışbükey temas zarfında birleştirilir. Parça-parça SAT kullanımı, farklı
+        // parçaların en derin örtüşmesini seçip robotları gereğinden fazla ayırabiliyordu.
         const toWorldPolygon=(x,z,a,local)=>{
           const c=Math.cos(a),sn=Math.sin(a);
           return local.map(([lx,lz])=>({x:x+lx*c+lz*sn,z:z-lx*sn+lz*c}));
         };
-        const circlePolygon=(cx,cz,r,n=12)=>Array.from({length:n},(_,i)=>[cx+Math.cos(i*2*Math.PI/n)*r,cz+Math.sin(i*2*Math.PI/n)*r]);
-        const makeCollisionPolygons=(x,z,a,profile,bladeType,driveSpec)=>{
-          const bw=profile.width*.78, bl=profile.length*.82;
+        const convexHull=(points)=>{
+          const pts=points.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+          if(pts.length<=2)return pts;
+          const cross=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+          const lower=[];for(const q of pts){while(lower.length>=2&&cross(lower[lower.length-2],lower[lower.length-1],q)<=0)lower.pop();lower.push(q);}
+          const upper=[];for(let i=pts.length-1;i>=0;i--){const q=pts[i];while(upper.length>=2&&cross(upper[upper.length-2],upper[upper.length-1],q)<=0)upper.pop();upper.push(q);}
+          lower.pop();upper.pop();return lower.concat(upper);
+        };
+        const makeFootprint=(x,z,a,profile,bladeType,driveSpec)=>{
+          const bw=profile.width*.78,bl=profile.length*.82;
           const bladeW=(bladeType==='Geniş kama'?1.08:bladeType==='Dar hassas kama'?.72:bladeType==='Çift kademeli'?.96:.94)*profile.width/.92;
           const bladeL=(bladeType==='Uzun alçak kama'?.98:.76)*profile.length/1.02;
-          const rear=profile.length*.16, tip=rear+bladeL, half=bladeW*.5;
-          const local=[
-            [[-bw/2,-bl/2],[bw/2,-bl/2],[bw/2,bl/2],[-bw/2,bl/2]],
-            // Görsel bıçakla aynı dikdörtgen plan: ön kesici ağız dümdüz ve tam genişlikte.
-            [[-half,rear],[half,rear],[half,tip],[-half,tip]]
-          ];
-          const wheelR=clamp(Number(driveSpec?.wheelDiameter)||30,15,60)/400, wheelZ=-profile.length*.105;
-          for(const side of [-1,1]) local.push(circlePolygon(side*profile.width*.455,wheelZ,wheelR,14));
-          return local.map(poly=>toWorldPolygon(x,z,a,poly));
+          const rear=profile.length*.16,tip=rear+bladeL;
+          const wheelR=clamp(Number(driveSpec?.wheelDiameter)||30,15,60)/400,wheelZ=-profile.length*.105;
+          const raw=[[-bw/2,-bl/2],[bw/2,-bl/2],[bw/2,bl/2],[-bw/2,bl/2],[-bladeW/2,rear],[bladeW/2,rear],[bladeW/2,tip],[-bladeW/2,tip]];
+          for(const side of [-1,1])for(let i=0;i<16;i++){const a0=i*Math.PI/8;raw.push([side*profile.width*.455+Math.cos(a0)*wheelR,wheelZ+Math.sin(a0)*wheelR]);}
+          return toWorldPolygon(x,z,a,convexHull(raw));
         };
-        const pShapes=makeCollisionPolygons(state.x,state.z,state.a,preset,p.bladeType,p.driveSpec);
-        const rShapes=makeCollisionPolygons(state.rx,state.rz,state.ra,rivalPreset,p.rivalBladeType,p.rivalDriveSpec);
-        let maxOverlap=0, collisionNormal=null;
-        const polygonContact=(A,B)=>{
-          let minOverlap=Infinity, normal=null;
-          for(const poly of [A,B]) for(let i=0;i<poly.length;i++){
-            const p1=poly[i],p2=poly[(i+1)%poly.length];
-            const edgeX=p2.x-p1.x,edgeZ=p2.z-p1.z;
-            const len=Math.hypot(edgeX,edgeZ)||1,axis={x:-edgeZ/len,z:edgeX/len};
-            let minA=Infinity,maxA=-Infinity,minB=Infinity,maxB=-Infinity;
+        const pFoot=makeFootprint(state.x,state.z,state.a,preset,p.bladeType,p.driveSpec);
+        const rFoot=makeFootprint(state.rx,state.rz,state.ra,rivalPreset,p.rivalBladeType,p.rivalDriveSpec);
+        const satContact=(A,B)=>{
+          let minOverlap=Infinity,normal=null;
+          for(const poly of [A,B])for(let i=0;i<poly.length;i++){
+            const p1=poly[i],p2=poly[(i+1)%poly.length],ex=p2.x-p1.x,ez=p2.z-p1.z,len=Math.hypot(ex,ez)||1;
+            const axis={x:-ez/len,z:ex/len};let minA=Infinity,maxA=-Infinity,minB=Infinity,maxB=-Infinity;
             for(const v of A){const d=v.x*axis.x+v.z*axis.z;minA=Math.min(minA,d);maxA=Math.max(maxA,d);}
             for(const v of B){const d=v.x*axis.x+v.z*axis.z;minB=Math.min(minB,d);maxB=Math.max(maxB,d);}
             const overlap=Math.min(maxA,maxB)-Math.max(minA,minB);
-            if(overlap<=0)return null;
+            // Küçük sayısal boşluklar da temas kabul edilir; kareler arası adım
+            // robotların birbirini delip geçmesine veya gözle görülür aralık oluşmasına yol açmasın.
+            if(overlap < -0.012)return null;
             if(overlap<minOverlap){minOverlap=overlap;normal={...axis};}
           }
           const ac=A.reduce((v,q)=>({x:v.x+q.x/A.length,z:v.z+q.z/A.length}),{x:0,z:0});
@@ -341,59 +344,44 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
           if(normal&&((bc.x-ac.x)*normal.x+(bc.z-ac.z)*normal.z)<0){normal.x*=-1;normal.z*=-1;}
           return {overlap:minOverlap,normal};
         };
-        for(const ps of pShapes) for(const rs of rShapes){
-          const contact=polygonContact(ps,rs);
-          if(contact&&contact.overlap>maxOverlap){maxOverlap=contact.overlap;collisionNormal=contact.normal;}
-        }
-        // Çok küçük örtüşmeler sayısal titreşim kabul edilir. Kuvvet ancak görünür geometriler
-        // temas ettikten sonra oluşur; böylece algılama menzili itme kuvveti üretemez.
-        const CONTACT_SKIN=0.003; // 0.6 mm simülasyon toleransı
-        if(maxOverlap>CONTACT_SKIN&&collisionNormal){
-          const nx=collisionNormal.x,nz=collisionNormal.z;
-          // Yalnızca doğrulanmış fiziksel temas sonrası gövdeleri ayır.
-          const separation=Math.max(0,maxOverlap-.0002);
-          state.x-=nx*separation*.5;state.z-=nz*separation*.5;
-          state.rx+=nx*separation*.5;state.rz+=nz*separation*.5;
-          const pForward=state.vx*nx+state.vz*nz;
-          const rForward=-(state.rvx*nx+state.rvz*nz);
+        const contact=satContact(pFoot,rFoot);
+        if(contact&&contact.normal){
+          const nx=contact.normal.x,nz=contact.normal.z,pMass=playerMassKg,rMass=rivalMassKg;
+          // Örtüşmeyi gider; çok küçük SAT boşluğunu da temas toleransı içinde kapat.
+          // Kütlesi düşük robot daha fazla konum düzeltmesi alır.
+          const invP=1/pMass,invR=1/rMass,totalInv=invP+invR;
+          const correction=contact.overlap>=0?Math.max(0,contact.overlap-0.00015):-contact.overlap*.85;
+          if(correction>0){
+            state.x-=nx*correction*(invP/totalInv);state.z-=nz*correction*(invP/totalInv);
+            state.rx+=nx*correction*(invR/totalInv);state.rz+=nz*correction*(invR/totalInv);
+          }
           const pNose=Math.sin(state.a)*nx+Math.cos(state.a)*nz;
           const rNose=-(Math.sin(state.ra)*nx+Math.cos(state.ra)*nz);
-          const pMass=playerMassKg;
-          const rMass=rivalMassKg;
-          const relative=(state.vx-state.rvx)*nx+(state.vz-state.rvz)*nz;
-          const closingSpeed=Math.max(0,relative);
-          // Sumo dohyo'sunda darbeler çoğunlukla elastik sekme değil, lastik tutuşuyla itiş üretir.
-          if(closingSpeed>0){
-            const restitution=.035;
-            const impulse=(1+restitution)*closingSpeed/(1/pMass+1/rMass);
-            state.vx-=impulse*nx/pMass;state.vz-=impulse*nz/pMass;
-            state.rvx+=impulse*nx/rMass;state.rvz+=impulse*nz/rMass;
+          const relative=(state.rvx-state.vx)*nx+(state.rvz-state.vz)*nz;
+          // Temas sırasında elastik sekmeyi azalt; birbirinden uzaklaşan normal hız oluşmasın.
+          if(relative>0){
+            const impulse=relative/(1/pMass+1/rMass);
+            state.vx+=impulse*nx/pMass;state.vz+=impulse*nz/pMass;
+            state.rvx-=impulse*nx/rMass;state.rvz-=impulse*nz/rMass;
+          }else if(relative<0){
+            const closing=-relative,softImpulse=closing*.88/(1/pMass+1/rMass);
+            state.vx-=softImpulse*nx/pMass;state.vz-=softImpulse*nz/pMass;
+            state.rvx+=softImpulse*nx/rMass;state.rvz+=softImpulse*nz/rMass;
           }
-          // Sürekli itiş kuvveti yalnızca SAT çarpışması doğrulandıktan sonra uygulanır.
-          // Motor torku ve lastik tutuşu iki robot için ayrı ayrı sınırlandırılır.
-          const pushPlayer=pNose>.48&&pF>.05?playerDrive.usableForceN*clamp(pF,0,1)*clamp(pNose,0,1):0;
-          const pushRival=rNose>.48&&rF>.05?rivalDrive.usableForceN*clamp(rF,0,1)*clamp(rNose,0,1):0;
-          const pushImpulse=(pushPlayer+pushRival)*dt*5; // N·s / kg -> simülasyon hız birimi
-          if(pushImpulse!==0){
-            // Temaslı itişte saldıran robotun motor ivmesini yapay olarak geri alma.
-            // İtme kuvveti hedef robota aktarılır; konum çözümü iki gövdeyi temas
-            // yüzeyinde tutar ve saldıran robot teması sürdürerek ilerleyebilir.
-            state.rvx+=pushImpulse*nx/rMass;state.rvz+=pushImpulse*nz/rMass;
+          // İki robotun motor kuvveti de kendi ayarlarından hesaplanır ve karşı tarafa
+          // doğru uygulanır. Oyuncu/rakip rolüne bağlı tek taraflı itiş yoktur.
+          const pPush=pNose>.45&&pF>.04?playerDrive.usableForceN*clamp(pF,0,1)*clamp(pNose,0,1):0;
+          const rPush=rNose>.45&&rF>.04?rivalDrive.usableForceN*clamp(rF,0,1)*clamp(rNose,0,1):0;
+          const pImpulse=pPush*dt*5,rImpulse=rPush*dt*5;
+          state.rvx+=pImpulse*nx/rMass;state.rvz+=pImpulse*nz/rMass;
+          state.vx-=rImpulse*nx/pMass;state.vz-=rImpulse*nz/pMass;
+          // Burun buruna itişte motorların birbirinden ayıran hız bileşeni sıfırlanır.
+          if(pNose>.45&&rNose>.45){
+            const separating=(state.rvx-state.vx)*nx+(state.rvz-state.vz)*nz;
+            if(separating>0){const j=separating/(1/pMass+1/rMass);state.vx+=j*nx/pMass;state.vz+=j*nz/pMass;state.rvx-=j*nx/rMass;state.rvz-=j*nz/rMass;}
           }
-          // Burun buruna temas kilidi: itilen robotun normal yönde hızlanması,
-          // iki gövde arasında görünür boşluk oluşturmasın. Temas halinde yalnızca
-          // birbirinden UZAKLAŞTIRAN bağıl normal hız bileşenini sıfırla;
-          // teğetsel hareket ve motorların ileri itişi korunur.
-          if(pNose>.48&&rNose>.48){
-            const separatingSpeed=(state.rvx-state.vx)*nx+(state.rvz-state.vz)*nz;
-            if(separatingSpeed>0){
-              const contactImpulse=separatingSpeed/(1/pMass+1/rMass);
-              state.vx+=contactImpulse*nx/pMass;
-              state.vz+=contactImpulse*nz/pMass;
-              state.rvx-=contactImpulse*nx/rMass;
-              state.rvz-=contactImpulse*nz/rMass;
-            }
-          }
+          const pForward=state.vx*nx+state.vz*nz;
+          const rForward=-(state.rvx*nx+state.rvz*nz);
           // Kama ancak robot gerçekten öne bakıyor ve rakibe doğru ilerliyorsa altına girmiş sayılır.
           // Yalnızca kafa kafaya temas etmek takla oluşturmaz.
           const pBladeFactor=p.bladeType==='Uzun alçak kama'?1.18:p.bladeType==='Geniş kama'?1.08:p.bladeType==='Çift kademeli'?1.0:p.bladeType==='Dar hassas kama'?.62:.88;
@@ -480,7 +468,11 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
         player.userData.sensors.forEach((s,i)=>s.mesh.material.color.set(playerSensors[i].edge?'#ff4d4d':'#35d7f4'));
         rival.userData.sensors.forEach((s,i)=>s.mesh.material.color.set(rivalSensors[i].edge?'#ff4d4d':'#35d7f4'));
       }
-      player.position.set(state.x,0,state.z);player.rotation.set(state.playerPitch,state.a,state.playerRoll,'YXZ');rival.position.set(state.rx,0,state.rz);rival.rotation.set(state.rivalPitch,state.ra,state.rivalRoll,'YXZ');
+      // Devrilen modelin pivotu zemin seviyesinde kaldığı için gövde dohyo tablasına gömülüyordu.
+      // Eğime göre en alt geometrik nokta tabla üstünde tutulur; robot kenardan ayrılırken
+      // görsel olarak zeminin içinden geçmez.
+      const renderLift=(profile,pitch,roll)=>{const hx=Math.max(profile.width*.58,profile.length*.48),hz=Math.max(profile.length*.58,profile.width*.48),base=.0955;const lowest=base*Math.cos(pitch)*Math.cos(roll)-hz*Math.abs(Math.sin(pitch))-hx*Math.abs(Math.sin(roll));return Math.max(0,base-lowest);};
+      player.position.set(state.x,renderLift(preset,state.playerPitch,state.playerRoll),state.z);player.rotation.set(state.playerPitch,state.a,state.playerRoll,'YXZ');rival.position.set(state.rx,renderLift(rivalPreset,state.rivalPitch,state.rivalRoll),state.rz);rival.rotation.set(state.rivalPitch,state.ra,state.rivalRoll,'YXZ');
       shadows[0].position.set(state.x,.105,state.z);shadows[1].position.set(state.rx,.105,state.rz);
       const distance=Math.hypot(state.rx-state.x,state.rz-state.z);
       if(now-lastTelemetry>140){p.onTelemetry?.({distance:distance.toFixed(2),speed:p.running&&!state.winner?p.speed:0,mode:p.mode,collisions:state.collisions,pushes:state.pushes,edge:state.playerEdge?'UYARI':'GÜVENLİ',lineSensors:state.playerEdge?'SINIR ALGILANDI':'ZEMİN',winner:state.winner,finishReason:state.finishReason,elapsed:state.elapsed.toFixed(1),playerTipped:state.playerTipped,rivalTipped:state.rivalTipped});lastTelemetry=now;}

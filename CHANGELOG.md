@@ -1,3 +1,13 @@
+# PARS SUMOLAB v0.22.2
+
+## Fizik ve temas sistemi revizyonu
+- Robot çarpışma ayak izleri gövde, bıçak ve tekerlekleri kapsayan tek dışbükey temas geometrisiyle hesaplanıyor.
+- SAT temas toleransı küçük kare-adımı boşluklarını kapatıyor; çarpışma çözümü robotları gereksiz yere birbirinden uzaklaştırmıyor.
+- İki robotun motor kuvveti de kendi motor torku, redüksiyon, tekerlek çapı, ağırlık, güç ve lastik tutuşu ayarlarından ayrı ayrı hesaplanıyor.
+- Burun buruna itişte her iki robotun kuvveti karşı tarafa aktarılıyor; temas anındaki ayırıcı hız bastırılıyor.
+- Devrilme açısına göre modelin dikey konumu telafi ediliyor; gövde ve bıçak dohyo tablasının içine gömülmüyor.
+- Oyuncu ve rakip robotun sınıf, ağırlık, kama, sensör, motor ve lastik ayarları fizik modelinde ayrı ayrı kullanılıyor.
+
 # PARS SUMOLAB v0.22.1
 
 ## Temaslı itiş düzeltmesi

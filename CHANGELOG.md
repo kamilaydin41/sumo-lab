@@ -59,3 +59,10 @@
 - Fixed the source tree so the root Vite entrypoint loads the latest App, Arena, and styles files.
 - Removed duplicated nested source directories.
 - Restored the latest Arena implementation as the canonical application source.
+
+
+## v0.21.0
+- Oyuncu ve rakip için aynı ayar grupları aynı sıraya alındı: sensör sayısı/menzili, motor gücü, tork, redüksiyon, RPM, tekerlek çapı ve lastik tutuşu.
+- Oyuncu motor gücü parametresi eklendi; iki robotun motor gücü simülasyondaki hız ve çekiş kuvvetine uygulanıyor.
+- Motor torku ve redüksiyon ayarlarının etkisi daha görünür olacak şekilde motor-kuvvet/lastik tutuş dengesi yeniden ölçeklendi.
+- Varsayılan başlangıç yerleşimi tam simetrik: robotlar aynı merkez çizgisinde, eşit uzaklıkta ve birbirlerine dönük başlar (90° / 270°). Sıfırlama da aynı konuma döner.

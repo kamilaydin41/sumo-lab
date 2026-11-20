@@ -149,11 +149,11 @@ function readOpponentSensors(robot, self, target, range=1.75) {
   return { any:active.length>0, left, right, front:active.length>0 && (Math.abs(bearing)<=.25 || (left&&right)), readings, distance, bearing };
 }
 
-export default function Arena({ running, speed, animationSpeed=1, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', playerOpponentSensorCount=3, rivalOpponentSensorCount=3, playerOpponentSensorRangeCm=40, rivalOpponentSensorRangeCm=40, driveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, rivalDriveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
+export default function Arena({ running, speed, animationSpeed=1, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', playerOpponentSensorCount=3, rivalOpponentSensorCount=3, playerOpponentSensorRangeCm=40, rivalOpponentSensorRangeCm=40, driveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, rivalDriveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, playerMotorPower=75, rivalMotorPower=75, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
   const host = useRef(null);
   const api = useRef(null);
-  const props = useRef({running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange});
-  useEffect(()=>{props.current={running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange};},[running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange]);
+  const props = useRef({running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,playerMotorPower,rivalMotorPower,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange});
+  useEffect(()=>{props.current={running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,playerMotorPower,rivalMotorPower,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange};},[running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,playerMotorPower,rivalMotorPower,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange]);
 
   useEffect(()=>{
     const el=host.current; if(!el) return;
@@ -212,9 +212,10 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
     let frame,lastTelemetry=0,last=performance.now();
     // Motor/şanzıman/tekerlek/lastik modeli. Simülasyonda 1 birim = 0.2 m.
     // motorTorque: motor milindeki tork (mNm); iki tahrik motoru varsayılır.
-    const drive=(r,forward,turn,dt,classMaxSpeed,massKg,spec={})=>{
+    const drive=(r,forward,turn,dt,classMaxSpeed,massKg,spec={},powerPercent=100)=>{
+      const powerScale=clamp((Number(powerPercent)||100)/100,.1,1);
       const mass=Math.max(.03,massKg||.5);
-      const motorTorqueNm=Math.max(1,Number(spec.motorTorque)||12)/1000;
+      const motorTorqueNm=Math.max(1,Number(spec.motorTorque)||12)/10000;
       const gearRatio=clamp(Number(spec.gearRatio)||50,1,150);
       const motorRpm=clamp(Number(spec.motorRpm)||600,200,1000);
       const wheelDiameterM=clamp(Number(spec.wheelDiameter)||30,10,100)/1000;
@@ -222,14 +223,14 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
       const mu=clamp(Number(spec.tireMu)||.9,.2,2);
       const drivetrainEfficiency=.72;
       const wheelTorquePerMotor=motorTorqueNm*gearRatio*drivetrainEfficiency;
-      const motorForceN=(2*wheelTorquePerMotor)/Math.max(.004,wheelRadiusM);
+      const motorForceN=((2*wheelTorquePerMotor)/Math.max(.004,wheelRadiusM))*powerScale;
       const tractionForceN=mu*mass*9.81;
       const usableForceN=Math.min(motorForceN,tractionForceN);
       const accelerationSim=(usableForceN/mass)*5; // m/s² -> simülasyon birimi/s²
       const wheelRpm=motorRpm/gearRatio;
       const wheelSpeedMps=(wheelRpm/60)*Math.PI*wheelDiameterM;
       const motorSpeedSim=wheelSpeedMps*5;
-      const targetSpeed=Math.min(classMaxSpeed,motorSpeedSim);
+      const targetSpeed=Math.min(classMaxSpeed,motorSpeedSim)*powerScale;
       r.turn=turn;
       const turnGrip=clamp(Math.sqrt(mu/.9),.55,1.28);
       r.a=wrapAngle(r.a+turn*2.45*dt*turnGrip);
@@ -291,8 +292,8 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
         if(state.rivalTipped){rF=0;rT=0;}else if(rFront){rF=-.92;rT=err>=0?-.9:.9;}else if(rivalTarget.any){if(rivalTarget.front){rF=1;rT=clamp(err*1.2,-.45,.45);}else{rF=.18;rT=rivalTarget.left?-.9:.9;}}else{rF=.35;rT=.78;}
         const autoTactic=(p.dipSwitches||[]).reduce((n,on,i)=>n+(on?(1<<i):0),0);
         const playerSpeedScale=(p.mode==='AUTO'||p.mode==='OTONOM')?([1,3,5,7].includes(autoTactic)?1.08:([4,6].includes(autoTactic)?.88:1)):1;
-        const playerDrive=drive(state,pF,pT,dt,maxSpeed*playerSpeedScale,playerMassKg,p.driveSpec);
-        const rivalDrive=drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,rivalCls.maxSpeed*.88,rivalMassKg,p.rivalDriveSpec);
+        const playerDrive=drive(state,pF,pT,dt,maxSpeed*playerSpeedScale,playerMassKg,p.driveSpec,p.playerMotorPower);
+        const rivalDrive=drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,rivalCls.maxSpeed*.88,rivalMassKg,p.rivalDriveSpec,p.rivalMotorPower);
 
         // Fiziksel temas: görünür gövde, iki lastik ve düz ön ağızlı bıçak için ayrı çokgenler.
         // Sensör menzili veya yaklaşık büyük dikdörtgenler çarpışma sayılmaz.

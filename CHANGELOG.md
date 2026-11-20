@@ -1,3 +1,8 @@
+## v0.18.0
+- Realistic low-profile sumo chassis with exposed drive wheels and motor pods.
+- Rebuilt wedge as a full-width triangular blade with an exact pointed nose and near-zero ground clearance.
+- Collision polygons now match the visible chassis, wheels, and triangular blade.
+
 ## v0.17.0 – Gerçekçi sumo robot gövdeleri ve sivri, zemine yakın bıçak
 
 - Robot şasileri yuvarlatılmış, alçak profilli metal gövde görünümüne geçirildi.

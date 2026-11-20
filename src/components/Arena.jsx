@@ -24,63 +24,81 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   const bodyMat = new THREE.MeshStandardMaterial({ color, metalness: .42, roughness: .38 });
   const darkMat = new THREE.MeshStandardMaterial({ color: '#111827', metalness: .25, roughness: .65 });
   const accentMat = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: .18, metalness: .3 });
-  // Alçak profilli, köşeleri yuvarlatılmış metal şasi: gerçek mini-sumo gövdelerine daha yakın.
-  const bodyRadius = Math.min(dimensions.width, dimensions.height, dimensions.length) * .075;
-  const body = new THREE.Mesh(new RoundedBoxGeometry(dimensions.width, dimensions.height, dimensions.length, 4, bodyRadius), bodyMat);
-  body.position.y = .105 + dimensions.height / 2; body.castShadow = true; body.receiveShadow = true; root.add(body);
-  // Üst elektronik kapağı ve küçük bağlantı/vida detayları.
-  const top = new THREE.Mesh(new RoundedBoxGeometry(dimensions.width * .66, Math.max(.012, dimensions.height * .12), dimensions.length * .58, 3, bodyRadius*.45), darkMat);
-  top.position.set(0, .105 + dimensions.height * .88, -.025); top.castShadow = true; root.add(top);
-  const controller = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width*.28, dimensions.height*.055, dimensions.length*.25), new THREE.MeshStandardMaterial({color:'#263445',metalness:.35,roughness:.55}));
-  controller.position.set(0,.105+dimensions.height*.96,-dimensions.length*.06); root.add(controller);
+  // Gerçek mini-sumo görünümü: dar ve alçak üst şasi, dışarı taşan tahrik tekerlekleri.
+  const bodyWidth = dimensions.width * .78;
+  const bodyLength = dimensions.length * .82;
+  const bodyBottom = .105;
+  const bodyTop = bodyBottom + dimensions.height;
+  const bodyRadius = Math.min(bodyWidth, dimensions.height, bodyLength) * .055;
+  const body = new THREE.Mesh(new RoundedBoxGeometry(bodyWidth, dimensions.height, bodyLength, 5, bodyRadius), bodyMat);
+  body.position.y = bodyBottom + dimensions.height / 2; body.castShadow = true; body.receiveShadow = true; root.add(body);
+  // Alçak elektronik kapak; robotun üstünü büyük bir kutu gibi kaplamaz.
+  const deck = new THREE.Mesh(new RoundedBoxGeometry(bodyWidth*.72, Math.max(.009, dimensions.height*.075), bodyLength*.66, 3, bodyRadius*.35), darkMat);
+  deck.position.set(0, bodyTop-dimensions.height*.075, -.015); deck.castShadow=true; root.add(deck);
+  // Düşük profilli kontrol kartı ve iki küçük sürücü modülü.
+  const controller = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.30, Math.max(.008,dimensions.height*.045), bodyLength*.22), new THREE.MeshStandardMaterial({color:'#263445',metalness:.42,roughness:.5}));
+  controller.position.set(0,bodyTop-dimensions.height*.025,-dimensions.length*.075); root.add(controller);
+  for (const x of [-1,1]) {
+    const module = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.12,Math.max(.008,dimensions.height*.06),bodyLength*.20),new THREE.MeshStandardMaterial({color:'#1c6b58',metalness:.25,roughness:.6}));
+    module.position.set(x*bodyWidth*.30,bodyTop-dimensions.height*.02,-dimensions.length*.08); root.add(module);
+  }
   for (const x of [-1,1]) for (const z of [-1,1]) {
-    const bolt = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.018,dimensions.width*.018,dimensions.height*.025,10),new THREE.MeshStandardMaterial({color:'#d5dce5',metalness:.9,roughness:.25}));
-    bolt.position.set(x*dimensions.width*.39,.105+dimensions.height*.91,z*dimensions.length*.39); root.add(bolt);
+    const bolt = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.012,dimensions.width*.012,dimensions.height*.018,10),new THREE.MeshStandardMaterial({color:'#d5dce5',metalness:.95,roughness:.2}));
+    bolt.position.set(x*bodyWidth*.40,bodyTop-dimensions.height*.025,z*bodyLength*.40); root.add(bolt);
   }
 
-  // Sumo bıçağı: alttaki yüzey düz, ön uç çok ince/sivri ve dohyo yüzeyine sıfıra yakın.
+  // Tek parça, üçgen planlı sumo bıçağı: geniş kök, tam sivri burun ve zemine sıfır alt yüzey.
   const blade = new THREE.Group();
-  const width = (bladeType === 'Geniş kama' ? 1.08 : bladeType === 'Dar hassas kama' ? .72 : bladeType === 'Çift kademeli' ? .96 : .94) * dimensions.width / .92;
-  const length = (bladeType === 'Uzun alçak kama' ? .98 : .76) * dimensions.length / 1.02;
-  const rearZ = dimensions.length * .18, tipZ = rearZ + length;
-  const h = width / 2, tipHalf = Math.max(.002, width*.018);
-  const floorY = .097; // Dohyo üst yüzeyi yaklaşık .0955; 0.3 mm görsel boşluk.
-  const rearTopY = .105 + dimensions.height*.62;
-  const rearBottomY = floorY + .004;
-  const v = [
-    -h,rearBottomY,rearZ,  h,rearBottomY,rearZ,
-    -h,rearTopY,rearZ,     h,rearTopY,rearZ,
-    -tipHalf,floorY,tipZ,  tipHalf,floorY,tipZ
+  const bladeWidth = (bladeType === 'Geniş kama' ? 1.08 : bladeType === 'Dar hassas kama' ? .72 : bladeType === 'Çift kademeli' ? .96 : .94) * dimensions.width / .92;
+  const bladeLength = (bladeType === 'Uzun alçak kama' ? .98 : .76) * dimensions.length / 1.02;
+  const rearZ = dimensions.length * .16, tipZ = rearZ + bladeLength;
+  const half = bladeWidth*.5;
+  const floorY = .0962; // Dohyo üst yüzeyine neredeyse sıfır boşluk.
+  const rearTopY = bodyBottom + dimensions.height*.54;
+  const tipTopY = floorY + .0012;
+  const verts = [
+    -half,floorY,rearZ,   half,floorY,rearZ,   0,floorY,tipZ,
+    -half,rearTopY,rearZ, half,rearTopY,rearZ, 0,tipTopY,tipZ
   ];
-  const faces = [
-    2,3,5, 2,5,4,       // eğimli üst yüzey
-    0,4,5, 0,5,1,       // düz alt yüzey
-    0,2,4, 1,5,3,       // yan yüzeyler
-    0,1,3, 0,3,2        // arka kapak
+  const indices = [
+    3,4,5,                 // üstte sivri üçgen rampa
+    0,2,1,                 // tamamen düz alt yüzey
+    0,3,5, 0,5,2,          // sol yan
+    1,2,5, 1,5,4,          // sağ yan
+    0,1,4, 0,4,3           // gövdeye bağlanan arka yüz
   ];
-  const geo = new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(v,3)); geo.setIndex(faces); geo.computeVertexNormals();
-  const metal = new THREE.MeshStandardMaterial({color:'#c5ced8',metalness:.96,roughness:.19,side:THREE.DoubleSide});
-  const wedge = new THREE.Mesh(geo,metal); wedge.castShadow=true; wedge.receiveShadow=true; blade.add(wedge);
-  // Keskin ön ağız; kalın bir tampon/lip kullanılmaz.
-  const edgeGeo = new THREE.BufferGeometry();
-  edgeGeo.setAttribute('position',new THREE.Float32BufferAttribute([-tipHalf,floorY,tipZ,tipHalf,floorY,tipZ,0,floorY+.002,tipZ-.012],3));
-  edgeGeo.setIndex([0,1,2]); edgeGeo.computeVertexNormals();
-  blade.add(new THREE.Mesh(edgeGeo,new THREE.MeshStandardMaterial({color:'#f1f5f9',metalness:1,roughness:.12,side:THREE.DoubleSide})));
-  // Bıçağın gövdeye bağlandığı iki metal kulak ve görünür bağlantı vidaları.
-  for (const x of [-h*.68,h*.68]) {
-    const mount = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width*.075,dimensions.height*.16,dimensions.length*.12),accentMat);
-    mount.position.set(x,.105+dimensions.height*.62,dimensions.length*.22); blade.add(mount);
-    const screw = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.018,dimensions.width*.018,dimensions.width*.012,12),darkMat);
-    screw.rotation.x=Math.PI/2; screw.position.set(x,.105+dimensions.height*.69,dimensions.length*.26); blade.add(screw);
+  const bladeGeo = new THREE.BufferGeometry();
+  bladeGeo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
+  bladeGeo.setIndex(indices); bladeGeo.computeVertexNormals();
+  const bladeMetal = new THREE.MeshStandardMaterial({color:'#aebbc9',metalness:.98,roughness:.16,side:THREE.DoubleSide});
+  const wedge = new THREE.Mesh(bladeGeo,bladeMetal); wedge.castShadow=true; wedge.receiveShadow=true; blade.add(wedge);
+  // Ön uç tek bir geometrik noktada birleşir; geniş veya düz bir tampon yoktur.
+  // Düşük montaj kulakları ve bağlantı vidaları.
+  for (const x of [-half*.72,half*.72]) {
+    const mount = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width*.055,dimensions.height*.10,dimensions.length*.09),accentMat);
+    mount.position.set(x,bodyBottom+dimensions.height*.53,dimensions.length*.19); blade.add(mount);
+    const screw = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.012,dimensions.width*.012,dimensions.width*.009,12),darkMat);
+    screw.rotation.x=Math.PI/2; screw.position.set(x,bodyBottom+dimensions.height*.57,dimensions.length*.23); blade.add(screw);
   }
   root.add(blade);
-  for (const x of [-dimensions.width*.46,dimensions.width*.46]) {
-    const wheelRadius=dimensions.width*.155, wheelWidth=dimensions.width*.105;
-    const motorPod = new THREE.Mesh(new RoundedBoxGeometry(dimensions.width*.16,dimensions.height*.36,dimensions.length*.31,3,dimensions.width*.025),darkMat);
-    motorPod.position.set(x*.72,.105+dimensions.height*.35,-dimensions.length*.12); root.add(motorPod);
-    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius,wheelRadius,wheelWidth,32),darkMat); wheel.rotation.z=Math.PI/2; wheel.position.set(x,.0925+wheelRadius,-dimensions.length*.12); wheel.castShadow=true; root.add(wheel);
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius*.40,wheelRadius*.40,wheelWidth*1.08,20),accentMat); hub.rotation.z=Math.PI/2; hub.position.copy(wheel.position); root.add(hub);
-    const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius*.16,wheelRadius*.16,wheelWidth*1.12,16),new THREE.MeshStandardMaterial({color:'#d7e0e9',metalness:.95,roughness:.2})); hubCap.rotation.z=Math.PI/2; hubCap.position.copy(wheel.position); root.add(hubCap);
+
+  // İki yanda belirgin lastik tahrik tekerlekleri ve kompakt motor muhafazaları.
+  const wheelRadius=dimensions.width*.155, wheelWidth=dimensions.width*.13;
+  for (const side of [-1,1]) {
+    const x=side*dimensions.width*.455;
+    const motorPod = new THREE.Mesh(new RoundedBoxGeometry(dimensions.width*.19,dimensions.height*.40,dimensions.length*.34,4,dimensions.width*.035),darkMat);
+    motorPod.position.set(side*dimensions.width*.36,bodyBottom+dimensions.height*.34,-dimensions.length*.105); root.add(motorPod);
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius,wheelRadius,wheelWidth,36),new THREE.MeshStandardMaterial({color:'#090d13',metalness:.08,roughness:.92}));
+    wheel.rotation.z=Math.PI/2; wheel.position.set(x,.0955+wheelRadius,-dimensions.length*.105); wheel.castShadow=true; root.add(wheel);
+    // Lastik sırt kanalları ve metal göbek.
+    for(let tread=0;tread<12;tread++){
+      const a=tread*Math.PI/6;
+      const rib=new THREE.Mesh(new THREE.BoxGeometry(wheelWidth*1.02,wheelRadius*.13,wheelRadius*.10),darkMat);
+      rib.position.set(x,.0955+wheelRadius+Math.sin(a)*wheelRadius*.91,-dimensions.length*.105+Math.cos(a)*wheelRadius*.91);
+      rib.rotation.x=-a; root.add(rib);
+    }
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius*.43,wheelRadius*.43,wheelWidth*1.04,24),accentMat); hub.rotation.z=Math.PI/2; hub.position.copy(wheel.position); root.add(hub);
+    const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius*.18,wheelRadius*.18,wheelWidth*1.08,18),new THREE.MeshStandardMaterial({color:'#d7e0e9',metalness:.96,roughness:.18})); hubCap.rotation.z=Math.PI/2; hubCap.position.copy(wheel.position); root.add(hubCap);
   }
   // Five visible line sensors: three front, two rear. Their state is updated from the dohyo surface.
   const sensors = [];
@@ -232,39 +250,50 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         const playerSpeedScale=(p.mode==='AUTO'||p.mode==='OTONOM')?([1,3,5,7].includes(autoTactic)?1.08:([4,6].includes(autoTactic)?.88:1)):1;
         drive(state,pF,pT,dt,maxSpeed*playerSpeedScale);drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,rivalCls.maxSpeed*.88*clamp(Math.sqrt(rivalCls.mass/Math.max(.03,(p.rivalTotalWeight||rivalCls.mass*1000)/1000)),.72,1.12));
 
-        // Fiziksel temas: tekerlek/şasi ve kama ayrı OBB çarpışma hacimleriyle modellenir.
-        // Rakip sensör menzili çarpışma üretmez; kuvvet yalnızca SAT temas doğrulamasında uygulanır.
-        const axes = (angle) => [{x:Math.cos(angle),z:-Math.sin(angle)},{x:Math.sin(angle),z:Math.cos(angle)}];
-        const projectRadius = (axis, angle, halfW, halfL) => {
-          const right={x:Math.cos(angle),z:-Math.sin(angle)}, forward={x:Math.sin(angle),z:Math.cos(angle)};
-          return Math.abs(axis.x*right.x+axis.z*right.z)*halfW + Math.abs(axis.x*forward.x+axis.z*forward.z)*halfL;
+        // Fiziksel temas: görünür gövde, iki lastik ve gerçek sivri üçgen bıçak için ayrı çokgenler.
+        // Sensör menzili veya yaklaşık büyük dikdörtgenler çarpışma sayılmaz.
+        const toWorldPolygon=(x,z,a,local)=>{
+          const c=Math.cos(a),sn=Math.sin(a);
+          return local.map(([lx,lz])=>({x:x+lx*c+lz*sn,z:z-lx*sn+lz*c}));
         };
-        // Çarpışma ölçüleri makeRobot() içindeki görünür geometriyle aynı koordinatlardan türetilir.
-        // 1.02 ve 0.92 katsayıları görsel kama geometrisinin gerçek ölçek dönüşümüdür.
-        const bladeLenP=(p.bladeType==='Uzun alçak kama'?.98:.76)/1.02;
-        const bladeLenR=(p.rivalBladeType==='Uzun alçak kama'?.98:.76)/1.02;
-        const bladeWidthP=(p.bladeType==='Geniş kama'?1.08:p.bladeType==='Dar hassas kama'?.72:p.bladeType==='Çift kademeli'?.96:.94)/.92;
-        const bladeWidthR=(p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.72:p.rivalBladeType==='Çift kademeli'?.96:.94)/.92;
-        const makeShapes=(x,z,a,profile,bladeLen,bladeWidth)=>[
-          // Yuvarlatılmış şasi ve dışarı taşan tekerlekler için muhafazakâr çarpışma hacmi.
-          {x,z,a,hw:profile.width*.62,hl:profile.length*.50},
-          // Bıçağın geniş arka tabanı ve daralan sivri burnu ayrı hacimlerdir.
-          // Böylece üçgen bıçağın ön ucu tam genişlikte dikdörtgen gibi davranmaz.
-          {x:x+Math.sin(a)*(profile.length*(.18+bladeLen*.35)),z:z+Math.cos(a)*(profile.length*(.18+bladeLen*.35)),a,hw:profile.width*bladeWidth*.5,hl:profile.length*bladeLen*.35},
-          {x:x+Math.sin(a)*(profile.length*(.18+bladeLen*.84)),z:z+Math.cos(a)*(profile.length*(.18+bladeLen*.84)),a,hw:profile.width*bladeWidth*.10,hl:profile.length*bladeLen*.16}
-        ];
-        const pShapes=makeShapes(state.x,state.z,state.a,preset,bladeLenP,bladeWidthP);
-        const rShapes=makeShapes(state.rx,state.rz,state.ra,rivalPreset,bladeLenR,bladeWidthR);
+        const circlePolygon=(cx,cz,r,n=12)=>Array.from({length:n},(_,i)=>[cx+Math.cos(i*2*Math.PI/n)*r,cz+Math.sin(i*2*Math.PI/n)*r]);
+        const makeCollisionPolygons=(x,z,a,profile,bladeType)=>{
+          const bw=profile.width*.78, bl=profile.length*.82;
+          const bladeW=(bladeType==='Geniş kama'?1.08:bladeType==='Dar hassas kama'?.72:bladeType==='Çift kademeli'?.96:.94)*profile.width/.92;
+          const bladeL=(bladeType==='Uzun alçak kama'?.98:.76)*profile.length/1.02;
+          const rear=profile.length*.16, tip=rear+bladeL, half=bladeW*.5;
+          const local=[
+            [[-bw/2,-bl/2],[bw/2,-bl/2],[bw/2,bl/2],[-bw/2,bl/2]],
+            [[-half,rear],[half,rear],[0,tip]]
+          ];
+          const wheelR=profile.width*.155, wheelZ=-profile.length*.105;
+          for(const side of [-1,1]) local.push(circlePolygon(side*profile.width*.455,wheelZ,wheelR,14));
+          return local.map(poly=>toWorldPolygon(x,z,a,poly));
+        };
+        const pShapes=makeCollisionPolygons(state.x,state.z,state.a,preset,p.bladeType);
+        const rShapes=makeCollisionPolygons(state.rx,state.rz,state.ra,rivalPreset,p.rivalBladeType);
         let maxOverlap=0, collisionNormal=null;
-        for(const ps of pShapes) for(const rs of rShapes){
-          const dx=rs.x-ps.x,dz=rs.z-ps.z; let pairOverlap=Infinity, pairNormal=null, separated=false;
-          for(const axis of [...axes(ps.a),...axes(rs.a)]){
-            const distance=Math.abs(dx*axis.x+dz*axis.z);
-            const overlap=projectRadius(axis,ps.a,ps.hw,ps.hl)+projectRadius(axis,rs.a,rs.hw,rs.hl)-distance;
-            if(overlap<=0){separated=true;break;}
-            if(overlap<pairOverlap){pairOverlap=overlap;pairNormal={...axis};if(dx*axis.x+dz*axis.z<0){pairNormal.x*=-1;pairNormal.z*=-1;}}
+        const polygonContact=(A,B)=>{
+          let minOverlap=Infinity, normal=null;
+          for(const poly of [A,B]) for(let i=0;i<poly.length;i++){
+            const p1=poly[i],p2=poly[(i+1)%poly.length];
+            const edgeX=p2.x-p1.x,edgeZ=p2.z-p1.z;
+            const len=Math.hypot(edgeX,edgeZ)||1,axis={x:-edgeZ/len,z:edgeX/len};
+            let minA=Infinity,maxA=-Infinity,minB=Infinity,maxB=-Infinity;
+            for(const v of A){const d=v.x*axis.x+v.z*axis.z;minA=Math.min(minA,d);maxA=Math.max(maxA,d);}
+            for(const v of B){const d=v.x*axis.x+v.z*axis.z;minB=Math.min(minB,d);maxB=Math.max(maxB,d);}
+            const overlap=Math.min(maxA,maxB)-Math.max(minA,minB);
+            if(overlap<=0)return null;
+            if(overlap<minOverlap){minOverlap=overlap;normal={...axis};}
           }
-          if(!separated && pairNormal && pairOverlap>maxOverlap){maxOverlap=pairOverlap;collisionNormal=pairNormal;}
+          const ac=A.reduce((v,q)=>({x:v.x+q.x/A.length,z:v.z+q.z/A.length}),{x:0,z:0});
+          const bc=B.reduce((v,q)=>({x:v.x+q.x/B.length,z:v.z+q.z/B.length}),{x:0,z:0});
+          if(normal&&((bc.x-ac.x)*normal.x+(bc.z-ac.z)*normal.z)<0){normal.x*=-1;normal.z*=-1;}
+          return {overlap:minOverlap,normal};
+        };
+        for(const ps of pShapes) for(const rs of rShapes){
+          const contact=polygonContact(ps,rs);
+          if(contact&&contact.overlap>maxOverlap){maxOverlap=contact.overlap;collisionNormal=contact.normal;}
         }
         // Çok küçük örtüşmeler sayısal titreşim kabul edilir. Kuvvet ancak görünür geometriler
         // temas ettikten sonra oluşur; böylece algılama menzili itme kuvveti üretemez.

@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import Arena from './components/Arena.jsx';
 
-const jsStarter = `// PARS SUMOLAB v0.21.6 | JavaScript sumo kontrol algoritması
+const jsStarter = `// PARS SUMOLAB v0.21.8 | JavaScript sumo kontrol algoritması
 // Simülatörün üç ön çizgi sensörü ve 2–7 fiziksel rakip sensörüne göre örnek davranış.
 
 function decide(sensor) {
@@ -27,7 +27,7 @@ function decide(sensor) {
 
 // Örnek: const motorCommand = decide(sensorData);`;
 
-const cppStarter = `// PARS SUMOLAB v0.21.6 | Arduino C++ örnek sumo algoritması
+const cppStarter = `// PARS SUMOLAB v0.21.8 | Arduino C++ örnek sumo algoritması
 // Örnek kart: Arduino UNO + TB6612FNG
 // QTR/çizgi sensörleri: yalnızca ön-sol A0, ön-orta A1, ön-sağ A2
 // Rakip IR algı bölgeleri: sol D2, ön D3, sağ D11 (2–7 sensörün bölgesel özeti)
@@ -371,7 +371,7 @@ export default function App() {
         <div className="side-label">SENSÖR DURUMU</div>
         <div className="sensor-chip"><span className="sensor-dot blue"/> Rakip algılama <b>Simüle</b></div>
         <div className="sensor-chip"><span className="sensor-dot orange"/> Çizgi algılama <b>Simüle</b></div>
-        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>PARS SUMOLAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">PARS SUMOLAB <span>v0.21.6 · SUMO FİZİĞİ</span></div></div>
+        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>PARS SUMOLAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">PARS SUMOLAB <span>v0.21.8 · SUMO FİZİĞİ</span></div></div>
       </aside>
 
       <section className="main-content">
@@ -402,7 +402,7 @@ export default function App() {
             <label className="field-label">Motor gücü <strong>{playerMotorPower}%</strong></label><input className="range" type="range" min="10" max="100" step="5" value={playerMotorPower} onChange={e=>setPlayerMotorPower(Number(e.target.value))}/><div className="panel-title"><div><Gauge size={17}/><strong>Motor ve yürüyüş sistemi</strong></div><span className="muted-tag">FİZİK PARAMETRELERİ</span></div>
             <label className="field-label">Motor torku <strong>{driveSpec.motorTorque} mNm / motor</strong></label><input className="range" type="range" min="2" max="40" step="1" value={driveSpec.motorTorque} onChange={e=>setDriveSpec(v=>({...v,motorTorque:Number(e.target.value)}))}/>
             <label className="field-label">Redüksiyon oranı <strong>{driveSpec.gearRatio}:1</strong></label><input className="range" type="range" min="10" max="100" step="5" value={driveSpec.gearRatio} onChange={e=>setDriveSpec(v=>({...v,gearRatio:Number(e.target.value)}))}/>
-            <label className="field-label">Motor devri <strong>{driveSpec.motorRpm} RPM</strong></label><input className="range" type="range" min="200" max="1000" step="50" value={driveSpec.motorRpm} onChange={e=>setDriveSpec(v=>({...v,motorRpm:Number(e.target.value)}))}/><div className="range-labels"><span>200 RPM</span><span>1000 RPM</span></div>
+            <label className="field-label">Redüktör çıkış devri <strong>{driveSpec.motorRpm} RPM</strong></label><input className="range" type="range" min="200" max="1000" step="50" value={driveSpec.motorRpm} onChange={e=>setDriveSpec(v=>({...v,motorRpm:Number(e.target.value)}))}/><div className="range-labels"><span>200 RPM</span><span>1000 RPM</span></div>
             <label className="field-label">Tahrik tekerleği çapı <strong>{driveSpec.wheelDiameter} mm</strong></label><input className="range" type="range" min="15" max="60" step="1" value={driveSpec.wheelDiameter} onChange={e=>setDriveSpec(v=>({...v,wheelDiameter:Number(e.target.value)}))}/>
             <label className="field-label">Lastik-dohyo sürtünme katsayısı <strong>{driveSpec.tireMu.toFixed(2)}</strong></label><input className="range" type="range" min="0.3" max="1.5" step="0.05" value={driveSpec.tireMu} onChange={e=>setDriveSpec(v=>({...v,tireMu:Number(e.target.value)}))}/>
             <p className="muted-copy">İki tahrik motorunun toplam çekişi; motor torku, redüksiyon, tekerlek yarıçapı ve lastik tutuşuna göre hesaplanır.</p>
@@ -422,7 +422,7 @@ export default function App() {
             <div className="panel-title"><div><Gauge size={17}/><strong>Motor ve yürüyüş sistemi</strong></div><span className="muted-tag">FİZİK PARAMETRELERİ</span></div>
             <label className="field-label">Motor torku <strong>{rivalDriveSpec.motorTorque} mNm / motor</strong></label><input className="range" type="range" min="2" max="40" step="1" value={rivalDriveSpec.motorTorque} onChange={e=>setRivalDriveSpec(v=>({...v,motorTorque:Number(e.target.value)}))}/>
             <label className="field-label">Redüksiyon oranı <strong>{rivalDriveSpec.gearRatio}:1</strong></label><input className="range" type="range" min="10" max="100" step="5" value={rivalDriveSpec.gearRatio} onChange={e=>setRivalDriveSpec(v=>({...v,gearRatio:Number(e.target.value)}))}/>
-            <label className="field-label">Motor devri <strong>{rivalDriveSpec.motorRpm} RPM</strong></label><input className="range" type="range" min="200" max="1000" step="50" value={rivalDriveSpec.motorRpm} onChange={e=>setRivalDriveSpec(v=>({...v,motorRpm:Number(e.target.value)}))}/><div className="range-labels"><span>200 RPM</span><span>1000 RPM</span></div>
+            <label className="field-label">Redüktör çıkış devri <strong>{rivalDriveSpec.motorRpm} RPM</strong></label><input className="range" type="range" min="200" max="1000" step="50" value={rivalDriveSpec.motorRpm} onChange={e=>setRivalDriveSpec(v=>({...v,motorRpm:Number(e.target.value)}))}/><div className="range-labels"><span>200 RPM</span><span>1000 RPM</span></div>
             <label className="field-label">Tahrik tekerleği çapı <strong>{rivalDriveSpec.wheelDiameter} mm</strong></label><input className="range" type="range" min="15" max="60" step="1" value={rivalDriveSpec.wheelDiameter} onChange={e=>setRivalDriveSpec(v=>({...v,wheelDiameter:Number(e.target.value)}))}/>
             <label className="field-label">Lastik-dohyo sürtünme katsayısı <strong>{rivalDriveSpec.tireMu.toFixed(2)}</strong></label><input className="range" type="range" min="0.3" max="1.5" step="0.05" value={rivalDriveSpec.tireMu} onChange={e=>setRivalDriveSpec(v=>({...v,tireMu:Number(e.target.value)}))}/>
             <p className="muted-copy">İki tahrik motorunun toplam çekişi; motor torku, redüksiyon, tekerlek yarıçapı ve lastik tutuşuna göre hesaplanır.</p>
@@ -437,7 +437,7 @@ export default function App() {
 
         {tab === 'parts' && <div className="panel parts-workspace"><div className="panel-title"><div><Package size={18}/><strong>Donanım bileşenleri</strong></div><span className="muted-tag">{selectedParts.length} PARÇA SEÇİLİ</span></div><p className="parts-intro">Robotunda kullanacağın parçaları seç. Seçimler ağırlık hesabına ve robot profiline yansır.</p><div className="parts-grid">{partCatalog.map(part => { const Icon = part.icon; const active = selectedParts.includes(part.name); return <button key={part.name} className={`part-card ${active ? 'part-selected' : ''}`} onClick={() => togglePart(part.name)}><div className="part-icon"><Icon size={20}/></div><div className="part-copy"><strong>{part.name}</strong><span>{part.category} · {part.detail}</span></div><div className="part-weight">{part.weight} g</div><div className={`part-check ${active ? 'checked' : ''}`}>{active ? <Check size={13}/> : '+'}</div></button>; })}</div><div className="parts-summary"><div><span>Toplam robot ağırlığı</span><strong>{totalWeight} g</strong></div><div><span>İzin verilen ağırlık</span><strong>{weightLimit} g</strong></div><span className="muted-copy">Tüm değişiklikleri üstteki “Tüm robot ayarlarını kaydet” düğmesiyle kaydet.</span></div></div>}
 
-        <footer className="main-footer"><span>PARS SUMOLAB · Robot sumo eğitim ve simülasyon platformu</span><span>v0.21.6 · Arduino varsayılan çalışma modu</span></footer>
+        <footer className="main-footer"><span>PARS SUMOLAB · Robot sumo eğitim ve simülasyon platformu</span><span>v0.21.8 · Arduino varsayılan çalışma modu</span></footer>
       </section>
     </main>
     <iframe ref={runtimeFrame} title="Arduino kod çalışma alanı" sandbox="allow-scripts" srcDoc={runtimeDoc} className="arduino-runtime-frame"/>

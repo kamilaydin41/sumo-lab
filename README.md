@@ -1,16 +1,8 @@
 # PARS SUMOLAB
 
-## v0.21.6 yenilikleri
-- Ön sensör algısı merkez sensör üzerinden doğru sınıflandırılır.
-- Ön sensör hedefinde ileri saldırı gücü tam, direksiyon düzeltmesi sınırlıdır.
-
-# PARS SUMOLAB
-
-## v0.21.6 yenilikleri
-
-- Ayrı alttaki ağırlık kontrol kartı kaldırıldı.
-- Oyuncu ve rakip robotun toplam ağırlığı, sınıf limiti, gövde ağırlığı ve seçili bileşen ağırlığı kendi ayar panelinde aynı biçimde gösterilir.
-- Uygulama sürüm etiketleri ve paket sürümü v0.21.6 olarak eşitlendi.
+## v0.21.8 yenilikleri
+- İleri hareket hızındaki redüksiyon kaynaklı aşırı yavaşlama düzeltildi. RPM ayarı redüktör çıkış devrini ifade eder.
+- Redüksiyon oranı tork hesabını etkilemeye devam eder.
 
 PARS SUMOLAB, sumo robotlarını tasarlamak, programlamak ve sanal dohyo üzerinde karşılaştırmak için hazırlanmış React + Vite + Three.js tabanlı eğitim simülatörüdür.
 

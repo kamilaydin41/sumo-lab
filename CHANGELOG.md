@@ -1,6 +1,11 @@
-# Changelog
+# Değişiklik Günlüğü
 
-## v0.21.6
+## v0.21.8
+- İleri hareket hız hesabındaki çift redüksiyon bölmesi düzeltildi. Motor RPM ayarı artık redüktör çıkış devri olarak yorumlanıyor.
+- Redüksiyon oranı tork hesabında korunuyor; tekerlek hızı gereksiz yere tekrar bölünmüyor.
+- Oyuncu ve rakip motor ayarlarında devir etiketi "Redüktör çıkış devri" olarak netleştirildi.
+
+## v0.21.8
 - Simülasyonun varsayılan kontrol modu Arduino C++ olarak değiştirildi.
 - Varsayılan kod dili Arduino C++ yapıldı; başlangıçta Arduino örnek programı yüklenir.
 - Ana simülasyon başlatma düğmeleri artık Arduino sketch'inin `setup()` ve `loop()` fonksiyonlarını çalıştırır.

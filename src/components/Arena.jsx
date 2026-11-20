@@ -229,7 +229,10 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
       const tractionForceN=mu*mass*9.81;
       const usableForceN=Math.min(motorForceN,tractionForceN);
       const accelerationSim=(usableForceN/mass)*5; // m/s² -> simülasyon birimi/s²
-      const wheelRpm=motorRpm/gearRatio;
+      // Ayarlardaki motorRpm, redüktörlü motorun çıkış (tekerlek tarafı) devridir.
+      // Bu değer yeniden gearRatio'ya bölünürse 600 RPM / 50 = 12 RPM gibi
+      // hatalı ve aşırı yavaş bir ileri hareket oluşur. Redüksiyon torku etkiler.
+      const wheelRpm=motorRpm;
       const wheelSpeedMps=(wheelRpm/60)*Math.PI*wheelDiameterM;
       const motorSpeedSim=wheelSpeedMps*5;
       const targetSpeed=Math.min(classMaxSpeed,motorSpeedSim)*powerScale;

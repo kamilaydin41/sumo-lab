@@ -1,3 +1,7 @@
+## v0.21.1
+- Rakip robot ayar paneli, oyuncu robotu paneliyle aynı alanları ve aynı sıralamayı kullanacak şekilde düzenlendi.
+- Rakip paneline aynı sırada dohyo sınıfı ve çapı kontrolleri eklendi; arena ölçüsü iki panelden de ortak yönetilir.
+
 # Sürüm notları
 
 ## v0.11.0 — Sürükle-bırak robot yerleşimi

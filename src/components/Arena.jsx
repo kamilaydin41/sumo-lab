@@ -146,10 +146,9 @@ function readOpponentSensors(robot, self, target, range=1.75) {
   });
   const active=readings.filter(x=>x.detected);
   const left=active.some(x=>x.angle<-.12), right=active.some(x=>x.angle>.12);
-  // Ön algılama bölgesi yaklaşık ±30° kabul edilir. Böylece merkez sensörün
-  // gördüğü rakip yanlışlıkla yan hedef sayılıp robotun yerinde dönmesine neden olmaz.
-  const front=active.length>0 && Math.abs(bearing)<=Math.PI/6;
-  return { any:active.length>0, left, right, front, readings, distance, bearing };
+  const centerSensorActive=active.some(x=>Math.abs(x.angle)<=.12);
+  // Orta sensörün algıladığı hedef, robotun önündedir; dar bearing eşiği yüzünden yan arama moduna düşürme.
+  return { any:active.length>0, left, right, front:active.length>0 && (centerSensorActive || (left&&right)), readings, distance, bearing };
 }
 
 export default function Arena({ running, speed, animationSpeed=1, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', playerOpponentSensorCount=3, rivalOpponentSensorCount=3, playerOpponentSensorRangeCm=40, rivalOpponentSensorRangeCm=40, driveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, rivalDriveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, playerMotorPower=75, rivalMotorPower=75, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
@@ -271,7 +270,7 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
           const tactic=(p.dipSwitches||[]).reduce((n,on,i)=>n+(on?(1<<i):0),0);
           const aggressive=[1,3,5,7].includes(tactic), fastScan=[2,5,7].includes(tactic), cautious=[4,6].includes(tactic);
           const dist=playerTarget.distance, err=playerTarget.bearing;
-          if(pFront){pF=cautious?-.98:-.88;pT=err>=0?-.95:.95;} else if(playerTarget.any){if(playerTarget.front){pF=1;pT=clamp(err*.9,-.32,.32);}else{pF=.18;pT=playerTarget.left?-.9:.9;}} else {pF=fastScan?.28:(cautious?.22:.35);pT=fastScan?.9:.72;}
+          if(pFront){pF=cautious?-.98:-.88;pT=err>=0?-.95:.95;} else if(playerTarget.any){if(playerTarget.front){pF=1;pT=clamp(err*.65,-.22,.22);}else{pF=.18;pT=playerTarget.left?-.9:.9;}} else {pF=fastScan?.28:(cautious?.22:.35);pT=fastScan?.9:.72;}
         } else if(p.mode==='ARDUINO') {
           const left=clamp(p.arduinoCommand?.left||0,-1,1), right=clamp(p.arduinoCommand?.right||0,-1,1);
           pF=(left+right)/2; pT=(right-left);
@@ -292,7 +291,7 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
         // Opponent controller: edge avoidance has priority over target seeking and attack.
         const err=rivalTarget.bearing;
         let rF=0,rT=0;
-        if(state.rivalTipped){rF=0;rT=0;}else if(rFront){rF=-.92;rT=err>=0?-.9:.9;}else if(rivalTarget.any){if(rivalTarget.front){rF=1;rT=clamp(err*.9,-.32,.32);}else{rF=.18;rT=rivalTarget.left?-.9:.9;}}else{rF=.35;rT=.78;}
+        if(state.rivalTipped){rF=0;rT=0;}else if(rFront){rF=-.92;rT=err>=0?-.9:.9;}else if(rivalTarget.any){if(rivalTarget.front){rF=1;rT=clamp(err*.65,-.22,.22);}else{rF=.18;rT=rivalTarget.left?-.9:.9;}}else{rF=.35;rT=.78;}
         const autoTactic=(p.dipSwitches||[]).reduce((n,on,i)=>n+(on?(1<<i):0),0);
         const playerSpeedScale=(p.mode==='AUTO'||p.mode==='OTONOM')?([1,3,5,7].includes(autoTactic)?1.08:([4,6].includes(autoTactic)?.88:1)):1;
         const playerDrive=drive(state,pF,pT,dt,maxSpeed*playerSpeedScale,playerMassKg,p.driveSpec,p.playerMotorPower);

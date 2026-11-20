@@ -1,15 +1,17 @@
-## v0.21.4
-- Rakip sensörlerinin ön algılama açısı ±30° olarak düzeltildi; merkez/ön sensör algısı artık yan arama davranışına düşmüyor.
-- Ön sensör hedef algıladığında oyuncu ve rakip robot tam ileri saldırı gücüyle ilerliyor; küçük yön düzeltmesi korunuyor.
+# PARS SUMOLAB v0.21.5
 
-# PARS SUMOLAB v0.21.4
+## v0.21.5
+- Ön sensör merkez algısı artık gerçek ön algı olarak sınıflandırılıyor; dar açı eşiği nedeniyle yavaş yan arama moduna düşmesi engellendi.
+- Ön algıda oyuncu ve rakip robot tam ileri saldırı gücü kullanıyor; yön düzeltmesi küçük tutuluyor.
+- Sayfa, paket ve kod şablonu sürüm bilgileri v0.21.5 olarak eşitlendi.
+
 - Büyük ağırlık kontrol kartları kaldırıldı. Oyuncu ve rakip robotun toplam ağırlığı, sınıf limiti ve gövde/bileşen dağılımı ayarlar panelinde gövde ağırlığı kaydırıcısının hemen üstüne taşındı.
 
-## v0.21.4
+## v0.21.5
 - Oyuncu robotunun ayrı alt bölümdeki ağırlık kontrol kartı kaldırıldı.
 - Toplam ağırlık, sınıf limiti, gövde ve bileşen ağırlıkları oyuncu robotu ayar paneline taşındı.
 - Oyuncu ve rakip robot için aynı tasarım ve aynı sırada ağırlık özeti gösteriliyor.
-- Sayfa içindeki sürüm etiketleri, paket sürümü ve dağıtım notları v0.21.4 olarak güncellendi.
+- Sayfa içindeki sürüm etiketleri, paket sürümü ve dağıtım notları v0.21.5 olarak güncellendi.
 
 ## v0.21.1
 - Rakip robot ayar paneli, oyuncu robotu paneliyle aynı alanları ve aynı sıralamayı kullanacak şekilde düzenlendi.

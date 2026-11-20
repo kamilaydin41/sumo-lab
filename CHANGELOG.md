@@ -1,5 +1,11 @@
+## v0.16.1
+- Görünür tekerleklerin dış sınırları çarpışma modeline eklendi; şasi temas ölçüleri 3B modelle eşleştirildi.
+- Kama çarpışma hacminin uzunluk ve genişliği 3B modeldeki gerçek ölçek katsayılarıyla eşitlendi.
+- Temas tespiti, bileşik şekiller arasındaki en derin doğrulanmış SAT örtüşmesini kullanır; sensör algılama menzili kuvvet üretmez.
+- İtme, momentum aktarımı, kama kaldırması ve çarpışma sayacı yalnızca fiziksel temas doğrulandıktan sonra çalışır.
+
 ## v0.16.0
-- Şasi ve kama için ayrı OBB/SAT temas hacimleri; görünür temas olmadan itme oluşmasını engelleyen daha dar bileşik çarpışma modeli.
+- Şasi ve kama için ayrı OBB/SAT temas hacimleri.
 - Oyuncu ve rakip robot için bağımsız 2–7 IR rakip sensörü seçimi.
 - Sensörler 3B modelde görünür; yan görüş algısı, otonom hedef takibi ve Arduino sensör köprüsüne bağlandı.
 

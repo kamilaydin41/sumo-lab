@@ -121,7 +121,9 @@ Simülasyon eğitim amaçlı yaklaşık bir fizik modelidir. Robot ölçüleri v
 - Rakip robotun adı, sınıfı, şasi ağırlığı, rengi, kama tipi ve bileşenleri bağımsız düzenlenebilir.
 - İki robotun sınıf ve kütle değerleri simülasyon fiziğinde ayrı kullanılır.
 
-### v0.16.0 – Temas fiziği ve rakip sensörleri
-- Robot itmesi yalnızca şasi/kama çarpışma hacimleri gerçekten kesiştiğinde uygulanır.
+### v0.16.1 – Temas fiziği hassasiyeti
+- Görünür tekerlek, şasi ve kama geometrileriyle eşleşen çarpışma hacimleri kullanılır.
+- En derin SAT teması doğrulanmadan itme, momentum aktarımı veya kama kaldırması uygulanmaz.
+- Rakip sensörlerinin algılama mesafesi fiziksel kuvvet üretmez.
 - Her iki robot için 2–7 adet rakip IR sensörü seçilebilir.
 - Sensörler ön ve yan görüş alanını kapsar; otonom arama, hedefe dönme ve Arduino sensör verisi bu algılamayı kullanır.

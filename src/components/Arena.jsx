@@ -203,24 +203,28 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         const playerSpeedScale=(p.mode==='AUTO'||p.mode==='OTONOM')?([1,3,5,7].includes(autoTactic)?1.08:([4,6].includes(autoTactic)?.88:1)):1;
         drive(state,pF,pT,dt,maxSpeed*playerSpeedScale);drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,rivalCls.maxSpeed*.88*clamp(Math.sqrt(rivalCls.mass/Math.max(.03,(p.rivalTotalWeight||rivalCls.mass*1000)/1000)),.72,1.12));
 
-        // Gerçek temas: şasi ve dar kama ayrı çarpışma hacimleridir.
-        // Önceki tek büyük dikdörtgen, kama çevresinde görünür boşluk varken temas varmış gibi davranabiliyordu.
+        // Fiziksel temas: tekerlek/şasi ve kama ayrı OBB çarpışma hacimleriyle modellenir.
+        // Rakip sensör menzili çarpışma üretmez; kuvvet yalnızca SAT temas doğrulamasında uygulanır.
         const axes = (angle) => [{x:Math.cos(angle),z:-Math.sin(angle)},{x:Math.sin(angle),z:Math.cos(angle)}];
         const projectRadius = (axis, angle, halfW, halfL) => {
           const right={x:Math.cos(angle),z:-Math.sin(angle)}, forward={x:Math.sin(angle),z:Math.cos(angle)};
           return Math.abs(axis.x*right.x+axis.z*right.z)*halfW + Math.abs(axis.x*forward.x+axis.z*forward.z)*halfL;
         };
-        const bladeLenP=p.bladeType==='Uzun alçak kama'?.98:.76;
-        const bladeLenR=p.rivalBladeType==='Uzun alçak kama'?.98:p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.72:.76;
-        const bladeWidthP=p.bladeType==='Geniş kama'?1.08:p.bladeType==='Dar hassas kama'?.72:.94;
-        const bladeWidthR=p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.72:.94;
+        // Çarpışma ölçüleri makeRobot() içindeki görünür geometriyle aynı koordinatlardan türetilir.
+        // 1.02 ve 0.92 katsayıları görsel kama geometrisinin gerçek ölçek dönüşümüdür.
+        const bladeLenP=(p.bladeType==='Uzun alçak kama'?.98:.76)/1.02;
+        const bladeLenR=(p.rivalBladeType==='Uzun alçak kama'?.98:.76)/1.02;
+        const bladeWidthP=(p.bladeType==='Geniş kama'?1.08:p.bladeType==='Dar hassas kama'?.72:p.bladeType==='Çift kademeli'?.96:.94)/.92;
+        const bladeWidthR=(p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.72:p.rivalBladeType==='Çift kademeli'?.96:.94)/.92;
         const makeShapes=(x,z,a,profile,bladeLen,bladeWidth)=>[
-          {x,z,a,hw:profile.width*.5,hl:profile.length*.5},
-          {x: x+Math.sin(a)*(profile.length*(.18+bladeLen*.5)), z:z+Math.cos(a)*(profile.length*(.18+bladeLen*.5)),a,hw:profile.width*bladeWidth*.5,hl:profile.length*bladeLen*.5}
+          // Şasiye ek olarak yanlarda görünen tekerleklerin dış sınırını da kapsa.
+          {x,z,a,hw:profile.width*.62,hl:profile.length*.50},
+          // Kama şekli, görsel modeldeki arka başlangıç ve uç koordinatlarıyla eşleşir.
+          {x:x+Math.sin(a)*(profile.length*(.18+bladeLen*.5)),z:z+Math.cos(a)*(profile.length*(.18+bladeLen*.5)),a,hw:profile.width*bladeWidth*.5,hl:profile.length*bladeLen*.5}
         ];
         const pShapes=makeShapes(state.x,state.z,state.a,preset,bladeLenP,bladeWidthP);
         const rShapes=makeShapes(state.rx,state.rz,state.ra,rivalPreset,bladeLenR,bladeWidthR);
-        let minOverlap=Infinity, collisionNormal=null;
+        let maxOverlap=0, collisionNormal=null;
         for(const ps of pShapes) for(const rs of rShapes){
           const dx=rs.x-ps.x,dz=rs.z-ps.z; let pairOverlap=Infinity, pairNormal=null, separated=false;
           for(const axis of [...axes(ps.a),...axes(rs.a)]){
@@ -229,12 +233,15 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
             if(overlap<=0){separated=true;break;}
             if(overlap<pairOverlap){pairOverlap=overlap;pairNormal={...axis};if(dx*axis.x+dz*axis.z<0){pairNormal.x*=-1;pairNormal.z*=-1;}}
           }
-          if(!separated && pairNormal && pairOverlap<minOverlap){minOverlap=pairOverlap;collisionNormal=pairNormal;}
+          if(!separated && pairNormal && pairOverlap>maxOverlap){maxOverlap=pairOverlap;collisionNormal=pairNormal;}
         }
-        if(minOverlap>0&&collisionNormal){
+        // Çok küçük örtüşmeler sayısal titreşim kabul edilir. Kuvvet ancak görünür geometriler
+        // temas ettikten sonra oluşur; böylece algılama menzili itme kuvveti üretemez.
+        const CONTACT_SKIN=0.003; // 0.6 mm simülasyon toleransı
+        if(maxOverlap>CONTACT_SKIN&&collisionNormal){
           const nx=collisionNormal.x,nz=collisionNormal.z;
-          // Temas düzeltmesi: iki OBB gövde birbirinin içine geçmez; düzeltme kontrollüdür.
-          const separation=Math.max(.001,minOverlap+.003);
+          // Yalnızca doğrulanmış fiziksel temas sonrası gövdeleri ayır.
+          const separation=maxOverlap+.002;
           state.x-=nx*separation*.5;state.z-=nz*separation*.5;
           state.rx+=nx*separation*.5;state.rz+=nz*separation*.5;
           const pForward=state.vx*nx+state.vz*nz;

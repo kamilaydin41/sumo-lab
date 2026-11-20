@@ -1,3 +1,9 @@
+## v0.21.2
+- Oyuncu robotunun ayrı alt bölümdeki ağırlık kontrol kartı kaldırıldı.
+- Toplam ağırlık, sınıf limiti, gövde ve bileşen ağırlıkları oyuncu robotu ayar paneline taşındı.
+- Oyuncu ve rakip robot için aynı tasarım ve aynı sırada ağırlık özeti gösteriliyor.
+- Sayfa içindeki sürüm etiketleri, paket sürümü ve dağıtım notları v0.21.2 olarak güncellendi.
+
 ## v0.21.1
 - Rakip robot ayar paneli, oyuncu robotu paneliyle aynı alanları ve aynı sıralamayı kullanacak şekilde düzenlendi.
 - Rakip paneline aynı sırada dohyo sınıfı ve çapı kontrolleri eklendi; arena ölçüsü iki panelden de ortak yönetilir.

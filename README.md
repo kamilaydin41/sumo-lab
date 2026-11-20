@@ -1,5 +1,11 @@
 # PARS SUMOLAB
 
+## v0.21.2 yenilikleri
+
+- Ayrı alttaki ağırlık kontrol kartı kaldırıldı.
+- Oyuncu ve rakip robotun toplam ağırlığı, sınıf limiti, gövde ağırlığı ve seçili bileşen ağırlığı kendi ayar panelinde aynı biçimde gösterilir.
+- Uygulama sürüm etiketleri ve paket sürümü v0.21.2 olarak eşitlendi.
+
 PARS SUMOLAB, sumo robotlarını tasarlamak, programlamak ve sanal dohyo üzerinde karşılaştırmak için hazırlanmış React + Vite + Three.js tabanlı eğitim simülatörüdür.
 
 ## v0.14.0 yenilikleri

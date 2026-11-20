@@ -1,14 +1,14 @@
-# Vercel güncelleme rehberi – PARS SUMOLAB v0.14.0
+# Vercel güncelleme rehberi – PARS SUMOLAB v0.21.2
 
 1. ZIP arşivini bilgisayarına indirip çıkar.
 2. Proje dosyalarını GitHub deposundaki mevcut dosyalarla değiştir.
 3. Aşağıdaki Türkçe commit mesajını kullan:
 
 ```text
-PARS SUMOLAB v0.14.0: Siyah dohyo, beyaz sınır ve orantılı ölçüler
+PARS SUMOLAB v0.21.2: Oyuncu ve rakip ağırlık özetlerini eşitle
 ```
 
 4. Değişiklikleri bağlı dala gönder. Vercel otomatik dağıtımı başlatır.
-5. Dağıtım tamamlandığında farklı dohyo profillerinde (Micro, Mini, Mega) siyah yüzey, beyaz sınır bandı, başlangıç çizgileri ve robot boyutlarını kontrol et.
+5. Dağıtım tamamlandığında oyuncu ve rakip ayar panellerindeki ağırlık özetlerinin aynı konumda göründüğünü; toplam kütle ve sınıf limitinin bileşen seçimleriyle güncellendiğini kontrol et.
 
 Yerel kontrol için `npm install` ve `npm run build` komutlarını çalıştır.

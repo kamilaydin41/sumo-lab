@@ -38,3 +38,12 @@ GitHub deposuna yeni ZIP içeriğini yükleyin ve şu commit mesajını kullanı
 `PARS SUMOLAB v0.12.0: Gerçekçi itiş ve devrilme fiziği`
 
 Vercel dağıtımı tamamlandıktan sonra özellikle düz kafa kafaya temas, kama altına girme, yanal çarpışma ve dohyo dışına itme senaryolarını ayrı ayrı deneyin.
+
+
+## v0.13.0 GitHub commit mesajı
+
+`PARS SUMOLAB v0.13.0: Robotu taşırken aynı anda döndürme`
+
+- Fareyle sürükleme sırasında tekerlek ile 6° döndürme eklendi.
+- Sürükleme sırasında Q/E klavye döndürmesi eklendi.
+- Konum ve yön bilgileri eş zamanlı güncellenir.

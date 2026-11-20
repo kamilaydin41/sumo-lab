@@ -26,3 +26,11 @@
 - Yanal çarpışmalarda devrilme daha nadir ve kademeli hale getirildi.
 - Gövde/kama dış sınırına dayalı ring-out kontrolü eklendi.
 - Dohyo üzerinde devrilme tek başına yenilgi sayılmıyor.
+
+## v0.13.0 — Sürüklerken döndürme
+
+- Robot dohyo üzerinde fareyle sürüklenirken fare tekerleğiyle aynı anda döndürülebilir.
+- Fare tekerleği her adımda 6 derece yön değiştirir; döndürme sırasında kamera yakınlaştırması engellenir.
+- Sürükleme devam ederken Q ve E tuşlarıyla seçili robot saat yönünün tersine / saat yönünde döndürülebilir.
+- Konum ve yön değişiklikleri ana yerleşim paneline anında aktarılır ve proje kaydına dahil edilir.
+- Dokunmatik cihazlarda sürükleme ve açı kaydırıcısı birlikte kullanılabilir.

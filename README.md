@@ -2,6 +2,13 @@
 
 PARS SUMOLAB, sumo robotlarını tasarlamak, programlamak ve sanal dohyo üzerinde karşılaştırmak için hazırlanmış React + Vite + Three.js tabanlı eğitim simülatörüdür.
 
+## v0.13.0 yenilikleri
+
+- Robotu sol fare tuşuyla sürüklerken fare tekerleğini çevirerek aynı anda döndürebilirsin. Her tekerlek adımı 6° yön değiştirir.
+- Sürükleme devam ederken `Q` ve `E` tuşları da seçili robotun yönünü değiştirir.
+- Fare tekerleğiyle döndürme sırasında kamera yakınlaştırması geçici olarak engellenir.
+- Konum ve yön değişiklikleri yerleşim paneline anında aktarılır. Dokunmatik cihazlarda sürükleme ve açı kaydırıcısı kullanılabilir.
+
 ## v0.11.0 yenilikleri
 
 - Oyuncu ve rakip robot, simülasyon duraklatılmışken 3B dohyo üzerinde fareyle veya dokunmatik ekranda sürüklenerek istenen başlangıç noktasına taşınabilir.

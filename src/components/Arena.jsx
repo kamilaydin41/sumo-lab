@@ -5,14 +5,15 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const CLASS_PRESETS = {
-  'Pico Sumo (50 g)': { radius: 1.45, robotScale: .56, maxSpeed: 1.55, mass: .05 },
-  'Micro Sumo (100 g)': { radius: 1.75, robotScale: .67, maxSpeed: 1.85, mass: .10 },
-  'Mini Sumo (500 g)': { radius: 2.5, robotScale: 1, maxSpeed: 2.15, mass: .50 },
-  '1 Kg Sumo': { radius: 2.8, robotScale: 1.12, maxSpeed: 2.05, mass: 1 },
-  'Mega Sumo (3 Kg)': { radius: 3.35, robotScale: 1.34, maxSpeed: 1.9, mass: 3 },
-  'Açık Sınıf (5 Kg)': { radius: 3.7, robotScale: 1.48, maxSpeed: 1.75, mass: 5 },
-  'LEGO Sumo (1 Kg)': { radius: 2.8, robotScale: 1.08, maxSpeed: 1.75, mass: 1 },
-  'RC Sumo (500 g)': { radius: 2.5, robotScale: 1, maxSpeed: 2.2, mass: .5 },
+  'Pico Sumo (50 g)': { robotScale: .56, maxSpeed: 1.55, mass: .05 },
+  'Micro Sumo (100 g)': { robotScale: .67, maxSpeed: 1.85, mass: .10 },
+  'Mini Sumo (500 g)': { robotScale: 1, maxSpeed: 2.15, mass: .50 },
+  '1 Kg Sumo': { robotScale: 1.12, maxSpeed: 2.05, mass: 1 },
+  'Klasik 1 Kg Sumo': { robotScale: 1.12, maxSpeed: 2.05, mass: 1 },
+  'Mega Sumo (3 Kg)': { robotScale: 1.34, maxSpeed: 1.9, mass: 3 },
+  'Açık Sınıf (5 Kg)': { robotScale: 1.48, maxSpeed: 1.75, mass: 5 },
+  'LEGO Sumo (1 Kg)': { robotScale: 1.08, maxSpeed: 1.75, mass: 1 },
+  'RC Sumo (500 g)': { robotScale: 1, maxSpeed: 2.2, mass: .5 },
 };
 
 function makeRobot(color, accent, bladeType, scale = 1, isRival = false) {
@@ -68,22 +69,24 @@ function sensorWorld(robot, x, z, radius) {
   return { x: wx, z: wz, edge: Math.hypot(wx,wz) > radius - .10 };
 }
 
-export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, resetKey, onTelemetry, robotColor='#3978ed', arenaSize='standard', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595 }) {
+export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, arenaDiameterCm=80 }) {
   const host = useRef(null);
   const api = useRef(null);
-  const props = useRef({running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight});
-  useEffect(()=>{props.current={running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight};},[running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight]);
+  const props = useRef({running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,arenaDiameterCm});
+  useEffect(()=>{props.current={running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,arenaDiameterCm};},[running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,arenaDiameterCm]);
 
   useEffect(()=>{
     const el=host.current; if(!el) return;
     const scene=new THREE.Scene(); scene.background=new THREE.Color('#0c1422'); scene.fog=new THREE.Fog('#0c1422',14,32);
     const camera=new THREE.PerspectiveCamera(42,el.clientWidth/Math.max(1,el.clientHeight),.1,100); camera.position.set(7.4,8.2,9.2);
     const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false}); renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); renderer.setSize(el.clientWidth,el.clientHeight); renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap; renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.1; el.appendChild(renderer.domElement);
-    const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.07; controls.target.set(0,.1,0); controls.minDistance=4.5; controls.maxDistance=20; controls.maxPolarAngle=Math.PI*.48;
+    const controls=new OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=.07; controls.target.set(0,.1,0); controls.minDistance=2.8; controls.maxDistance=28; controls.maxPolarAngle=Math.PI*.48;
     scene.add(new THREE.HemisphereLight(0xddeaff,0x1d293b,2)); const key=new THREE.DirectionalLight(0xffffff,2.8); key.position.set(-4,10,6); key.castShadow=true; key.shadow.mapSize.set(2048,2048); scene.add(key); const rim=new THREE.PointLight(0x3b82f6,24,18); rim.position.set(5,3,-4); scene.add(rim);
     const floor=new THREE.Mesh(new THREE.PlaneGeometry(50,50),new THREE.MeshStandardMaterial({color:'#111c2d',roughness:.96})); floor.rotation.x=-Math.PI/2; floor.position.y=-.22; floor.receiveShadow=true; scene.add(floor); const grid=new THREE.GridHelper(50,50,'#243650','#1a293e'); grid.position.y=-.21; scene.add(grid);
     const preset=CLASS_PRESETS[props.current.robotClass]||CLASS_PRESETS['Mini Sumo (500 g)'];
-    const maxRadius=preset.radius;
+    // 1 Three.js birimi = 20 cm; varsayılan Mini Sumo dohyo çapı 80 cm'dir.
+    const maxRadius=Math.max(.75, (props.current.arenaDiameterCm || 80) / 40);
+    camera.position.set(maxRadius * 3.0, maxRadius * 3.25, maxRadius * 3.7);
     const plinth=new THREE.Mesh(new THREE.CylinderGeometry(maxRadius+.22,maxRadius+.22,.22,112),new THREE.MeshStandardMaterial({color:'#252f40',metalness:.25,roughness:.72})); plinth.position.y=-.09; plinth.receiveShadow=true; plinth.castShadow=true; scene.add(plinth);
     const dohyo=new THREE.Mesh(new THREE.CylinderGeometry(maxRadius,maxRadius,.075,112),new THREE.MeshStandardMaterial({color:'#e6e8e8',roughness:.9})); dohyo.position.y=.055; dohyo.receiveShadow=true; scene.add(dohyo);
     const edge=new THREE.Mesh(new THREE.TorusGeometry(maxRadius-.14,.075,12,112),new THREE.MeshStandardMaterial({color:'#e44c4c',roughness:.52,emissive:'#5c1111',emissiveIntensity:.12})); edge.rotation.x=Math.PI/2; edge.position.y=.105; scene.add(edge);
@@ -93,7 +96,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     const player=makeRobot(props.current.robotColor,'#8fc2ff',props.current.bladeType,preset.robotScale,false);
     const rival=makeRobot('#d84b4b','#ffb36b','Geniş kama',preset.robotScale,true); scene.add(player,rival);
     const shadows=[]; for(const [color,op] of [['#3b82f6',.14],['#ef4444',.12]]){const m=new THREE.Mesh(new THREE.CircleGeometry(.68*preset.robotScale,32),new THREE.MeshBasicMaterial({color,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.y=.105;scene.add(m);shadows.push(m);}
-    const startState=()=>({x:-preset.radius*.34,z:-preset.radius*.29,a:.72,vx:0,vz:0,turn:0,rx:preset.radius*.34,rz:preset.radius*.29,ra:-2.42,rvx:0,rvz:0,rturn:0,collisions:0,pushes:0,playerEdge:false,rivalEdge:false,winner:null,finishReason:'',lastHit:0,elapsed:0});
+    const startState=()=>({x:-maxRadius*.34,z:-maxRadius*.29,a:.72,vx:0,vz:0,turn:0,rx:maxRadius*.34,rz:maxRadius*.29,ra:-2.42,rvx:0,rvz:0,rturn:0,collisions:0,pushes:0,playerEdge:false,rivalEdge:false,winner:null,finishReason:'',lastHit:0,elapsed:0});
     const state=startState(); const keys={forward:false,back:false,left:false,right:false};
     const keyMap={KeyW:'forward',ArrowUp:'forward',KeyS:'back',ArrowDown:'back',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
     const down=e=>{if(keyMap[e.code]&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){keys[keyMap[e.code]]=true;e.preventDefault();}};
@@ -108,9 +111,9 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
       if(p.running&&!state.winner){
         state.elapsed+=dt;const maxSpeed=cls.maxSpeed*(p.speed/100);
         // Edge sensors read the actual white dohyo boundary at five physical sensor positions.
-        const playerSensors=player.userData.sensors.map(s=>sensorWorld(state,s.x*cls.robotScale,s.z*cls.robotScale,cls.radius));
+        const playerSensors=player.userData.sensors.map(s=>sensorWorld(state,s.x*cls.robotScale,s.z*cls.robotScale,maxRadius));
         const rivalProxy={x:state.rx,z:state.rz,a:state.ra};
-        const rivalSensors=rival.userData.sensors.map(s=>sensorWorld(rivalProxy,s.x*cls.robotScale,s.z*cls.robotScale,cls.radius));
+        const rivalSensors=rival.userData.sensors.map(s=>sensorWorld(rivalProxy,s.x*cls.robotScale,s.z*cls.robotScale,maxRadius));
         const pFront=playerSensors.slice(0,3).some(s=>s.edge),pRear=playerSensors.slice(3).some(s=>s.edge);
         const rFront=rivalSensors.slice(0,3).some(s=>s.edge),rRear=rivalSensors.slice(3).some(s=>s.edge);
         state.playerEdge=pFront||pRear;state.rivalEdge=rFront||rRear;
@@ -156,7 +159,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         // Surface friction and natural deceleration.
         const friction=Math.max(0,1-dt*.55);state.vx*=friction;state.vz*=friction;state.rvx*=friction;state.rvz*=friction;
         // A robot loses only after its chassis center leaves the dohyo; no artificial edge teleport/clamp.
-        const outP=Math.hypot(state.x,state.z)>cls.radius+.06,outR=Math.hypot(state.rx,state.rz)>cls.radius+.06;
+        const outP=Math.hypot(state.x,state.z)>maxRadius+.06,outR=Math.hypot(state.rx,state.rz)>maxRadius+.06;
         if(outP||outR){state.winner=outP?'RAKİP KAZANDI':'SEN KAZANDIN';state.finishReason=outP?'Oyuncu robot dohyo dışına çıktı':'Rakip robot dohyo dışına çıktı';}
         // Update sensor lamps with the live readings.
         player.userData.sensors.forEach((s,i)=>s.mesh.material.color.set(playerSensors[i].edge?'#ff4d4d':'#35d7f4'));
@@ -170,7 +173,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     };
     api.current={state,startState};frame=requestAnimationFrame(tick);
     return()=>{cancelAnimationFrame(frame);ro.disconnect();window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);controls.dispose();renderer.dispose();scene.traverse(o=>{o.geometry?.dispose?.();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose?.();});if(renderer.domElement.parentNode===el)el.removeChild(renderer.domElement);};
-  },[robotClass]);
+  },[robotClass,arenaDiameterCm]);
 
   useEffect(()=>{if(api.current){Object.assign(api.current.state,api.current.startState());}},[resetKey,robotClass]);
   return <div className="arena-canvas" ref={host}>

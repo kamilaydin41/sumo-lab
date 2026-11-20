@@ -1,20 +1,32 @@
-# SUMO LAB v0.5.0
+# SUMO LAB v0.6.0
 
-React, Vite ve Three.js kullanılarak geliştirilen 3B sumo robot simülasyonu ve eğitim ortamı.
+React, Vite ve Three.js ile geliştirilen 3B sumo robot simülasyonu ve eğitim ortamı.
 
 ## Özellikler
-- 3B dohyo ve iki robotla antrenman simülasyonu
-- Ekran üzerindeki çift sanal kumanda koluyla RC / manuel kontrol
-- WASD ve yön tuşlarıyla klavye kontrolü
-- Tarayıcı Gamepad API üzerinden USB / Bluetooth oyun kumandası desteği
-- Rakip arama, yaklaşma ve dohyo sınırından kaçınma özellikli otonom mod
-- Her robot için beş adet simüle çizgi sensörü
-- Robot sınıfı, ön kama tipi, renk ve donanım bileşeni seçimi
-- Ayarlanabilir gövde / şasi ağırlığı
-- Gövde ve bileşen ağırlıklarını birleştiren toplam ağırlık hesabı ve sınıf limiti uyarısı
-- Robotun toplam ağırlığını itiş fiziği hesabına yansıtma
-- JavaScript ve Arduino C++ başlangıç kodu alanları
-- Robot ayarlarını tarayıcıda yerel olarak kaydetme
+- 3B dairesel dohyo ve iki robotla antrenman simülasyonu
+- Varsayılan Mini Sumo dohyo çapı: **80 cm**
+- Micro Sumo, Mini Sumo ve Mega Sumo dohyo profilleri
+- Dohyo çapını 30–200 cm arasında ayarlama
+- RC / manuel kontrol: çift sanal kumanda kolu, klavye ve USB / Bluetooth gamepad
+- Otonom rakip arama, yaklaşma, saldırı ve sınırdan kaçınma
+- Her robot için beş simüle çizgi sensörü
+- Pico, Micro, Mini, 1 kg, Klasik 1 kg, Mega, Açık Sınıf, LEGO ve RC robot profilleri
+- Robot rengi, ön kama tipi, donanım bileşenleri ve gövde ağırlığı ayarı
+- Toplam ağırlık hesabı ve sınıf limiti uyarısı
+- Robot ağırlığını itiş fiziği hesabına yansıtma
+- JavaScript ve Arduino C++ örnek kod alanları
+- Proje ayarlarını tarayıcıda yerel olarak kaydetme
+
+## Dohyo ayarları
+Robot tasarımı sekmesinden dohyo profili seçilebilir:
+
+| Profil | Varsayılan çap |
+|---|---:|
+| Micro Sumo | 38 cm |
+| Mini Sumo | 80 cm |
+| Mega Sumo | 154 cm |
+
+Seçilen profil başlangıç çapını belirler. Çap ayrıca 30–200 cm aralığında kaydırıcıyla değiştirilebilir. Simülatör dairesel dohyo kullanır; gerçek yarışmalarda organizasyonun teknik şartnamesindeki ölçüler esas alınmalıdır.
 
 ## Yerel ortamda çalıştırma
 
@@ -33,13 +45,13 @@ npm run preview
 ## Kontroller
 - RC / Manuel: Sol sanal kol ileri-geri, sağ sanal kol sağ-sol yön kontrolü sağlar.
 - Klavye: W / S ileri-geri, A / D dönüş kontrolü sağlar.
-- Oyun kumandası: Sol analog kolun Y ekseni gaz, X ekseni yön kontrolüdür.
-- Otonom: Robot rakibi arar, yaklaşır ve saldırır; dohyo sınır sensörlerine öncelik verir.
+- Gamepad: Sol analog kolun Y ekseni gaz, X ekseni yön kontrolüdür.
+- Otonom: Robot rakibi arar, yaklaşır ve saldırır; sınır sensörlerine öncelik verir.
 
 ## Ağırlık ayarı
-Robot tasarımı sekmesindeki **Gövde ağırlığı** kaydırıcısı şasi, üst kapak ve bağlantı elemanlarının toplamını temsil eder. Donanım bileşenleri sekmesinde seçilen parçaların ağırlıkları bu değere eklenir. Toplam ağırlık, seçilen robot sınıfının limitine göre kontrol edilir.
+Gövde ağırlığı şasi, üst kapak ve bağlantı elemanlarının toplamını temsil eder. Seçilen elektronik ve mekanik parçaların ağırlığı bu değere eklenir. Toplam ağırlık robot sınıfı limitiyle karşılaştırılır.
 
-Ağırlık ve itiş davranışı eğitim amaçlı yaklaşık bir modeldir. Gerçek robotun kütle dağılımı, sürtünmesi, motor torku ve yarışma teknik şartnamesi farklı sonuçlar doğurabilir.
+Fizik modeli eğitim amaçlı yaklaşık bir modeldir. Gerçek robotun kütle dağılımı, sürtünmesi, motor torku ve yarışma şartnamesi farklı sonuçlar doğurabilir. Kod editöründeki özel kodlar henüz simülasyon motorunda çalıştırılmaz.
 
 ## GitHub açıklama dili
-Bu depodaki README, sürüm notları, değişiklik kayıtları ve güncelleme yönergeleri Türkçe tutulur.
+README, sürüm notları, değişiklik kayıtları, commit önerileri ve güncelleme yönergeleri Türkçe hazırlanır.

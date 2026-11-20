@@ -1,5 +1,12 @@
 # PARS SUMOLAB
 
+## v0.15.1 ring-out düzeltmesi
+
+- Robotun kenara yaklaşması veya beyaz sınır bandına girmesi artık otomatik galibiyet oluşturmaz.
+- Maç, robotun merkezi dohyonun fiziksel dış kenarını geçtiğinde biter.
+- İki robot aynı anda dışarı çıkarsa beraberlik gösterilir.
+
+
 PARS SUMOLAB, sumo robotlarını tasarlamak, programlamak ve sanal dohyo üzerinde karşılaştırmak için hazırlanmış React + Vite + Three.js tabanlı eğitim simülatörüdür.
 
 ## v0.14.0 yenilikleri

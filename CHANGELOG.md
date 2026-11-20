@@ -1,5 +1,12 @@
 # Değişiklik günlüğü
 
+## v0.15.1 — 20 Kasım 2026
+- Hatalı erken ring-out kontrolü düzeltildi: robotun gövde/kama yarıçapı artık merkez konumuna eklenerek erken galibiyet oluşturmaz.
+- Galibiyet için robotun merkezi dohyonun fiziksel dış kenarını güvenlik payıyla geçmelidir.
+- Beyaz sınır bandına yaklaşmak veya temas etmek tek başına maç bitirmez.
+- İki robot aynı anda dohyo dışına çıkarsa sonuç beraberlik olur.
+
+
 ## v0.15.0 — 20 Kasım 2026
 - Maç sonucu ve kazanan robotun adı dohyo üzerinde görünür bir etiket olarak gösterilir.
 - Rakip robot için bağımsız ad, sınıf, gövde ağırlığı, renk, kama tipi ve donanım bileşeni ayarları eklendi.

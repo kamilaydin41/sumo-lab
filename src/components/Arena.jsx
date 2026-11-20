@@ -283,14 +283,24 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         }
         // Surface friction and natural deceleration.
         const friction=Math.max(0,1-dt*.55);state.vx*=friction;state.vz*=friction;state.rvx*=friction;state.rvz*=friction;
-        // Resmi sumo yaklaşımı: gövdenin herhangi bir bölümü dohyo dışına temas ederse ring-out.
-        const activeBladeLength=p.bladeType==='Uzun alçak kama'?.98:.76;
-        const playerFootprint=Math.hypot(preset.width*.53,(preset.length*(activeBladeLength+.18)));
-        const rivalActiveBlade=p.rivalBladeType==='Uzun alçak kama'?.98:p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.72:.76;
-        const rivalFootprint=Math.hypot(rivalPreset.width*.53,(rivalPreset.length*(rivalActiveBlade+.18)));
-        const outP=Math.hypot(state.x,state.z)+playerFootprint>maxRadius+.015;
-        const outR=Math.hypot(state.rx,state.rz)+rivalFootprint>maxRadius+.015;
-        if(outP||outR){state.winner=outP?'RAKİP KAZANDI':'SEN KAZANDIN';state.finishReason=outP?'Oyuncu robot dohyo dışına çıktı':'Rakip robot dohyo dışına çıktı';}
+        // Ring-out yalnızca robotun merkezi dohyonun fiziksel dış kenarını geçtiğinde oluşur.
+        // Gövde/kama boyutunu merkeze eklemek robot kenara yaklaşır yaklaşmaz hatalı galibiyet veriyordu.
+        // Beyaz sınır bandı ring-out değildir; gerçek platform dış kenarı maxRadius'tır.
+        const ringOutMargin = 0.04; // 8 mm güvenlik payı (1 birim = 20 cm)
+        const playerCenterRadius = Math.hypot(state.x, state.z);
+        const rivalCenterRadius = Math.hypot(state.rx, state.rz);
+        const outP = playerCenterRadius > maxRadius + ringOutMargin;
+        const outR = rivalCenterRadius > maxRadius + ringOutMargin;
+        if (outP && outR) {
+          state.winner = 'BERABERE';
+          state.finishReason = 'İki robot da dohyo dışına çıktı';
+        } else if (outP) {
+          state.winner = 'RAKİP KAZANDI';
+          state.finishReason = 'Oyuncu robot dohyonun dışına çıktı';
+        } else if (outR) {
+          state.winner = 'SEN KAZANDIN';
+          state.finishReason = 'Rakip robot dohyonun dışına çıktı';
+        }
         // Update sensor lamps with the live readings.
         player.userData.sensors.forEach((s,i)=>s.mesh.material.color.set(playerSensors[i].edge?'#ff4d4d':'#35d7f4'));
         rival.userData.sensors.forEach((s,i)=>s.mesh.material.color.set(rivalSensors[i].edge?'#ff4d4d':'#35d7f4'));

@@ -5,31 +5,31 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const CLASS_PRESETS = {
-  'Pico Sumo (50 g)': { robotScale: .56, maxSpeed: 1.55, mass: .05 },
-  'Micro Sumo (100 g)': { robotScale: .67, maxSpeed: 1.85, mass: .10 },
-  'Mini Sumo (500 g)': { robotScale: 1, maxSpeed: 2.15, mass: .50 },
-  '1 Kg Sumo': { robotScale: 1.12, maxSpeed: 2.05, mass: 1 },
-  'Klasik 1 Kg Sumo': { robotScale: 1.12, maxSpeed: 2.05, mass: 1 },
-  'Mega Sumo (3 Kg)': { robotScale: 1.34, maxSpeed: 1.9, mass: 3 },
-  'Açık Sınıf (5 Kg)': { robotScale: 1.48, maxSpeed: 1.75, mass: 5 },
-  'LEGO Sumo (1 Kg)': { robotScale: 1.08, maxSpeed: 1.75, mass: 1 },
-  'RC Sumo (500 g)': { robotScale: 1, maxSpeed: 2.2, mass: .5 },
+  'Pico Sumo (50 g)': { robotScale: .48, maxSpeed: 1.55, mass: .05, width: .44, length: .48, height: .18 },
+  'Micro Sumo (100 g)': { robotScale: .62, maxSpeed: 1.85, mass: .10, width: .56, length: .62, height: .20 },
+  'Mini Sumo (500 g)': { robotScale: 1, maxSpeed: 2.15, mass: .50, width: .92, length: 1.02, height: .25 },
+  '1 Kg Sumo': { robotScale: 1.12, maxSpeed: 2.05, mass: 1, width: 1.02, length: 1.12, height: .29 },
+  'Klasik 1 Kg Sumo': { robotScale: 1.12, maxSpeed: 2.05, mass: 1, width: 1.02, length: 1.12, height: .29 },
+  'Mega Sumo (3 Kg)': { robotScale: 1.34, maxSpeed: 1.9, mass: 3, width: 1.20, length: 1.34, height: .34 },
+  'Açık Sınıf (5 Kg)': { robotScale: 1.48, maxSpeed: 1.75, mass: 5, width: 1.34, length: 1.48, height: .38 },
+  'LEGO Sumo (1 Kg)': { robotScale: 1.08, maxSpeed: 1.75, mass: 1, width: .98, length: 1.08, height: .32 },
+  'RC Sumo (500 g)': { robotScale: 1, maxSpeed: 2.2, mass: .5, width: .92, length: 1.02, height: .25 },
 };
 
-function makeRobot(color, accent, bladeType, scale = 1, isRival = false) {
+function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensions = { width: .92, length: 1.02, height: .25 }) {
   const root = new THREE.Group();
   root.scale.setScalar(scale);
   const bodyMat = new THREE.MeshStandardMaterial({ color, metalness: .42, roughness: .38 });
   const darkMat = new THREE.MeshStandardMaterial({ color: '#111827', metalness: .25, roughness: .65 });
   const accentMat = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: .18, metalness: .3 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(.92, .25, 1.02), bodyMat);
-  body.position.y = .34; body.castShadow = true; root.add(body);
-  const top = new THREE.Mesh(new THREE.BoxGeometry(.58, .07, .56), darkMat);
-  top.position.set(0, .5, -.02); top.castShadow = true; root.add(top);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.length), bodyMat);
+  body.position.y = .12 + dimensions.height / 2; body.castShadow = true; root.add(body);
+  const top = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width * .62, .07, dimensions.length * .55), darkMat);
+  top.position.set(0, .19 + dimensions.height, -.02); top.castShadow = true; root.add(top);
 
   const blade = new THREE.Group();
-  const width = bladeType === 'Geniş kama' ? 1.08 : bladeType === 'Dar hassas kama' ? .72 : bladeType === 'Çift kademeli' ? .96 : .94;
-  const length = bladeType === 'Uzun alçak kama' ? .98 : .76;
+  const width = (bladeType === 'Geniş kama' ? 1.08 : bladeType === 'Dar hassas kama' ? .72 : bladeType === 'Çift kademeli' ? .96 : .94) * dimensions.width / .92;
+  const length = (bladeType === 'Uzun alçak kama' ? .98 : .76) * dimensions.length / 1.02;
   const rearZ = .18, tipZ = rearZ + length;
   const y0 = .105, yRear = .30, yTip = bladeType === 'Çift kademeli' ? .18 : .145;
   const h = width / 2;
@@ -47,18 +47,18 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false) {
     const screw = new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.014,12),darkMat); screw.rotation.x=Math.PI/2; screw.position.set(x,.27,.31); blade.add(screw);
   }
   root.add(blade);
-  for (const x of [-.49,.49]) {
-    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.12,24),darkMat); wheel.rotation.z=Math.PI/2; wheel.position.set(x,.25,-.12); wheel.castShadow=true; root.add(wheel);
+  for (const x of [-dimensions.width*.53,dimensions.width*.53]) {
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.12,24),darkMat); wheel.rotation.z=Math.PI/2; wheel.position.set(x,.22,-dimensions.length*.12); wheel.castShadow=true; root.add(wheel);
     const hub = new THREE.Mesh(new THREE.CylinderGeometry(.065,.065,.125,16),accentMat); hub.rotation.z=Math.PI/2; hub.position.copy(wheel.position); root.add(hub);
   }
   // Five visible line sensors: three front, two rear. Their state is updated from the dohyo surface.
   const sensors = [];
-  for (const [x,z] of [[-.31,.53],[0,.59],[.31,.53],[-.29,-.43],[.29,-.43]]) {
+  for (const [x,z] of [[-dimensions.width*.34,dimensions.length*.49],[0,dimensions.length*.54],[dimensions.width*.34,dimensions.length*.49],[-dimensions.width*.32,-dimensions.length*.42],[dimensions.width*.32,-dimensions.length*.42]]) {
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(.043,12,10),new THREE.MeshBasicMaterial({color:'#35d7f4'}));
     mesh.position.set(x,.17,z); root.add(mesh); sensors.push({mesh,x,z});
   }
   const beacon = new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,.035,24),accentMat); beacon.position.set(0,.55,-.02); root.add(beacon);
-  root.userData = { sensors, bladeType, label: isRival ? 'RAKİP' : 'OYUNCU' };
+  root.userData = { sensors, bladeType, label: isRival ? 'RAKİP' : 'OYUNCU', dimensions };
   return root;
 }
 
@@ -93,10 +93,10 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     const startMat=new THREE.MeshStandardMaterial({color:'#a7adb6',roughness:.75}); [-.5,.5].forEach(z=>{const line=new THREE.Mesh(new THREE.BoxGeometry(.85,.012,.045),startMat);line.position.set(0,.1,z);scene.add(line);});
     const ringLights=new THREE.Mesh(new THREE.TorusGeometry(maxRadius+.25,.018,8,112),new THREE.MeshBasicMaterial({color:'#3b82f6',transparent:true,opacity:.5})); ringLights.rotation.x=Math.PI/2;ringLights.position.y=-.02;scene.add(ringLights);
 
-    const player=makeRobot(props.current.robotColor,'#8fc2ff',props.current.bladeType,preset.robotScale,false);
-    const rival=makeRobot('#d84b4b','#ffb36b','Geniş kama',preset.robotScale,true); scene.add(player,rival);
+    const player=makeRobot(props.current.robotColor,'#8fc2ff',props.current.bladeType,preset.robotScale,false,preset);
+    const rival=makeRobot('#d84b4b','#ffb36b','Geniş kama',preset.robotScale,true,preset); scene.add(player,rival);
     const shadows=[]; for(const [color,op] of [['#3b82f6',.14],['#ef4444',.12]]){const m=new THREE.Mesh(new THREE.CircleGeometry(.68*preset.robotScale,32),new THREE.MeshBasicMaterial({color,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.y=.105;scene.add(m);shadows.push(m);}
-    const startState=()=>({x:-maxRadius*.34,z:-maxRadius*.29,a:.72,vx:0,vz:0,turn:0,rx:maxRadius*.34,rz:maxRadius*.29,ra:-2.42,rvx:0,rvz:0,rturn:0,collisions:0,pushes:0,playerEdge:false,rivalEdge:false,winner:null,finishReason:'',lastHit:0,elapsed:0});
+    const startState=()=>({x:-maxRadius*.52,z:0,a:Math.PI/2,vx:0,vz:0,turn:0,rx:maxRadius*.52,rz:0,ra:-Math.PI/2,rvx:0,rvz:0,rturn:0,collisions:0,pushes:0,playerRoll:0,playerPitch:0,rivalRoll:0,rivalPitch:0,playerTipped:false,rivalTipped:false,playerEdge:false,rivalEdge:false,winner:null,finishReason:'',lastHit:0,elapsed:0});
     const state=startState(); const keys={forward:false,back:false,left:false,right:false};
     const keyMap={KeyW:'forward',ArrowUp:'forward',KeyS:'back',ArrowDown:'back',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
     const down=e=>{if(keyMap[e.code]&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){keys[keyMap[e.code]]=true;e.preventDefault();}};
@@ -109,7 +109,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
       if(player.children[0]?.material?.color)player.children[0].material.color.set(p.robotColor);
       const cls=CLASS_PRESETS[p.robotClass]||CLASS_PRESETS['Mini Sumo (500 g)'];
       if(p.running&&!state.winner){
-        state.elapsed+=dt;const maxSpeed=cls.maxSpeed*(p.speed/100);
+        state.elapsed+=dt;const configuredMass=Math.max(.03,(p.totalWeight||cls.mass*1000)/1000);const maxSpeed=cls.maxSpeed*(p.speed/100)*clamp(Math.sqrt(cls.mass/configuredMass),.72,1.12);
         // Edge sensors read the actual white dohyo boundary at five physical sensor positions.
         const playerSensors=player.userData.sensors.map(s=>sensorWorld(state,s.x*cls.robotScale,s.z*cls.robotScale,maxRadius));
         const rivalProxy={x:state.rx,z:state.rz,a:state.ra};
@@ -118,7 +118,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         const rFront=rivalSensors.slice(0,3).some(s=>s.edge),rRear=rivalSensors.slice(3).some(s=>s.edge);
         state.playerEdge=pFront||pRear;state.rivalEdge=rFront||rRear;
         let pF=0,pT=0;
-        if(p.mode==='AUTO'||p.mode==='OTONOM'){
+        if(state.playerTipped){pF=0;pT=0;} else if(p.mode==='AUTO'||p.mode==='OTONOM'){
           const dx=state.rx-state.x,dz=state.rz-state.z,dist=Math.hypot(dx,dz);const desired=Math.atan2(dx,dz);const err=wrapAngle(desired-state.a);
           if(pFront){pF=-.88;pT=err>=0?-.95:.95;} else if(pRear){pF=.45;pT=err>=0?.7:-.7;} else if(dist<1.55){pF=1;pT=clamp(err*1.5,-1,1);} else {pF=.35;pT=err>.12?1:err<-.12?-1:.18;}
         } else if(p.mode==='ARDUINO') {
@@ -143,29 +143,84 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         // Opponent controller: edge avoidance has priority over target seeking and attack.
         const dx=state.x-state.rx,dz=state.z-state.rz,dist=Math.hypot(dx,dz),targetAngle=Math.atan2(dx,dz),err=wrapAngle(targetAngle-state.ra);
         let rF=0,rT=0;
-        if(rFront){rF=-.92;rT=err>=0?-.9:.9;}else if(rRear){rF=.5;rT=err>=0?.7:-.7;}else if(dist>1.25){rF=.9;rT=clamp(err*1.65,-1,1);}else{rF=1;rT=clamp(err*1.2,-.55,.55);}
+        if(state.rivalTipped){rF=0;rT=0;}else if(rFront){rF=-.92;rT=err>=0?-.9:.9;}else if(rRear){rF=.5;rT=err>=0?.7:-.7;}else if(dist>1.25){rF=.9;rT=clamp(err*1.65,-1,1);}else{rF=1;rT=clamp(err*1.2,-.55,.55);}
         drive(state,pF,pT,dt,maxSpeed);drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,cls.maxSpeed*.88);
 
-        // Body-to-body contact. Front-facing wedge contact transfers more traction to the pushed robot.
-        const cx=state.rx-state.x,cz=state.rz-state.z,centerDist=Math.hypot(cx,cz),contactDist=.78*cls.robotScale;
-        if(centerDist<contactDist&&centerDist>.0001){
-          const nx=cx/centerDist,nz=cz/centerDist,overlap=contactDist-centerDist;
-          state.x-=nx*overlap*.52;state.z-=nz*overlap*.52;state.rx+=nx*overlap*.48;state.rz+=nz*overlap*.48;
-          const pForward=state.vx*nx+state.vz*nz;const rForward=-(state.rvx*nx+state.rvz*nz);
+        // Yönelimli dikdörtgen gövde çarpışması (OBB/SAT): robotlar birbirinin içinden geçemez.
+        const axes = (angle) => [{x:Math.cos(angle),z:-Math.sin(angle)},{x:Math.sin(angle),z:Math.cos(angle)}];
+        const projectRadius = (axis, angle, halfW, halfL) => {
+          const right={x:Math.cos(angle),z:-Math.sin(angle)}, forward={x:Math.sin(angle),z:Math.cos(angle)};
+          return Math.abs(axis.x*right.x+axis.z*right.z)*halfW + Math.abs(axis.x*forward.x+axis.z*forward.z)*halfL;
+        };
+        // Çarpışma hacmi şasi + öne uzanan kama alanını kapsar; kama rakibin gövdesinin içinden görsel olarak geçmez.
+        const pBladeExt=.43*(preset.length/1.02)*preset.robotScale;
+        const rBladeExt=pBladeExt;
+        const pForwardX=Math.sin(state.a),pForwardZ=Math.cos(state.a);
+        const rForwardX=Math.sin(state.ra),rForwardZ=Math.cos(state.ra);
+        const pCenterX=state.x+pForwardX*pBladeExt*.5,pCenterZ=state.z+pForwardZ*pBladeExt*.5;
+        const rCenterX=state.rx+rForwardX*rBladeExt*.5,rCenterZ=state.rz+rForwardZ*rBladeExt*.5;
+        const dxBody=rCenterX-pCenterX,dzBody=rCenterZ-pCenterZ;
+        const pHalfW=preset.width*preset.robotScale*.5, pHalfL=(preset.length*preset.robotScale+pBladeExt)*.5;
+        const rHalfW=pHalfW, rHalfL=(preset.length*preset.robotScale+rBladeExt)*.5;
+        const candidates=[...axes(state.a),...axes(state.ra)];
+        let minOverlap=Infinity, collisionNormal=null;
+        for(const axis of candidates){
+          const distance=Math.abs(dxBody*axis.x+dzBody*axis.z);
+          const overlap=projectRadius(axis,state.a,pHalfW,pHalfL)+projectRadius(axis,state.ra,rHalfW,rHalfL)-distance;
+          if(overlap<=0){minOverlap=-1;break;}
+          if(overlap<minOverlap){minOverlap=overlap;collisionNormal={...axis};if(dxBody*axis.x+dzBody*axis.z<0){collisionNormal.x*=-1;collisionNormal.z*=-1;}}
+        }
+        if(minOverlap>0&&collisionNormal){
+          const nx=collisionNormal.x,nz=collisionNormal.z;
+          // Konum düzeltmesi iki robotun gövde hacimlerini ayırır.
+          const separation=Math.max(.001,minOverlap+.006);
+          state.x-=nx*separation*.5;state.z-=nz*separation*.5;
+          state.rx+=nx*separation*.5;state.rz+=nz*separation*.5;
+          const pForward=state.vx*nx+state.vz*nz;
+          const rForward=-(state.rvx*nx+state.rvz*nz);
           const pNose=Math.sin(state.a)*nx+Math.cos(state.a)*nz;
           const rNose=-(Math.sin(state.ra)*nx+Math.cos(state.ra)*nz);
-          const pBlade=pNose>.48;const rBlade=rNose>.48;
-          const pForce=Math.max(0,pForward)*(pBlade?1.8:1.08);const rForce=Math.max(0,rForward)*(rBlade?1.8:1.08);
-          const playerMass=Math.max(.05,(p.totalWeight||cls.mass*1000)/1000);
-          const rivalMass=cls.mass;
-          const impulse=(pForce-rForce)*dt*2.6;
-          state.rvx+=nx*impulse/Math.max(.15,rivalMass*.75);state.rvz+=nz*impulse/Math.max(.15,rivalMass*.75);
-          state.vx-=nx*impulse/Math.max(.15,playerMass*.75);state.vz-=nz*impulse/Math.max(.15,playerMass*.75);
-          // Blade-on-body alignment gives a short extra shove, rather than allowing meshes to pass through.
-          if((pBlade&&pForward>.05)||(rBlade&&rForward>.05)){state.pushes++;}
-          if(now-state.lastHit>280){state.collisions++;state.lastHit=now;}
-          state.vx*=.985;state.vz*=.985;state.rvx*=.985;state.rvz*=.985;
+          // Kama rakibin altına girdiğinde yatay itiş ve devrilme momenti artar.
+          const pWedge=pNose>.62 && props.current.bladeType!=='Dar hassas kama';
+          const rWedge=rNose>.62;
+          const pMass=Math.max(.05,(p.totalWeight||preset.mass*1000)/1000);
+          const rMass=preset.mass;
+          const relative=(state.vx-state.rvx)*nx+(state.vz-state.rvz)*nz;
+          if(relative>0){
+            const restitution=(pWedge||rWedge)?.48:.22;
+            const impulse=(1+restitution)*relative/(1/pMass+1/rMass);
+            state.vx-=impulse*nx/pMass;state.vz-=impulse*nz/pMass;
+            state.rvx+=impulse*nx/rMass;state.rvz+=impulse*nz/rMass;
+          }
+          if(pWedge&&pForward>.04){
+            const shove=Math.min(2.8,pForward*(1.35+(pMass/rMass)*.18));
+            state.rvx+=nx*shove;state.rvz+=nz*shove;
+            state.rivalPitch=clamp(state.rivalPitch+(pForward*.95),-1.65,1.65);
+            state.playerPitch=clamp(state.playerPitch-.12,-1.65,1.65);
+          }
+          if(rWedge&&rForward>.04){
+            const shove=Math.min(2.8,rForward*(1.35+(rMass/pMass)*.18));
+            state.vx-=nx*shove;state.vz-=nz*shove;
+            state.playerPitch=clamp(state.playerPitch-(rForward*.95),-1.65,1.65);
+            state.rivalPitch=clamp(state.rivalPitch-.12,-1.65,1.65);
+          }
+          // Yandan çarpışma robotun roll ekseninde takla atmasına yol açabilir.
+          const sideImpact=Math.abs((state.vx-state.rvx)*(-nz)+(state.vz-state.rvz)*nx);
+          const sideSign=Math.sign((state.vx-state.rvx)*(-nz)+(state.vz-state.rvz)*nx)||1;
+          if(sideImpact>.22){
+            if(pWedge||sideImpact>.75) state.playerRoll=clamp(state.playerRoll+sideSign*sideImpact*.42,-1.72,1.72);
+            if(rWedge||sideImpact>.75) state.rivalRoll=clamp(state.rivalRoll-sideSign*sideImpact*.42,-1.72,1.72);
+          }
+          state.playerTipped=Math.abs(state.playerRoll)>1.28||Math.abs(state.playerPitch)>1.35;
+          state.rivalTipped=Math.abs(state.rivalRoll)>1.28||Math.abs(state.rivalPitch)>1.35;
+          if((pWedge&&pForward>.05)||(rWedge&&rForward>.05))state.pushes++;
+          if(now-state.lastHit>220){state.collisions++;state.lastHit=now;}
         }
+        // Devrilme salınımı yavaşça sönümlenir; devrilen robot kendi motoruyla doğrulamaz.
+        state.playerRoll*=Math.max(0,1-dt*.22);state.playerPitch*=Math.max(0,1-dt*.18);
+        state.rivalRoll*=Math.max(0,1-dt*.22);state.rivalPitch*=Math.max(0,1-dt*.18);
+        state.playerTipped=state.playerTipped&&(Math.abs(state.playerRoll)>1.05||Math.abs(state.playerPitch)>1.1);
+        state.rivalTipped=state.rivalTipped&&(Math.abs(state.rivalRoll)>1.05||Math.abs(state.rivalPitch)>1.1);
         // Surface friction and natural deceleration.
         const friction=Math.max(0,1-dt*.55);state.vx*=friction;state.vz*=friction;state.rvx*=friction;state.rvz*=friction;
         // A robot loses only after its chassis center leaves the dohyo; no artificial edge teleport/clamp.
@@ -175,19 +230,19 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         player.userData.sensors.forEach((s,i)=>s.mesh.material.color.set(playerSensors[i].edge?'#ff4d4d':'#35d7f4'));
         rival.userData.sensors.forEach((s,i)=>s.mesh.material.color.set(rivalSensors[i].edge?'#ff4d4d':'#35d7f4'));
       }
-      player.position.set(state.x,0,state.z);player.rotation.y=state.a;rival.position.set(state.rx,0,state.rz);rival.rotation.y=state.ra;
+      player.position.set(state.x,state.playerTipped?-.015:0,state.z);player.rotation.set(state.playerPitch,state.a,state.playerRoll,'YXZ');rival.position.set(state.rx,state.rivalTipped?-.015:0,state.rz);rival.rotation.set(state.rivalPitch,state.ra,state.rivalRoll,'YXZ');
       shadows[0].position.set(state.x,.105,state.z);shadows[1].position.set(state.rx,.105,state.rz);
       const distance=Math.hypot(state.rx-state.x,state.rz-state.z);
-      if(now-lastTelemetry>140){p.onTelemetry?.({distance:distance.toFixed(2),speed:p.running&&!state.winner?p.speed:0,mode:p.mode,collisions:state.collisions,pushes:state.pushes,edge:state.playerEdge?'UYARI':'GÜVENLİ',lineSensors:state.playerEdge?'SINIR ALGILANDI':'ZEMİN',winner:state.winner,finishReason:state.finishReason,elapsed:state.elapsed.toFixed(1)});lastTelemetry=now;}
+      if(now-lastTelemetry>140){p.onTelemetry?.({distance:distance.toFixed(2),speed:p.running&&!state.winner?p.speed:0,mode:p.mode,collisions:state.collisions,pushes:state.pushes,edge:state.playerEdge?'UYARI':'GÜVENLİ',lineSensors:state.playerEdge?'SINIR ALGILANDI':'ZEMİN',winner:state.winner,finishReason:state.finishReason,elapsed:state.elapsed.toFixed(1),playerTipped:state.playerTipped,rivalTipped:state.rivalTipped});lastTelemetry=now;}
       controls.update();renderer.render(scene,camera);
     };
     api.current={state,startState};frame=requestAnimationFrame(tick);
     return()=>{cancelAnimationFrame(frame);ro.disconnect();window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);controls.dispose();renderer.dispose();scene.traverse(o=>{o.geometry?.dispose?.();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose?.();});if(renderer.domElement.parentNode===el)el.removeChild(renderer.domElement);};
-  },[robotClass,arenaDiameterCm]);
+  },[robotClass,arenaDiameterCm,bladeType]);
 
   useEffect(()=>{if(api.current){Object.assign(api.current.state,api.current.startState());}},[resetKey,robotClass]);
   return <div className="arena-canvas" ref={host}>
-    <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> RC KUMANDA / OTONOM / ARDUINO C++ / DIP-SWITCH</div>
+    <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> PARS SUMO LAB · RC / OTONOM / ARDUINO C++</div>
     <div className="arena-help"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> sürüş <span>·</span> Sensörler dohyo dışını algılar <span>·</span> Fare: kamera</div>
   </div>;
 }

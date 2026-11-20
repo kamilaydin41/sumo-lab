@@ -1,15 +1,13 @@
-# Sürüm Notları
+# Sürüm notları
 
-## v0.7.0 — Arduino C++ çalışma alanı ve 3'lü DIP-switch
+## v0.8.0 – PARS SUMO LAB
+- Marka adı ve sayfa başlığı PARS SUMO LAB olarak değiştirildi.
+- Robot gövdeleri için yönelimli çarpışma ve çakışma giderme eklendi.
+- Kütleye bağlı momentum aktarımı ve kama yönüne bağlı itiş eklendi.
+- Çarpışma momentiyle devrilme/takla görselleştirmesi eklendi.
+- Dohyo dışına itilen robot için maç bitişi korundu.
+- Robot sınıfına bağlı boyut, kütle, hız, gövde ağırlığı, bileşen ve dohyo profilleri eklendi.
+- Önceki RC, otonom, Arduino C++ ve DIP-switch özellikleri korundu.
 
-- Üç konumlu DIP-switch paneli eklendi. SW1, SW2 ve SW3; Arduino D12, D13 ve A5 girişlerine bağlandı.
-- DIP-switch kombinasyonları proje ayarlarıyla birlikte kaydedilir. Üç anahtar sekiz taktik seçeneği sağlar.
-- Arduino C++ sketch'leri için izole iframe içinde çalışan temel uyumluluk katmanı eklendi.
-- `setup()`, `loop()`, temel GPIO, analog giriş/çıkış, `millis()`, `constrain()`, `map()` ve temel Serial çağrıları eşlendi.
-- Varsayılan TB6612FNG motor pin eşlemesi sanal sol/sağ motor komutlarına bağlandı.
-- Sanal beş çizgi sensörü ve üç rakip algılama girişi Arduino pinlerine aktarıldı.
-- Örnek Arduino sketch'ine DIP-switch ile taktik seçimi eklendi.
-- Kod çalıştırma ve durdurma kontrolleri eklendi.
-
-### Uyumluluk notu
-Bu sürüm tam Arduino derleyicisi değildir. Harici kütüphaneler ve tüm kartlara özgü API'ler desteklenmez. Kod yalnızca tarayıcıdaki sanal sensör ve motorlarla çalışır; fiziksel karta yükleme yapmaz.
+## Sınırlamalar
+Fizik modeli eğitim amaçlı yaklaşık modeldir. Üretim derlemesi ve gerçek tarayıcı testi bu paketin hazırlanması sırasında henüz tamamlanmamıştır.

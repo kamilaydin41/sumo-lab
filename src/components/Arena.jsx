@@ -2,47 +2,161 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
-export default function Arena({ running, speed, mode, resetKey, onTelemetry }) {
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+const angleDelta = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
+
+function makeRobot(color, accent, label) {
+  const root = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color, metalness: .42, roughness: .38 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: '#111827', metalness: .25, roughness: .65 });
+  const accentMat = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: .22, metalness: .25 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(.92, .25, 1.02), bodyMat);
+  body.position.y = .34; body.castShadow = true; root.add(body);
+  const top = new THREE.Mesh(new THREE.BoxGeometry(.58, .07, .56), darkMat);
+  top.position.set(0, .5, .02); top.castShadow = true; root.add(top);
+  const wedge = new THREE.Mesh(new THREE.BoxGeometry(.88, .09, .42), new THREE.MeshStandardMaterial({ color: accent, metalness: .2, roughness: .45 }));
+  wedge.position.set(0, .23, -.67); wedge.rotation.x = -.12; wedge.castShadow = true; root.add(wedge);
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(.8, .025, .28), accentMat);
+  nose.position.set(0, .18, -.78); root.add(nose);
+  for (const x of [-.49, .49]) {
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(.16, .16, .12, 24), darkMat);
+    wheel.rotation.z = Math.PI / 2; wheel.position.set(x, .25, .16); wheel.castShadow = true; root.add(wheel);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(.065, .065, .125, 16), accentMat);
+    hub.rotation.z = Math.PI / 2; hub.position.copy(wheel.position); root.add(hub);
+  }
+  for (const x of [-.28, 0, .28]) {
+    const sensor = new THREE.Mesh(new THREE.SphereGeometry(.045, 12, 10), new THREE.MeshBasicMaterial({ color: '#62e6ff' }));
+    sensor.position.set(x, .35, -.51); root.add(sensor);
+  }
+  const beacon = new THREE.Mesh(new THREE.CylinderGeometry(.11, .11, .035, 24), accentMat);
+  beacon.position.set(0, .55, .02); root.add(beacon);
+  root.userData.label = label;
+  return root;
+}
+
+export default function Arena({ running, speed, mode, resetKey, onTelemetry, robotColor = '#3978ed', arenaSize = 'standard' }) {
   const host = useRef(null);
   const api = useRef(null);
-  const propsRef = useRef({ running, speed, mode, onTelemetry });
-  useEffect(() => { propsRef.current = { running, speed, mode, onTelemetry }; }, [running, speed, mode, onTelemetry]);
+  const propsRef = useRef({ running, speed, mode, onTelemetry, robotColor, arenaSize });
+  useEffect(() => { propsRef.current = { running, speed, mode, onTelemetry, robotColor, arenaSize }; }, [running, speed, mode, onTelemetry, robotColor, arenaSize]);
+
   useEffect(() => {
     const el = host.current;
-    const scene = new THREE.Scene(); scene.background = new THREE.Color('#101a2b');
-    const camera = new THREE.PerspectiveCamera(42, el.clientWidth / el.clientHeight, .1, 100);
-    camera.position.set(7.5, 8.5, 10);
-    const renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(el.clientWidth, el.clientHeight); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.outputColorSpace = THREE.SRGBColorSpace; el.appendChild(renderer.domElement);
-    const controls = new OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.target.set(0, 0, 0); controls.maxPolarAngle = Math.PI * .48;
-    scene.add(new THREE.HemisphereLight(0xdceaff, 0x263044, 2.1));
-    const light = new THREE.DirectionalLight(0xffffff, 2.4); light.position.set(-4, 9, 5); light.castShadow = true; scene.add(light);
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: '#182438', roughness: .95 })); floor.rotation.x = -Math.PI / 2; floor.position.y = -.16; floor.receiveShadow = true; scene.add(floor);
-    const ring = new THREE.Mesh(new THREE.CylinderGeometry(5.0, 5.0, .22, 96), new THREE.MeshStandardMaterial({ color: '#252b34', roughness: .88 })); ring.position.y = -.02; ring.receiveShadow = true; scene.add(ring);
-    const dohyo = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, .08, 96), new THREE.MeshStandardMaterial({ color: '#e7e8e5', roughness: .92 })); dohyo.position.y = .13; dohyo.receiveShadow = true; scene.add(dohyo);
-    const border = new THREE.Mesh(new THREE.TorusGeometry(4.27, .12, 12, 96), new THREE.MeshStandardMaterial({ color: '#e34842', roughness: .7 })); border.rotation.x = Math.PI/2; border.position.y = .19; scene.add(border);
-    const startMat = new THREE.MeshStandardMaterial({ color: '#8c929c' });
-    [-.42,.42].forEach(z => { const line = new THREE.Mesh(new THREE.BoxGeometry(.9,.012,.045), startMat); line.position.set(0,.18,z); scene.add(line); });
-    const makeRobot = (color, accent) => { const g = new THREE.Group(); const body = new THREE.Mesh(new THREE.BoxGeometry(1.05,.32,.9), new THREE.MeshStandardMaterial({ color, metalness:.28, roughness:.42 })); body.position.y=.43; body.castShadow=true; g.add(body); const wedge = new THREE.Mesh(new THREE.BoxGeometry(.96,.12,.34), new THREE.MeshStandardMaterial({ color:accent, metalness:.15, roughness:.5 })); wedge.position.set(0,.27,-.53); wedge.rotation.x=-.12; wedge.castShadow=true; g.add(wedge); const dome = new THREE.Mesh(new THREE.CylinderGeometry(.19,.22,.1,24), new THREE.MeshStandardMaterial({ color:'#141a24', metalness:.5 })); dome.position.set(0,.65,.08); g.add(dome); for (const x of [-.56,.56]) { const wheel = new THREE.Mesh(new THREE.CylinderGeometry(.17,.17,.12,24), new THREE.MeshStandardMaterial({ color:'#090d13', roughness:.8 })); wheel.rotation.z=Math.PI/2; wheel.position.set(x,.32,.18); g.add(wheel); } const eye = new THREE.Mesh(new THREE.BoxGeometry(.23,.055,.035), new THREE.MeshBasicMaterial({ color:accent })); eye.position.set(0,.49,-.47); g.add(eye); scene.add(g); return g; };
-    const player = makeRobot('#3978ed','#9ed3ff'); const rival = makeRobot('#e34f4f','#ffd0a1'); player.position.set(-1.35,.2,1.0); rival.position.set(1.35,.2,-1.0); rival.rotation.y=Math.PI;
-    const grid = new THREE.GridHelper(40,40,'#26364c','#1e2b3e'); grid.position.y=-.15; scene.add(grid);
-    let lastTelemetry=0;
-    const state = { x:-1.35,z:1,angle:0,rx:1.35,rz:-1,ra:Math.PI, last:performance.now(), telemetry:{distance:0,speed:0,mode:'MANUEL'} };
+    if (!el) return undefined;
+    const scene = new THREE.Scene(); scene.background = new THREE.Color('#0c1422');
+    scene.fog = new THREE.Fog('#0c1422', 13, 28);
+    const camera = new THREE.PerspectiveCamera(42, el.clientWidth / Math.max(1, el.clientHeight), .1, 100);
+    camera.position.set(6.7, 7.3, 8.5);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(el.clientWidth, el.clientHeight);
+    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.12;
+    el.appendChild(renderer.domElement);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = .07; controls.target.set(0, .15, 0);
+    controls.minDistance = 5; controls.maxDistance = 15; controls.maxPolarAngle = Math.PI * .48;
+
+    scene.add(new THREE.HemisphereLight(0xddeaff, 0x1d293b, 2.0));
+    const key = new THREE.DirectionalLight(0xffffff, 2.8); key.position.set(-4, 9, 5); key.castShadow = true; key.shadow.mapSize.set(2048, 2048); scene.add(key);
+    const rim = new THREE.PointLight(0x3b82f6, 22, 14); rim.position.set(5, 3, -4); scene.add(rim);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: '#111c2d', roughness: .96 }));
+    floor.rotation.x = -Math.PI / 2; floor.position.y = -.22; floor.receiveShadow = true; scene.add(floor);
+    const grid = new THREE.GridHelper(40, 40, '#243650', '#1a293e'); grid.position.y = -.21; scene.add(grid);
+
+    const radius = 2.5;
+    const plinth = new THREE.Mesh(new THREE.CylinderGeometry(2.88, 2.88, .22, 96), new THREE.MeshStandardMaterial({ color: '#252f40', metalness: .25, roughness: .72 }));
+    plinth.position.y = -.09; plinth.receiveShadow = true; plinth.castShadow = true; scene.add(plinth);
+    const dohyo = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, .075, 96), new THREE.MeshStandardMaterial({ color: '#e6e8e8', roughness: .9 }));
+    dohyo.position.y = .055; dohyo.receiveShadow = true; scene.add(dohyo);
+    const edge = new THREE.Mesh(new THREE.TorusGeometry(radius - .14, .075, 12, 96), new THREE.MeshStandardMaterial({ color: '#e44c4c', roughness: .52, emissive: '#5c1111', emissiveIntensity: .12 }));
+    edge.rotation.x = Math.PI / 2; edge.position.y = .105; scene.add(edge);
+    const startMat = new THREE.MeshStandardMaterial({ color: '#a7adb6', roughness: .75 });
+    [-.45, .45].forEach(z => { const line = new THREE.Mesh(new THREE.BoxGeometry(.72, .012, .045), startMat); line.position.set(0, .1, z); scene.add(line); });
+    const ringLights = new THREE.Mesh(new THREE.TorusGeometry(2.92, .018, 8, 100), new THREE.MeshBasicMaterial({ color: '#3b82f6', transparent: true, opacity: .55 }));
+    ringLights.rotation.x = Math.PI / 2; ringLights.position.y = -.02; scene.add(ringLights);
+
+    const player = makeRobot('#3978ed', propsRef.current.robotColor, 'PLAYER');
+    const rival = makeRobot('#d84b4b', '#ffb36b', 'RIVAL');
+    scene.add(player, rival);
+    const shadowCircle = new THREE.Mesh(new THREE.CircleGeometry(.64, 32), new THREE.MeshBasicMaterial({ color: '#3b82f6', transparent: true, opacity: .13, depthWrite: false }));
+    shadowCircle.rotation.x = -Math.PI / 2; shadowCircle.position.y = .105; scene.add(shadowCircle);
+    const rivalShadow = new THREE.Mesh(new THREE.CircleGeometry(.64, 32), new THREE.MeshBasicMaterial({ color: '#ef4444', transparent: true, opacity: .11, depthWrite: false }));
+    rivalShadow.rotation.x = -Math.PI / 2; rivalShadow.position.y = .105; scene.add(rivalShadow);
+
+    const state = { x: -1.05, z: .8, angle: 0, rx: 1.05, rz: -.8, ra: Math.PI, last: performance.now(), collisions: 0, edgeWarnings: 0 };
+    const keys = { forward: false, back: false, left: false, right: false };
+    const keyMap = { KeyW: 'forward', ArrowUp: 'forward', KeyS: 'back', ArrowDown: 'back', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right' };
+    const down = e => { if (keyMap[e.code] && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) { keys[keyMap[e.code]] = true; e.preventDefault(); } };
+    const up = e => { if (keyMap[e.code]) keys[keyMap[e.code]] = false; };
+    window.addEventListener('keydown', down); window.addEventListener('keyup', up);
+
     api.current = { state, player, rival };
-    const resize = () => { const w=el.clientWidth,h=el.clientHeight; camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h); }; const ro = new ResizeObserver(resize); ro.observe(el);
-    let frame; const tick = (now) => { frame=requestAnimationFrame(tick); const dt=Math.min((now-state.last)/1000,.04); state.last=now;
-      const props = propsRef.current;
-      if (props.running) { const s=props.speed/100; if (props.mode==='AUTO') { const dx=state.rx-state.x,dz=state.rz-state.z; const target=Math.atan2(dx,dz); let d=((target-state.angle+Math.PI*3)%(Math.PI*2))-Math.PI; state.angle+=Math.max(-2.2*dt,Math.min(2.2*dt,d)); state.x+=Math.sin(state.angle)*s*2.2*dt; state.z+=Math.cos(state.angle)*s*2.2*dt; } else { if(keys.forward) {state.x+=Math.sin(state.angle)*s*2.8*dt;state.z+=Math.cos(state.angle)*s*2.8*dt;} if(keys.back){state.x-=Math.sin(state.angle)*s*1.8*dt;state.z-=Math.cos(state.angle)*s*1.8*dt;} if(keys.left)state.angle+=2.6*dt;if(keys.right)state.angle-=2.6*dt; }
-        const dx=state.rx-state.x,dz=state.rz-state.z,dist=Math.hypot(dx,dz); if(dist<.88){state.x-=Math.sin(state.angle)*s*2.1*dt;state.z-=Math.cos(state.angle)*s*2.1*dt;state.rx+=Math.sin(state.ra)*.7*dt;state.rz+=Math.cos(state.ra)*.7*dt;} else {const a=Math.atan2(state.x-state.rx,state.z-state.rz);state.ra+=Math.sin(a-state.ra)*.9*dt;state.rx+=Math.sin(state.ra)*.45*dt;state.rz+=Math.cos(state.ra)*.45*dt;}
-        const r=Math.hypot(state.x,state.z); if(r>3.95){state.x*=.985;state.z*=.985;} const rr=Math.hypot(state.rx,state.rz);if(rr>3.95){state.rx*=.985;state.rz*=.985;}
+    const resize = () => { const w = el.clientWidth, h = Math.max(1, el.clientHeight); camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); };
+    const ro = new ResizeObserver(resize); ro.observe(el);
+    let frame, lastTelemetry = 0;
+    const tick = now => {
+      frame = requestAnimationFrame(tick);
+      const dt = Math.min((now - state.last) / 1000, .04); state.last = now;
+      const p = propsRef.current;
+      if (p.robotColor) player.children[0].material.color.set(p.robotColor);
+      if (p.running) {
+        const power = p.speed / 100;
+        if (p.mode === 'AUTO') {
+          const desired = Math.atan2(state.rx - state.x, state.rz - state.z);
+          state.angle += clamp(angleDelta(state.angle, desired), -2.7 * dt, 2.7 * dt);
+          state.x += Math.sin(state.angle) * power * 2.05 * dt;
+          state.z += Math.cos(state.angle) * power * 2.05 * dt;
+        } else {
+          if (keys.forward) { state.x += Math.sin(state.angle) * power * 2.5 * dt; state.z += Math.cos(state.angle) * power * 2.5 * dt; }
+          if (keys.back) { state.x -= Math.sin(state.angle) * power * 1.7 * dt; state.z -= Math.cos(state.angle) * power * 1.7 * dt; }
+          if (keys.left) state.angle += 2.65 * dt;
+          if (keys.right) state.angle -= 2.65 * dt;
+        }
+        const toPlayer = Math.atan2(state.x - state.rx, state.z - state.rz);
+        state.ra += clamp(angleDelta(state.ra, toPlayer), -1.8 * dt, 1.8 * dt);
+        state.rx += Math.sin(state.ra) * .75 * dt;
+        state.rz += Math.cos(state.ra) * .75 * dt;
+
+        const dx = state.rx - state.x, dz = state.rz - state.z, dist = Math.hypot(dx, dz);
+        if (dist < .82) {
+          state.collisions++;
+          const push = ( .82 - dist ) * .55;
+          state.rx += (dx / Math.max(dist, .001)) * push;
+          state.rz += (dz / Math.max(dist, .001)) * push;
+          state.x -= (dx / Math.max(dist, .001)) * push * .32;
+          state.z -= (dz / Math.max(dist, .001)) * push * .32;
+        }
+        const pr = Math.hypot(state.x, state.z), rr = Math.hypot(state.rx, state.rz);
+        if (pr > radius - .42) { state.edgeWarnings++; state.x = Math.cos(Math.atan2(state.z, state.x)) * (radius - .42); state.z = Math.sin(Math.atan2(state.z, state.x)) * (radius - .42); }
+        if (rr > radius - .42) { state.rx = Math.cos(Math.atan2(state.rz, state.rx)) * (radius - .42); state.rz = Math.sin(Math.atan2(state.rz, state.rx)) * (radius - .42); }
       }
-      player.position.set(state.x,.2,state.z); player.rotation.y=state.angle; rival.position.set(state.rx,.2,state.rz); rival.rotation.y=state.ra;
-      state.telemetry={distance:Math.max(0,Math.hypot(state.rx-state.x,state.rz-state.z)).toFixed(1),speed:props.running?Math.round(props.speed):0,mode:props.mode}; if(now-lastTelemetry>180){props.onTelemetry?.(state.telemetry);lastTelemetry=now;} controls.update(); renderer.render(scene,camera);
-    }; const keys={forward:false,back:false,left:false,right:false};
-    const keyMap={KeyW:'forward',ArrowUp:'forward',KeyS:'back',ArrowDown:'back',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
-    const down=e=>{if(keyMap[e.code]){keys[keyMap[e.code]]=true;e.preventDefault();}}; const up=e=>{if(keyMap[e.code])keys[keyMap[e.code]]=false;}; window.addEventListener('keydown',down);window.addEventListener('keyup',up);
+      player.position.set(state.x, .1, state.z); player.rotation.y = state.angle;
+      rival.position.set(state.rx, .1, state.rz); rival.rotation.y = state.ra;
+      shadowCircle.position.set(state.x, .105, state.z); rivalShadow.position.set(state.rx, .105, state.rz);
+      const distance = Math.hypot(state.rx - state.x, state.rz - state.z);
+      if (now - lastTelemetry > 160) {
+        p.onTelemetry?.({ distance: distance.toFixed(2), speed: p.running ? p.speed : 0, mode: p.mode, collisions: state.collisions, edge: Math.hypot(state.x, state.z) > 1.85 ? 'UYARI' : 'GÜVENLİ' });
+        lastTelemetry = now;
+      }
+      controls.update(); renderer.render(scene, camera);
+    };
     tick(performance.now());
-    return ()=>{cancelAnimationFrame(frame);ro.disconnect();window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);controls.dispose();renderer.dispose();el.removeChild(renderer.domElement);scene.traverse(o=>{o.geometry?.dispose?.(); if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose?.();});};
+    return () => {
+      cancelAnimationFrame(frame); ro.disconnect(); window.removeEventListener('keydown', down); window.removeEventListener('keyup', up);
+      controls.dispose(); renderer.dispose();
+      scene.traverse(o => { o.geometry?.dispose?.(); if (Array.isArray(o.material)) o.material.forEach(m => m.dispose()); else o.material?.dispose?.(); });
+      if (renderer.domElement.parentNode === el) el.removeChild(renderer.domElement);
+    };
   }, []);
-  useEffect(()=>{if(api.current){Object.assign(api.current.state,{x:-1.35,z:1,angle:0,rx:1.35,rz:-1,ra:Math.PI});}},[resetKey]);
-  return <div className="arena-canvas" ref={host}><div className="arena-hud"><span className="live-dot"/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON DURAKLATILDI'}<span className="hud-sep">·</span>3B DÖVÜŞ ARENASI</div><div className="arena-help">W A S D / Ok tuşları ile kontrol et <span>·</span> Fare ile kamerayı döndür</div></div>;
+
+  useEffect(() => {
+    if (api.current) Object.assign(api.current.state, { x: -1.05, z: .8, angle: 0, rx: 1.05, rz: -.8, ra: Math.PI, collisions: 0, edgeWarnings: 0 });
+  }, [resetKey]);
+
+  return <div className="arena-canvas" ref={host}>
+    <div className="arena-hud"><span className={`live-dot ${running ? 'active' : ''}`} />{running ? 'SİMÜLASYON ÇALIŞIYOR' : 'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span>3B DOHYO / MINI SUMO</div>
+    <div className="arena-help"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> veya ok tuşlarıyla sür <span>·</span> Fareyle kamerayı döndür / yakınlaştır</div>
+  </div>;
 }

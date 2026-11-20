@@ -1,6 +1,6 @@
-# SUMO LAB — v0.1.0
+# SUMO LAB — v0.2.0
 
-Mini sumo robot design and simulation starter project. Built with React, Vite and Three.js.
+Turkish-language mini-sumo robot design and 3D simulation workspace. Built with React, Vite and Three.js.
 
 ## Requirements
 - Node.js 20.19+ or 22.12+
@@ -18,23 +18,27 @@ npm run build
 npm run preview
 ```
 
-## Deploy to Vercel
-1. Push this project to a GitHub repository.
-2. In Vercel choose **Add New → Project** and import the repository.
-3. Framework preset: **Vite** (usually detected automatically).
-4. Build command: `npm run build`
-5. Output directory: `dist`
-6. Deploy.
+## Deploy / update on Vercel
+1. Push the contents of this project to the connected GitHub repository (replace the previous project files).
+2. Vercel automatically starts a new deployment when the connected branch receives a commit.
+3. Build command: `npm run build`; output directory: `dist`.
 
-No environment variables are required for this starter.
+No environment variables are required.
 
-## Current scope
-- Responsive Turkish UI
-- Three.js 3D dohyo and two simple robot models
-- Manual keyboard driving (WASD / arrow keys)
-- Basic autonomous chase mode
-- Speed control, reset, telemetry display
-- JavaScript and Arduino C++ starter code views
-- Component library preview
+## v0.2.0 features
+- Responsive Turkish interface
+- Three.js 3D mini-sumo dohyo and two robot models
+- Manual WASD / arrow-key control
+- Autonomous chase mode and rival pursuit behavior
+- Speed control, reset, distance and collision telemetry
+- Robot identity, class and body color settings
+- Component selection with estimated weight budget
+- Local project persistence in browser localStorage
+- Editable JavaScript and Arduino C++ code templates
+- Copy code and download `.js` / `.ino` source files
 
-The code editor is currently a starter-code viewer; user code execution, real robot physics, sensors, robot assembly, saving projects and ESP32 connectivity are planned for later phases.
+## Current limitations
+- Physics and collision handling are educational approximations, not competition-grade dynamics.
+- Component placement is a selection/weight estimator; a full drag-and-drop CAD editor is not included yet.
+- The code panel edits and exports code but does not execute user code in the simulator.
+- ESP32 / physical robot connectivity, persistent cloud projects, accounts and multiplayer are not included.

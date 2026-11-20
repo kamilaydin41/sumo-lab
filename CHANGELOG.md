@@ -108,3 +108,8 @@
 - Robot tekerleklerinin dışa taşması ve kama çarpışma uzantısı fiziksel ölçülere yaklaştırıldı.
 
 **Ölçek:** Simülasyonda 1 Three.js birimi 20 cm'dir. Robot ölçüleri milimetre profillerinden, dohyo çapı santimetre cinsinden dönüştürülür.
+
+## v0.20.2
+- Varsayılan kontrol modu Otonom olarak ayarlandı.
+- Arka çizgi sensörleri kaldırıldı; üç ön çizgi sensörü bırakıldı.
+- Kenar algılama ve kaçış algoritması, Arduino örnek kodu dahil, ön sensörlerle sınırlandı.

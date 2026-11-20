@@ -8,17 +8,12 @@ import {
 import Arena from './components/Arena.jsx';
 
 const jsStarter = `// PARS SUMOLAB v0.20.0 | JavaScript sumo kontrol algoritması
-// Simülatörün beş çizgi sensörü ve 2–7 fiziksel rakip sensöründen türetilen sol/ön/sağ algı bölgelerine göre örnek davranış.
+// Simülatörün üç ön çizgi sensörü ve 2–7 fiziksel rakip sensörüne göre örnek davranış.
 
 function decide(sensor) {
-  // Ön çizgi sensörlerinden biri dohyo dışını görürse geri kaç.
+  // Yalnızca ön çizgi sensörleri dohyo dışını görürse geri kaç.
   if (sensor.edgeFrontLeft || sensor.edgeFrontCenter || sensor.edgeFrontRight) {
     return { left: -85, right: -85, action: "EDGE_ESCAPE" };
-  }
-
-  // Arka sensörler sınırı görürse ileri kaç.
-  if (sensor.edgeRearLeft || sensor.edgeRearRight) {
-    return { left: 75, right: 75, action: "EDGE_ESCAPE" };
   }
 
   // Rakip sensörlerinin yönüne göre saldırı.
@@ -34,14 +29,14 @@ function decide(sensor) {
 
 const cppStarter = `// PARS SUMOLAB v0.20.0 | Arduino C++ örnek sumo algoritması
 // Örnek kart: Arduino UNO + TB6612FNG
-// QTR/çizgi sensörleri: ön-sol A0, ön-orta A1, ön-sağ A2, arka-sol A3, arka-sağ A4
+// QTR/çizgi sensörleri: yalnızca ön-sol A0, ön-orta A1, ön-sağ A2
 // Rakip IR algı bölgeleri: sol D2, ön D3, sağ D11 (2–7 sensörün bölgesel özeti)
 
 const int PWMA=5, AIN1=7, AIN2=8;
 const int PWMB=6, BIN1=9, BIN2=10, STBY=4;
 const int OPP_LEFT=2, OPP_FRONT=3, OPP_RIGHT=11;
 const int DIP_1=12, DIP_2=13, DIP_3=A5; // 3'lü taktik anahtarı
-const int EDGE_FL=A0, EDGE_FC=A1, EDGE_FR=A2, EDGE_RL=A3, EDGE_RR=A4;
+const int EDGE_FL=A0, EDGE_FC=A1, EDGE_FR=A2;
 const int EDGE_THRESHOLD=600; // Sensör ve dohyo rengine göre kalibre et
 
 void motor(int left, int right) {
@@ -65,8 +60,6 @@ void loop() {
   bool fl=analogRead(EDGE_FL)>EDGE_THRESHOLD;
   bool fc=analogRead(EDGE_FC)>EDGE_THRESHOLD;
   bool fr=analogRead(EDGE_FR)>EDGE_THRESHOLD;
-  bool rl=analogRead(EDGE_RL)>EDGE_THRESHOLD;
-  bool rr=analogRead(EDGE_RR)>EDGE_THRESHOLD;
   bool oppL=digitalRead(OPP_LEFT), oppF=digitalRead(OPP_FRONT), oppR=digitalRead(OPP_RIGHT);
   // SW1 en düşük bit olacak şekilde 000-111 arasında 8 taktik.
   int tactic=(digitalRead(DIP_1)?1:0) | (digitalRead(DIP_2)?2:0) | (digitalRead(DIP_3)?4:0);
@@ -86,8 +79,6 @@ void loop() {
   if(fl || fc || fr) {
     motor(-190,-190); delay(150);
     motor(fl ? 185 : -185, fr ? -185 : 185); delay(170);
-  } else if(rl || rr) {
-    motor(170,170); delay(120);
   } else if(oppF || (oppL && oppR)) {
     motor(attackPower,attackPower);
   } else if(oppL) {
@@ -183,7 +174,7 @@ export default function App() {
   const [tab, setTab] = useState('sim');
   const [running, setRunning] = useState(false);
   const [speed, setSpeed] = useState(75);
-  const [mode, setMode] = useState('RC');
+  const [mode, setMode] = useState('AUTO');
   const [rcInput, setRcInput] = useState({ throttle: 0, steer: 0, throttleActive: false, steerActive: false });
   const [gamepadName, setGamepadName] = useState('Gamepad aranıyor');
   const [resetKey, setResetKey] = useState(0);

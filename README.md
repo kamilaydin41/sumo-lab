@@ -140,3 +140,9 @@ Simülasyon eğitim amaçlı yaklaşık bir fizik modelidir. Robot ölçüleri v
 - Rakip sensörlerinin algılama mesafesi fiziksel kuvvet üretmez.
 - Her iki robot için 2–7 adet rakip IR sensörü seçilebilir.
 - Sensörler ön ve yan görüş alanını kapsar; otonom arama, hedefe dönme ve Arduino sensör verisi bu algılamayı kullanır.
+
+
+## v0.20.2
+- Simülasyon kontrol modu varsayılan olarak Otonom başlar. Simülasyonu başlatma düğmesi yine kullanıcı kontrolündedir.
+- Robotların arka çizgi sensörleri kaldırıldı; her robotta yalnızca ön-sol, ön-orta ve ön-sağ çizgi sensörü bulunur.
+- Otonom kenar kaçış algoritması ve Arduino örnek kodu üç ön sensöre göre güncellendi.

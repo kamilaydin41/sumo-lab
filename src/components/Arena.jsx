@@ -108,9 +108,9 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
     const hub = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius*.43,wheelRadius*.43,wheelWidth*1.04,24),accentMat); hub.rotation.z=Math.PI/2; hub.position.copy(wheel.position); root.add(hub);
     const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius*.18,wheelRadius*.18,wheelWidth*1.08,18),new THREE.MeshStandardMaterial({color:'#d7e0e9',metalness:.96,roughness:.18})); hubCap.rotation.z=Math.PI/2; hubCap.position.copy(wheel.position); root.add(hubCap);
   }
-  // Five visible line sensors: three front, two rear. Their state is updated from the dohyo surface.
+  // Three visible front line sensors only; rear line sensors are removed.
   const sensors = [];
-  for (const [x,z] of [[-dimensions.width*.34,dimensions.length*.49],[0,dimensions.length*.54],[dimensions.width*.34,dimensions.length*.49],[-dimensions.width*.32,-dimensions.length*.42],[dimensions.width*.32,-dimensions.length*.42]]) {
+  for (const [x,z] of [[-dimensions.width*.34,dimensions.length*.49],[0,dimensions.length*.54],[dimensions.width*.34,dimensions.length*.49]]) {
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(dimensions.width*.045,12,10),new THREE.MeshBasicMaterial({color:'#35d7f4'}));
     mesh.position.set(x,.0925+dimensions.width*.045,z); root.add(mesh); sensors.push({mesh,x,z});
   }
@@ -253,13 +253,13 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         const playerMassKg=Math.max(.03,(p.totalWeight||cls.mass*1000)/1000);
         const rivalMassKg=Math.max(.03,(p.rivalTotalWeight||rivalCls.mass*1000)/1000);
         const maxSpeed=cls.maxSpeed*(p.speed/100);
-        // Edge sensors read the actual white dohyo boundary at five physical sensor positions.
+        // Front edge sensors read the actual white dohyo boundary at three physical sensor positions.
         const playerSensors=player.userData.sensors.map(s=>sensorWorld(state,s.x,s.z,playableRadius));
         const rivalProxy={x:state.rx,z:state.rz,a:state.ra};
         const rivalSensors=rival.userData.sensors.map(s=>sensorWorld(rivalProxy,s.x,s.z,playableRadius));
-        const pFront=playerSensors.slice(0,3).some(s=>s.edge),pRear=playerSensors.slice(3).some(s=>s.edge);
-        const rFront=rivalSensors.slice(0,3).some(s=>s.edge),rRear=rivalSensors.slice(3).some(s=>s.edge);
-        state.playerEdge=pFront||pRear;state.rivalEdge=rFront||rRear;
+        const pFront=playerSensors.some(s=>s.edge);
+        const rFront=rivalSensors.some(s=>s.edge);
+        state.playerEdge=pFront;state.rivalEdge=rFront;
         const playerTarget=readOpponentSensors(player,state,{x:state.rx,z:state.rz},1.85);
         const rivalTarget=readOpponentSensors(rival,{x:state.rx,z:state.rz,a:state.ra},{x:state.x,z:state.z},1.85);
         let pF=0,pT=0;
@@ -267,7 +267,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           const tactic=(p.dipSwitches||[]).reduce((n,on,i)=>n+(on?(1<<i):0),0);
           const aggressive=[1,3,5,7].includes(tactic), fastScan=[2,5,7].includes(tactic), cautious=[4,6].includes(tactic);
           const dist=playerTarget.distance, err=playerTarget.bearing;
-          if(pFront){pF=cautious?-.98:-.88;pT=err>=0?-.95:.95;} else if(pRear){pF=.48;pT=err>=0?.75:-.75;} else if(playerTarget.any){if(playerTarget.front){pF=aggressive?1:.88;pT=clamp(err*1.2,-.45,.45);}else{pF=.18;pT=playerTarget.left?-.9:.9;}} else {pF=fastScan?.28:(cautious?.22:.35);pT=fastScan?.9:.72;}
+          if(pFront){pF=cautious?-.98:-.88;pT=err>=0?-.95:.95;} else if(playerTarget.any){if(playerTarget.front){pF=aggressive?1:.88;pT=clamp(err*1.2,-.45,.45);}else{pF=.18;pT=playerTarget.left?-.9:.9;}} else {pF=fastScan?.28:(cautious?.22:.35);pT=fastScan?.9:.72;}
         } else if(p.mode==='ARDUINO') {
           const left=clamp(p.arduinoCommand?.left||0,-1,1), right=clamp(p.arduinoCommand?.right||0,-1,1);
           pF=(left+right)/2; pT=(right-left);
@@ -280,7 +280,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           const pads=navigator.getGamepads?.()||[];const pad=Array.from(pads).find(Boolean);
           if(pad){const axisY=Math.abs(pad.axes?.[1]||0)>.12?-(pad.axes[1]):0;const axisX=Math.abs(pad.axes?.[0]||0)>.12?pad.axes[0]:0;if(Math.abs(axisY)>.12||Math.abs(axisX)>.12){pF=clamp(axisY,-1,1);pT=clamp(axisX,-1,1);}if(pad.buttons?.[7]?.pressed)pF=1;if(pad.buttons?.[6]?.pressed)pF=-1;}
         }
-        // Arduino sketch sensor bridge: A0-A4 edge, D2/D3/D11 opponent, D12/D13/A5 DIP.
+        // Arduino sketch sensor bridge: A0-A2 front edge, D2/D3/D11 opponent, D12/D13/A5 DIP.
         if(p.mode==='ARDUINO' && now-(state.lastArduinoSensor||0)>35){
           const sensors={edge:playerSensors.map(v=>v.edge),opponent:[playerTarget.left,playerTarget.front,playerTarget.right]};
           window.parent.postMessage({type:'SUMO_SENSOR_DATA',sensors},'*'); state.lastArduinoSensor=now;
@@ -288,7 +288,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         // Opponent controller: edge avoidance has priority over target seeking and attack.
         const err=rivalTarget.bearing;
         let rF=0,rT=0;
-        if(state.rivalTipped){rF=0;rT=0;}else if(rFront){rF=-.92;rT=err>=0?-.9:.9;}else if(rRear){rF=.5;rT=err>=0?.7:-.7;}else if(rivalTarget.any){if(rivalTarget.front){rF=1;rT=clamp(err*1.2,-.45,.45);}else{rF=.18;rT=rivalTarget.left?-.9:.9;}}else{rF=.35;rT=.78;}
+        if(state.rivalTipped){rF=0;rT=0;}else if(rFront){rF=-.92;rT=err>=0?-.9:.9;}else if(rivalTarget.any){if(rivalTarget.front){rF=1;rT=clamp(err*1.2,-.45,.45);}else{rF=.18;rT=rivalTarget.left?-.9:.9;}}else{rF=.35;rT=.78;}
         const autoTactic=(p.dipSwitches||[]).reduce((n,on,i)=>n+(on?(1<<i):0),0);
         const playerSpeedScale=(p.mode==='AUTO'||p.mode==='OTONOM')?([1,3,5,7].includes(autoTactic)?1.08:([4,6].includes(autoTactic)?.88:1)):1;
         const playerDrive=drive(state,pF,pT,dt,maxSpeed*playerSpeedScale,playerMassKg,p.driveSpec);

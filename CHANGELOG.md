@@ -1,14 +1,15 @@
-# Değişiklik Kaydı
+# Sürüm Notları
 
-## v0.6.0 – Dohyo ölçüleri ve Klasik 1 kg robot
-- Varsayılan dohyo çapı 80 cm olarak ayarlandı.
-- Micro Sumo (38 cm), Mini Sumo (80 cm) ve Mega Sumo (154 cm) dohyo profilleri eklendi.
-- Dohyo çapı 30–200 cm aralığında ayarlanabilir hale getirildi.
-- 3B arena, çizgi sensörleri ve dohyo dışına çıkma kontrolü seçilen çapa bağlandı.
-- Klasik 1 kg Sumo robot profili eklendi.
-- Dohyo profili ve çapı proje kaydına dahil edildi.
-- GitHub dokümantasyonu Türkçe olarak güncellendi.
+## v0.7.0 — Arduino C++ çalışma alanı ve 3'lü DIP-switch
 
-## v0.5.0 – Gövde ağırlığı
-- Gövde / şasi ağırlığı ayarı eklendi.
-- Toplam ağırlık ve sınıf limiti kontrolü güncellendi.
+- Üç konumlu DIP-switch paneli eklendi. SW1, SW2 ve SW3; Arduino D12, D13 ve A5 girişlerine bağlandı.
+- DIP-switch kombinasyonları proje ayarlarıyla birlikte kaydedilir. Üç anahtar sekiz taktik seçeneği sağlar.
+- Arduino C++ sketch'leri için izole iframe içinde çalışan temel uyumluluk katmanı eklendi.
+- `setup()`, `loop()`, temel GPIO, analog giriş/çıkış, `millis()`, `constrain()`, `map()` ve temel Serial çağrıları eşlendi.
+- Varsayılan TB6612FNG motor pin eşlemesi sanal sol/sağ motor komutlarına bağlandı.
+- Sanal beş çizgi sensörü ve üç rakip algılama girişi Arduino pinlerine aktarıldı.
+- Örnek Arduino sketch'ine DIP-switch ile taktik seçimi eklendi.
+- Kod çalıştırma ve durdurma kontrolleri eklendi.
+
+### Uyumluluk notu
+Bu sürüm tam Arduino derleyicisi değildir. Harici kütüphaneler ve tüm kartlara özgü API'ler desteklenmez. Kod yalnızca tarayıcıdaki sanal sensör ve motorlarla çalışır; fiziksel karta yükleme yapmaz.

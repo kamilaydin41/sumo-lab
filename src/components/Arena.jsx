@@ -69,11 +69,11 @@ function sensorWorld(robot, x, z, radius) {
   return { x: wx, z: wz, edge: Math.hypot(wx,wz) > radius - .10 };
 }
 
-export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, arenaDiameterCm=80 }) {
+export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, arenaDiameterCm=80 }) {
   const host = useRef(null);
   const api = useRef(null);
-  const props = useRef({running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,arenaDiameterCm});
-  useEffect(()=>{props.current={running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,arenaDiameterCm};},[running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,arenaDiameterCm]);
+  const props = useRef({running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,arenaDiameterCm});
+  useEffect(()=>{props.current={running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,arenaDiameterCm};},[running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,arenaDiameterCm]);
 
   useEffect(()=>{
     const el=host.current; if(!el) return;
@@ -121,6 +121,9 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         if(p.mode==='AUTO'||p.mode==='OTONOM'){
           const dx=state.rx-state.x,dz=state.rz-state.z,dist=Math.hypot(dx,dz);const desired=Math.atan2(dx,dz);const err=wrapAngle(desired-state.a);
           if(pFront){pF=-.88;pT=err>=0?-.95:.95;} else if(pRear){pF=.45;pT=err>=0?.7:-.7;} else if(dist<1.55){pF=1;pT=clamp(err*1.5,-1,1);} else {pF=.35;pT=err>.12?1:err<-.12?-1:.18;}
+        } else if(p.mode==='ARDUINO') {
+          const left=clamp(p.arduinoCommand?.left||0,-1,1), right=clamp(p.arduinoCommand?.right||0,-1,1);
+          pF=(left+right)/2; pT=(right-left);
         } else {
           pF=(keys.forward?1:0)-(keys.back?1:0);pT=(keys.left?1:0)-(keys.right?1:0);
           // Browser virtual RC transmitter: independent throttle and steering sticks.
@@ -129,6 +132,13 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           // Standard USB/Bluetooth gamepad: left stick Y drives, left stick X steers.
           const pads=navigator.getGamepads?.()||[];const pad=Array.from(pads).find(Boolean);
           if(pad){const axisY=Math.abs(pad.axes?.[1]||0)>.12?-(pad.axes[1]):0;const axisX=Math.abs(pad.axes?.[0]||0)>.12?pad.axes[0]:0;if(Math.abs(axisY)>.12||Math.abs(axisX)>.12){pF=clamp(axisY,-1,1);pT=clamp(axisX,-1,1);}if(pad.buttons?.[7]?.pressed)pF=1;if(pad.buttons?.[6]?.pressed)pF=-1;}
+        }
+        // Arduino sketch sensor bridge: A0-A4 edge, D2/D3/D11 opponent, D12/D13/A5 DIP.
+        if(p.mode==='ARDUINO' && now-(state.lastArduinoSensor||0)>35){
+          const rel=wrapAngle(Math.atan2(state.rx-state.x,state.rz-state.z)-state.a);
+          const opponentVisible=Math.hypot(state.rx-state.x,state.rz-state.z)<1.9;
+          const sensors={edge:playerSensors.map(v=>v.edge),opponent:[opponentVisible&&rel<-.22,opponentVisible&&Math.abs(rel)<=.42,opponentVisible&&rel>.22]};
+          window.parent.postMessage({type:'SUMO_SENSOR_DATA',sensors},'*'); state.lastArduinoSensor=now;
         }
         // Opponent controller: edge avoidance has priority over target seeking and attack.
         const dx=state.x-state.rx,dz=state.z-state.rz,dist=Math.hypot(dx,dz),targetAngle=Math.atan2(dx,dz),err=wrapAngle(targetAngle-state.ra);
@@ -177,7 +187,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
 
   useEffect(()=>{if(api.current){Object.assign(api.current.state,api.current.startState());}},[resetKey,robotClass]);
   return <div className="arena-canvas" ref={host}>
-    <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> RC KUMANDA / OTONOM / ÇİZGİ SENSÖRLERİ</div>
+    <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> RC KUMANDA / OTONOM / ARDUINO C++ / DIP-SWITCH</div>
     <div className="arena-help"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> sürüş <span>·</span> Sensörler dohyo dışını algılar <span>·</span> Fare: kamera</div>
   </div>;
 }

@@ -1,57 +1,60 @@
-# SUMO LAB v0.6.0
+# SUMO LAB v0.7.0
 
-React, Vite ve Three.js ile geliştirilen 3B sumo robot simülasyonu ve eğitim ortamı.
+SUMO LAB; mini, micro ve mega sumo robotları için tarayıcı tabanlı eğitim ve prototipleme simülatörüdür.
 
 ## Özellikler
-- 3B dairesel dohyo ve iki robotla antrenman simülasyonu
-- Varsayılan Mini Sumo dohyo çapı: **80 cm**
-- Micro Sumo, Mini Sumo ve Mega Sumo dohyo profilleri
-- Dohyo çapını 30–200 cm arasında ayarlama
-- RC / manuel kontrol: çift sanal kumanda kolu, klavye ve USB / Bluetooth gamepad
-- Otonom rakip arama, yaklaşma, saldırı ve sınırdan kaçınma
-- Her robot için beş simüle çizgi sensörü
-- Pico, Micro, Mini, 1 kg, Klasik 1 kg, Mega, Açık Sınıf, LEGO ve RC robot profilleri
-- Robot rengi, ön kama tipi, donanım bileşenleri ve gövde ağırlığı ayarı
-- Toplam ağırlık hesabı ve sınıf limiti uyarısı
-- Robot ağırlığını itiş fiziği hesabına yansıtma
-- JavaScript ve Arduino C++ örnek kod alanları
-- Proje ayarlarını tarayıcıda yerel olarak kaydetme
+- Three.js ile 3B dohyo ve robot simülasyonu
+- Micro, Mini ve Mega dohyo profilleri; çap ayarı
+- Pico, Micro, Mini, Klasik 1 Kg, 1 Kg, Mega ve diğer robot sınıfları
+- Gövde ve bileşen ağırlığı hesabı
+- RC sürüş: sanal çift joystick, klavye ve USB/Bluetooth gamepad
+- Yerleşik otonom rakip arama ve dohyo sınırından kaçış
+- Arduino C++ için tarayıcı içinde temel uyumluluk çalışma alanı
+- Üçlü DIP-switch ile 8 farklı taktik kombinasyonu
+- Proje ayarlarını tarayıcıda kaydetme
 
-## Dohyo ayarları
-Robot tasarımı sekmesinden dohyo profili seçilebilir:
+## Arduino C++ çalışma alanı
+Kod laboratuvarında `Arduino C++` seçilip `Arduino kodunu çalıştır` düğmesine basıldığında sketch, izole bir tarayıcı iframe'i içinde çalıştırılır. Simülatör aşağıdaki temel Arduino işlevlerini eşler:
 
-| Profil | Varsayılan çap |
-|---|---:|
-| Micro Sumo | 38 cm |
-| Mini Sumo | 80 cm |
-| Mega Sumo | 154 cm |
+- `setup()` ve `loop()`
+- `pinMode()`, `digitalRead()`, `analogRead()`
+- `digitalWrite()`, `analogWrite()`
+- `delay()`, `millis()`, `constrain()`, `map()`, `Serial.print/println()` için temel karşılıklar
 
-Seçilen profil başlangıç çapını belirler. Çap ayrıca 30–200 cm aralığında kaydırıcıyla değiştirilebilir. Simülatör dairesel dohyo kullanır; gerçek yarışmalarda organizasyonun teknik şartnamesindeki ölçüler esas alınmalıdır.
+### Simülatör pin eşlemesi
+| Arduino pini | Simülatördeki karşılığı |
+|---|---|
+| A0–A4 | Ön-sol, ön-orta, ön-sağ, arka-sol, arka-sağ çizgi sensörleri |
+| D2 | Sol rakip IR sensörü |
+| D3 | Ön rakip IR sensörü |
+| D11 | Sağ rakip IR sensörü |
+| D12 | DIP switch 1 |
+| D13 | DIP switch 2 |
+| A5 | DIP switch 3 |
+| D5 / D7 / D8 | Sol motor PWM / yön |
+| D6 / D9 / D10 | Sağ motor PWM / yön |
+| D4 | TB6612FNG STBY |
 
-## Yerel ortamda çalıştırma
+Motor sürücü eşlemesi varsayılan TB6612FNG örneğine göredir. Kodun farklı pin kullanıyorsa eşlemeyi bu sürücü pinlerine göre düzenle.
 
+### DIP-switch kullanımı
+Üç anahtarın her biri `digitalRead(12)`, `digitalRead(13)` ve `digitalRead(A5)` ile okunabilir. Üç anahtar toplam sekiz kombinasyon sağlar. Anahtar durumları proje ayarlarıyla birlikte saklanır.
+
+## Önemli uyumluluk sınırı
+Bu özellik tam bir Arduino IDE derleyicisi değildir. Yaygın Arduino dil yapıları ve temel pin API'leri için hafif bir uyumluluk katmanıdır. `#include` ile eklenen harici kütüphaneler, `Wire`, `SPI`, `Servo`, `QTRSensors`, `SoftwareSerial`, gerçek zamanlı kesmeler, donanıma özel kayıtlar, ESP32/Pico'ya özgü API'ler ve bütün C++ dil özellikleri desteklenmez. `delay()` simülasyon döngüsünü bloke etmemesi için bekleme yapmaz. Karmaşık veya kütüphane kullanan gerçek robot sketch'leri doğrudan çalışmayabilir; desteklenmeyen kodlar için simülatöre özel uyarlama gerekir.
+
+Bu çalışma alanı fiziksel Arduino kartına kod yüklemez ve gerçek donanımı kontrol etmez. Kod, yalnızca SUMO LAB içindeki sanal sensör ve motorlarla çalışır.
+
+## Geliştirme
 ```bash
 npm install
 npm run dev
 ```
 
-## Üretim sürümünü oluşturma
-
+Üretim derlemesi:
 ```bash
 npm run build
-npm run preview
 ```
 
-## Kontroller
-- RC / Manuel: Sol sanal kol ileri-geri, sağ sanal kol sağ-sol yön kontrolü sağlar.
-- Klavye: W / S ileri-geri, A / D dönüş kontrolü sağlar.
-- Gamepad: Sol analog kolun Y ekseni gaz, X ekseni yön kontrolüdür.
-- Otonom: Robot rakibi arar, yaklaşır ve saldırır; sınır sensörlerine öncelik verir.
-
-## Ağırlık ayarı
-Gövde ağırlığı şasi, üst kapak ve bağlantı elemanlarının toplamını temsil eder. Seçilen elektronik ve mekanik parçaların ağırlığı bu değere eklenir. Toplam ağırlık robot sınıfı limitiyle karşılaştırılır.
-
-Fizik modeli eğitim amaçlı yaklaşık bir modeldir. Gerçek robotun kütle dağılımı, sürtünmesi, motor torku ve yarışma şartnamesi farklı sonuçlar doğurabilir. Kod editöründeki özel kodlar henüz simülasyon motorunda çalıştırılmaz.
-
-## GitHub açıklama dili
-README, sürüm notları, değişiklik kayıtları, commit önerileri ve güncelleme yönergeleri Türkçe hazırlanır.
+## Dağıtım
+Projeyi GitHub deposuna gönderdiğinde Vercel bağlantısı varsa yeni commit otomatik dağıtımı başlatır.

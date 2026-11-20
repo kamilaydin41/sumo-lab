@@ -76,10 +76,10 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   const bladeGeo = new THREE.BufferGeometry();
   bladeGeo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
   bladeGeo.setIndex(indices); bladeGeo.computeVertexNormals();
-  const bladeMetal = new THREE.MeshStandardMaterial({color:'#e5e7eb',metalness:1,roughness:.12,side:THREE.DoubleSide});
+  const bladeMetal = new THREE.MeshStandardMaterial({color:'#f2f4f7',metalness:.42,roughness:.24,emissive:'#555b63',emissiveIntensity:.22,side:THREE.DoubleSide});
   const wedge = new THREE.Mesh(bladeGeo,bladeMetal); wedge.castShadow=true; wedge.receiveShadow=true; blade.add(wedge);
   // Ön kesici ağız tek bir düz çizgidir ve robotun tüm bıçak genişliği boyunca uzanır.
-  const cuttingEdge = new THREE.Mesh(new THREE.BoxGeometry(bladeWidth,bladeThickness,dimensions.width*.008),new THREE.MeshStandardMaterial({color:'#ffffff',metalness:1,roughness:.1}));
+  const cuttingEdge = new THREE.Mesh(new THREE.BoxGeometry(bladeWidth,bladeThickness,dimensions.width*.008),new THREE.MeshStandardMaterial({color:'#ffffff',metalness:.35,roughness:.18,emissive:'#777d85',emissiveIntensity:.28}));
   cuttingEdge.position.set(0,floorY+bladeThickness*.5,tipZ); blade.add(cuttingEdge);
   // Düşük montaj kulakları ve bağlantı vidaları.
   for (const x of [-half*.72,half*.72]) {

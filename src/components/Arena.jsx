@@ -17,7 +17,7 @@ const CLASS_PRESETS = {
   'RC Sumo (500 g)': { robotScale:1, maxSpeed:2.05, mass:.5, width:.50, length:.50, height:.175 }, // 100x100x35 mm
 };
 
-function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensions = { width: .92, length: 1.02, height: .25 }) {
+function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensions = { width: .92, length: 1.02, height: .25 }, opponentSensorCount = 3) {
   const root = new THREE.Group();
   root.scale.setScalar(scale);
   const bodyMat = new THREE.MeshStandardMaterial({ color, metalness: .42, roughness: .38 });
@@ -59,8 +59,16 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(dimensions.width*.045,12,10),new THREE.MeshBasicMaterial({color:'#35d7f4'}));
     mesh.position.set(x,.0925+dimensions.width*.045,z); root.add(mesh); sensors.push({mesh,x,z});
   }
+  // Rakip IR sensörleri ön yarım daireye 2–7 adet yerleştirilir.
+  const opponentSensors = [];
+  const sensorAngles = opponentSensorCount === 2 ? [-32, 32] : Array.from({length:opponentSensorCount}, (_,i)=>-70 + i*(140/(opponentSensorCount-1)));
+  for (const deg of sensorAngles) {
+    const a=deg*Math.PI/180, x=Math.sin(a)*dimensions.width*.57, z=Math.cos(a)*dimensions.length*.57;
+    const mesh=new THREE.Mesh(new THREE.SphereGeometry(dimensions.width*.035,12,10),new THREE.MeshBasicMaterial({color:'#38bdf8'}));
+    mesh.position.set(x,.105+dimensions.height*.72,z); root.add(mesh); opponentSensors.push({mesh,angle:a,detected:false});
+  }
   const beacon = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.07,dimensions.width*.07,dimensions.width*.025,24),accentMat); beacon.position.set(0,.105+dimensions.height+dimensions.width*.055,-.02); root.add(beacon);
-  root.userData = { sensors, bladeType, label: isRival ? 'RAKİP' : 'OYUNCU', dimensions };
+  root.userData = { sensors, opponentSensors, bladeType, label: isRival ? 'RAKİP' : 'OYUNCU', dimensions };
   return root;
 }
 
@@ -72,11 +80,25 @@ function sensorWorld(robot, x, z, playableRadius) {
   return { x: wx, z: wz, edge: Math.hypot(wx,wz) >= playableRadius };
 }
 
-export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
+function readOpponentSensors(robot, self, target, range=1.75) {
+  const dx=target.x-self.x, dz=target.z-self.z, distance=Math.hypot(dx,dz);
+  const bearing=wrapAngle(Math.atan2(dx,dz)-self.a);
+  const readings=robot.userData.opponentSensors.map(sensor=>{
+    const relative=wrapAngle(bearing-sensor.angle);
+    const detected=distance<=range && Math.abs(relative)<=Math.PI/5;
+    sensor.detected=detected; sensor.mesh.material.color.set(detected?'#fbbf24':'#38bdf8');
+    return {detected,angle:sensor.angle};
+  });
+  const active=readings.filter(x=>x.detected);
+  const left=active.some(x=>x.angle<-.12), right=active.some(x=>x.angle>.12);
+  return { any:active.length>0, left, right, front:active.length>0 && (Math.abs(bearing)<=.25 || (left&&right)), readings, distance, bearing };
+}
+
+export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', playerOpponentSensorCount=3, rivalOpponentSensorCount=3, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
   const host = useRef(null);
   const api = useRef(null);
-  const props = useRef({running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange});
-  useEffect(()=>{props.current={running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange};},[running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange]);
+  const props = useRef({running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange});
+  useEffect(()=>{props.current={running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange};},[running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange]);
 
   useEffect(()=>{
     const el=host.current; if(!el) return;
@@ -110,8 +132,8 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     const startMat=new THREE.MeshStandardMaterial({color:'#f7f7f4',roughness:.88});
     [-startLineOffset,startLineOffset].forEach(x=>{const line=new THREE.Mesh(new THREE.BoxGeometry(.018,.006,startLineLength),startMat);line.position.set(x,.097,0);scene.add(line);});
 
-    const player=makeRobot(props.current.robotColor,'#8fc2ff',props.current.bladeType,preset.robotScale,false,preset);
-    const rival=makeRobot(props.current.rivalColor,'#ffb36b',props.current.rivalBladeType,rivalPreset.robotScale,true,rivalPreset); scene.add(player,rival);
+    const player=makeRobot(props.current.robotColor,'#8fc2ff',props.current.bladeType,preset.robotScale,false,preset,props.current.playerOpponentSensorCount||3);
+    const rival=makeRobot(props.current.rivalColor,'#ffb36b',props.current.rivalBladeType,rivalPreset.robotScale,true,rivalPreset,props.current.rivalOpponentSensorCount||3); scene.add(player,rival);
     const shadows=[]; for(const [color,op,profile] of [['#3b82f6',.14,preset],['#ef4444',.12,rivalPreset]]){const m=new THREE.Mesh(new THREE.CircleGeometry(Math.max(profile.width,profile.length)*.72,32),new THREE.MeshBasicMaterial({color,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.y=.105;scene.add(m);shadows.push(m);}
     const startState=()=>({x:(props.current.playerPosition?.x??-.52)*maxRadius,z:(props.current.playerPosition?.z??0)*maxRadius,a:(props.current.playerHeading??90)*Math.PI/180,vx:0,vz:0,turn:0,rx:(props.current.rivalPosition?.x??.52)*maxRadius,rz:(props.current.rivalPosition?.z??0)*maxRadius,ra:(props.current.rivalHeading??270)*Math.PI/180,rvx:0,rvz:0,rturn:0,collisions:0,pushes:0,playerRoll:0,playerPitch:0,rivalRoll:0,rivalPitch:0,playerRollRate:0,playerPitchRate:0,rivalRollRate:0,rivalPitchRate:0,lastPush:0,playerTipped:false,rivalTipped:false,playerEdge:false,rivalEdge:false,winner:null,finishReason:'',lastHit:0,elapsed:0});
     const state=startState(); const keys={forward:false,back:false,left:false,right:false};
@@ -148,12 +170,14 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         const pFront=playerSensors.slice(0,3).some(s=>s.edge),pRear=playerSensors.slice(3).some(s=>s.edge);
         const rFront=rivalSensors.slice(0,3).some(s=>s.edge),rRear=rivalSensors.slice(3).some(s=>s.edge);
         state.playerEdge=pFront||pRear;state.rivalEdge=rFront||rRear;
+        const playerTarget=readOpponentSensors(player,state,{x:state.rx,z:state.rz},1.85);
+        const rivalTarget=readOpponentSensors(rival,{x:state.rx,z:state.rz,a:state.ra},{x:state.x,z:state.z},1.85);
         let pF=0,pT=0;
         if(state.playerTipped){pF=0;pT=0;} else if(p.mode==='AUTO'||p.mode==='OTONOM'){
           const tactic=(p.dipSwitches||[]).reduce((n,on,i)=>n+(on?(1<<i):0),0);
           const aggressive=[1,3,5,7].includes(tactic), fastScan=[2,5,7].includes(tactic), cautious=[4,6].includes(tactic);
-          const dx=state.rx-state.x,dz=state.rz-state.z,dist=Math.hypot(dx,dz);const desired=Math.atan2(dx,dz);const err=wrapAngle(desired-state.a);
-          if(pFront){pF=cautious?-.98:-.88;pT=err>=0?-.95:.95;} else if(pRear){pF=.48;pT=err>=0?.75:-.75;} else if(dist<1.55){pF=aggressive?1:.88;pT=clamp(err*(aggressive?1.7:1.35),-1,1);} else {pF=fastScan?.28:(cautious?.22:.35);pT=err>.12?(fastScan?1:.78):err<-.12?(fastScan?-1:-.78):(fastScan?.42:.18);}
+          const dist=playerTarget.distance, err=playerTarget.bearing;
+          if(pFront){pF=cautious?-.98:-.88;pT=err>=0?-.95:.95;} else if(pRear){pF=.48;pT=err>=0?.75:-.75;} else if(playerTarget.any){if(playerTarget.front){pF=aggressive?1:.88;pT=clamp(err*1.2,-.45,.45);}else{pF=.18;pT=playerTarget.left?-.9:.9;}} else {pF=fastScan?.28:(cautious?.22:.35);pT=fastScan?.9:.72;}
         } else if(p.mode==='ARDUINO') {
           const left=clamp(p.arduinoCommand?.left||0,-1,1), right=clamp(p.arduinoCommand?.right||0,-1,1);
           pF=(left+right)/2; pT=(right-left);
@@ -168,44 +192,44 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         }
         // Arduino sketch sensor bridge: A0-A4 edge, D2/D3/D11 opponent, D12/D13/A5 DIP.
         if(p.mode==='ARDUINO' && now-(state.lastArduinoSensor||0)>35){
-          const rel=wrapAngle(Math.atan2(state.rx-state.x,state.rz-state.z)-state.a);
-          const opponentVisible=Math.hypot(state.rx-state.x,state.rz-state.z)<1.9;
-          const sensors={edge:playerSensors.map(v=>v.edge),opponent:[opponentVisible&&rel<-.22,opponentVisible&&Math.abs(rel)<=.42,opponentVisible&&rel>.22]};
+          const sensors={edge:playerSensors.map(v=>v.edge),opponent:[playerTarget.left,playerTarget.front,playerTarget.right]};
           window.parent.postMessage({type:'SUMO_SENSOR_DATA',sensors},'*'); state.lastArduinoSensor=now;
         }
         // Opponent controller: edge avoidance has priority over target seeking and attack.
-        const dx=state.x-state.rx,dz=state.z-state.rz,dist=Math.hypot(dx,dz),targetAngle=Math.atan2(dx,dz),err=wrapAngle(targetAngle-state.ra);
+        const err=rivalTarget.bearing;
         let rF=0,rT=0;
-        if(state.rivalTipped){rF=0;rT=0;}else if(rFront){rF=-.92;rT=err>=0?-.9:.9;}else if(rRear){rF=.5;rT=err>=0?.7:-.7;}else if(dist>1.25){rF=.9;rT=clamp(err*1.65,-1,1);}else{rF=1;rT=clamp(err*1.2,-.55,.55);}
+        if(state.rivalTipped){rF=0;rT=0;}else if(rFront){rF=-.92;rT=err>=0?-.9:.9;}else if(rRear){rF=.5;rT=err>=0?.7:-.7;}else if(rivalTarget.any){if(rivalTarget.front){rF=1;rT=clamp(err*1.2,-.45,.45);}else{rF=.18;rT=rivalTarget.left?-.9:.9;}}else{rF=.35;rT=.78;}
         const autoTactic=(p.dipSwitches||[]).reduce((n,on,i)=>n+(on?(1<<i):0),0);
         const playerSpeedScale=(p.mode==='AUTO'||p.mode==='OTONOM')?([1,3,5,7].includes(autoTactic)?1.08:([4,6].includes(autoTactic)?.88:1)):1;
         drive(state,pF,pT,dt,maxSpeed*playerSpeedScale);drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,rivalCls.maxSpeed*.88*clamp(Math.sqrt(rivalCls.mass/Math.max(.03,(p.rivalTotalWeight||rivalCls.mass*1000)/1000)),.72,1.12));
 
-        // Yönelimli dikdörtgen gövde çarpışması (OBB/SAT): robotlar birbirinin içinden geçemez.
+        // Gerçek temas: şasi ve dar kama ayrı çarpışma hacimleridir.
+        // Önceki tek büyük dikdörtgen, kama çevresinde görünür boşluk varken temas varmış gibi davranabiliyordu.
         const axes = (angle) => [{x:Math.cos(angle),z:-Math.sin(angle)},{x:Math.sin(angle),z:Math.cos(angle)}];
         const projectRadius = (axis, angle, halfW, halfL) => {
           const right={x:Math.cos(angle),z:-Math.sin(angle)}, forward={x:Math.sin(angle),z:Math.cos(angle)};
           return Math.abs(axis.x*right.x+axis.z*right.z)*halfW + Math.abs(axis.x*forward.x+axis.z*forward.z)*halfL;
         };
-        // Çarpışma hacmi şasi + öne uzanan kama alanını kapsar; kama rakibin gövdesinin içinden görsel olarak geçmez.
-        const playerBladeLength=p.bladeType==='Uzun alçak kama'?.98:.76;
-        const rivalBladeLength=p.rivalBladeType==='Uzun alçak kama'?.98:p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.72:.76;
-        const pBladeExt=Math.max(0,playerBladeLength-.32)*preset.length*preset.robotScale;
-        const rBladeExt=Math.max(0,rivalBladeLength-.32)*rivalPreset.length*rivalPreset.robotScale;
-        const pForwardX=Math.sin(state.a),pForwardZ=Math.cos(state.a);
-        const rForwardX=Math.sin(state.ra),rForwardZ=Math.cos(state.ra);
-        const pCenterX=state.x+pForwardX*pBladeExt*.5,pCenterZ=state.z+pForwardZ*pBladeExt*.5;
-        const rCenterX=state.rx+rForwardX*rBladeExt*.5,rCenterZ=state.rz+rForwardZ*rBladeExt*.5;
-        const dxBody=rCenterX-pCenterX,dzBody=rCenterZ-pCenterZ;
-        const pHalfW=preset.width*preset.robotScale*.53, pHalfL=(preset.length*preset.robotScale+pBladeExt)*.5;
-        const rHalfW=rivalPreset.width*rivalPreset.robotScale*.53, rHalfL=(rivalPreset.length*rivalPreset.robotScale+rBladeExt)*.5;
-        const candidates=[...axes(state.a),...axes(state.ra)];
+        const bladeLenP=p.bladeType==='Uzun alçak kama'?.98:.76;
+        const bladeLenR=p.rivalBladeType==='Uzun alçak kama'?.98:p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.72:.76;
+        const bladeWidthP=p.bladeType==='Geniş kama'?1.08:p.bladeType==='Dar hassas kama'?.72:.94;
+        const bladeWidthR=p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.72:.94;
+        const makeShapes=(x,z,a,profile,bladeLen,bladeWidth)=>[
+          {x,z,a,hw:profile.width*.5,hl:profile.length*.5},
+          {x: x+Math.sin(a)*(profile.length*(.18+bladeLen*.5)), z:z+Math.cos(a)*(profile.length*(.18+bladeLen*.5)),a,hw:profile.width*bladeWidth*.5,hl:profile.length*bladeLen*.5}
+        ];
+        const pShapes=makeShapes(state.x,state.z,state.a,preset,bladeLenP,bladeWidthP);
+        const rShapes=makeShapes(state.rx,state.rz,state.ra,rivalPreset,bladeLenR,bladeWidthR);
         let minOverlap=Infinity, collisionNormal=null;
-        for(const axis of candidates){
-          const distance=Math.abs(dxBody*axis.x+dzBody*axis.z);
-          const overlap=projectRadius(axis,state.a,pHalfW,pHalfL)+projectRadius(axis,state.ra,rHalfW,rHalfL)-distance;
-          if(overlap<=0){minOverlap=-1;break;}
-          if(overlap<minOverlap){minOverlap=overlap;collisionNormal={...axis};if(dxBody*axis.x+dzBody*axis.z<0){collisionNormal.x*=-1;collisionNormal.z*=-1;}}
+        for(const ps of pShapes) for(const rs of rShapes){
+          const dx=rs.x-ps.x,dz=rs.z-ps.z; let pairOverlap=Infinity, pairNormal=null, separated=false;
+          for(const axis of [...axes(ps.a),...axes(rs.a)]){
+            const distance=Math.abs(dx*axis.x+dz*axis.z);
+            const overlap=projectRadius(axis,ps.a,ps.hw,ps.hl)+projectRadius(axis,rs.a,rs.hw,rs.hl)-distance;
+            if(overlap<=0){separated=true;break;}
+            if(overlap<pairOverlap){pairOverlap=overlap;pairNormal={...axis};if(dx*axis.x+dz*axis.z<0){pairNormal.x*=-1;pairNormal.z*=-1;}}
+          }
+          if(!separated && pairNormal && pairOverlap<minOverlap){minOverlap=pairOverlap;collisionNormal=pairNormal;}
         }
         if(minOverlap>0&&collisionNormal){
           const nx=collisionNormal.x,nz=collisionNormal.z;
@@ -313,7 +337,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     };
     api.current={state,startState};frame=requestAnimationFrame(tick);
     return()=>{cancelAnimationFrame(frame);ro.disconnect();window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointermove',pointerMove);renderer.domElement.removeEventListener('pointerup',pointerUp);renderer.domElement.removeEventListener('pointercancel',pointerUp);renderer.domElement.removeEventListener('wheel',wheelRotate,true);window.removeEventListener('keydown',rotateKey);controls.dispose();renderer.dispose();scene.traverse(o=>{o.geometry?.dispose?.();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose?.();});if(renderer.domElement.parentNode===el)el.removeChild(renderer.domElement);};
-  },[robotClass,rivalRobotClass,arenaDiameterCm,bladeType,rivalBladeType,rivalColor]);
+  },[robotClass,rivalRobotClass,arenaDiameterCm,bladeType,rivalBladeType,rivalColor,playerOpponentSensorCount,rivalOpponentSensorCount]);
 
   useEffect(()=>{if(api.current){Object.assign(api.current.state,api.current.startState());}},[resetKey,robotClass,rivalRobotClass]);
   useEffect(()=>{if(api.current&&!running){const s=api.current.state;const radius=Math.max(.75,(arenaDiameterCm||80)/40);s.a=(playerHeading*Math.PI)/180;s.ra=(rivalHeading*Math.PI)/180;s.x=(playerPosition?.x??-.52)*radius;s.z=(playerPosition?.z??0)*radius;s.rx=(rivalPosition?.x??.52)*radius;s.rz=(rivalPosition?.z??0)*radius;s.vx=0;s.vz=0;s.rvx=0;s.rvz=0;}},[playerHeading,rivalHeading,playerPosition,rivalPosition,running,arenaDiameterCm]);

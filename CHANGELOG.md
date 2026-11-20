@@ -1,3 +1,8 @@
+## v0.16.0
+- Şasi ve kama için ayrı OBB/SAT temas hacimleri; görünür temas olmadan itme oluşmasını engelleyen daha dar bileşik çarpışma modeli.
+- Oyuncu ve rakip robot için bağımsız 2–7 IR rakip sensörü seçimi.
+- Sensörler 3B modelde görünür; yan görüş algısı, otonom hedef takibi ve Arduino sensör köprüsüne bağlandı.
+
 # Değişiklik günlüğü
 
 ## v0.15.1 — 20 Kasım 2026

@@ -120,3 +120,8 @@
 - Varsayılan kontrol modu Otonom olarak ayarlandı.
 - Arka çizgi sensörleri kaldırıldı; üç ön çizgi sensörü bırakıldı.
 - Kenar algılama ve kaçış algoritması, Arduino örnek kodu dahil, ön sensörlerle sınırlandı.
+
+## v0.20.4
+- Added independent opponent-sensor detection distance controls for player and rival robots (10–100 cm, 5 cm steps; default 40 cm).
+- Applied each robot's configured range directly to opponent detection in the simulation; range changes affect sensing only, not pushing or collision forces.
+- Persisted both range settings in saved projects and restored/clamped them when loading older or edited configurations.

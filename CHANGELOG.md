@@ -54,3 +54,8 @@
 - Çarpışma sırasında sürekli itme kuvveti motor torku, redüksiyon, tekerlek yarıçapı, lastik tutuşu ve iki robotun kütlesine göre hesaplanır.
 - Robotların başlangıç konum ve yönleri tam ayna simetrisi olmayacak şekilde değiştirildi.
 - Tüm robot ayarlarını kaydetmek için tek ana kayıt düğmesi bırakıldı.
+
+## 0.20.8
+- Fixed the source tree so the root Vite entrypoint loads the latest App, Arena, and styles files.
+- Removed duplicated nested source directories.
+- Restored the latest Arena implementation as the canonical application source.

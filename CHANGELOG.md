@@ -34,3 +34,15 @@
 - Sürükleme devam ederken Q ve E tuşlarıyla seçili robot saat yönünün tersine / saat yönünde döndürülebilir.
 - Konum ve yön değişiklikleri ana yerleşim paneline anında aktarılır ve proje kaydına dahil edilir.
 - Dokunmatik cihazlarda sürükleme ve açı kaydırıcısı birlikte kullanılabilir.
+
+
+## v0.14.0 – Gerçekçi dohyo renkleri ve orantılı ölçüler
+
+- Dohyo'nun mücadele yüzeyi siyah, çevre sınır bandı beyaz olarak yenilendi.
+- Önceki kırmızı sınır halkası kaldırıldı.
+- Çizgi sensörleri beyaz sınır bandının iç kenarını algılar; ring-out platformun dış kenarına göre hesaplanır.
+- Beyaz sınır bandı ve platform çevresi dohyo çapına göre orantılıdır.
+- Başlangıç çizgilerinin konumu ve boyu dohyo/robot ölçülerine göre ölçeklenir.
+- Robot tekerleklerinin dışa taşması ve kama çarpışma uzantısı fiziksel ölçülere yaklaştırıldı.
+
+**Ölçek:** Simülasyonda 1 Three.js birimi 20 cm'dir. Robot ölçüleri milimetre profillerinden, dohyo çapı santimetre cinsinden dönüştürülür.

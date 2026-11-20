@@ -48,8 +48,8 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
     const screw = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.022,dimensions.width*.022,dimensions.width*.014,12),darkMat); screw.rotation.x=Math.PI/2; screw.position.set(x,.105+dimensions.height*.9,dimensions.length*.31); blade.add(screw);
   }
   root.add(blade);
-  for (const x of [-dimensions.width*.53,dimensions.width*.53]) {
-    const wheelRadius=dimensions.width*.17, wheelWidth=dimensions.width*.13;
+  for (const x of [-dimensions.width*.46,dimensions.width*.46]) {
+    const wheelRadius=dimensions.width*.16, wheelWidth=dimensions.width*.10;
     const wheel = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius,wheelRadius,wheelWidth,24),darkMat); wheel.rotation.z=Math.PI/2; wheel.position.set(x,.0925+wheelRadius,-dimensions.length*.12); wheel.castShadow=true; root.add(wheel);
     const hub = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius*.42,wheelRadius*.42,wheelWidth*1.04,16),accentMat); hub.rotation.z=Math.PI/2; hub.position.copy(wheel.position); root.add(hub);
   }
@@ -64,11 +64,12 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   return root;
 }
 
-function sensorWorld(robot, x, z, radius) {
+function sensorWorld(robot, x, z, playableRadius) {
   const c = Math.cos(robot.a), s = Math.sin(robot.a);
   const wx = robot.x + x*c + z*s;
   const wz = robot.z - x*s + z*c;
-  return { x: wx, z: wz, edge: Math.hypot(wx,wz) > radius - .10 };
+  // Sensörler siyah dohyo yüzeyinden beyaz sınır bandına geçişte tetiklenir.
+  return { x: wx, z: wz, edge: Math.hypot(wx,wz) >= playableRadius };
 }
 
 export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
@@ -89,11 +90,24 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     // 1 Three.js birimi = 20 cm; varsayılan Mini Sumo dohyo çapı 80 cm'dir.
     const maxRadius=Math.max(.75, (props.current.arenaDiameterCm || 80) / 40);
     camera.position.set(maxRadius * 3.0, maxRadius * 3.25, maxRadius * 3.7);
-    const plinth=new THREE.Mesh(new THREE.CylinderGeometry(maxRadius+.22,maxRadius+.22,.22,112),new THREE.MeshStandardMaterial({color:'#252f40',metalness:.25,roughness:.72})); plinth.position.y=-.09; plinth.receiveShadow=true; plinth.castShadow=true; scene.add(plinth);
-    const dohyo=new THREE.Mesh(new THREE.CylinderGeometry(maxRadius,maxRadius,.075,112),new THREE.MeshStandardMaterial({color:'#e6e8e8',roughness:.9})); dohyo.position.y=.055; dohyo.receiveShadow=true; scene.add(dohyo);
-    const edge=new THREE.Mesh(new THREE.TorusGeometry(maxRadius-.14,.075,12,112),new THREE.MeshStandardMaterial({color:'#e44c4c',roughness:.52,emissive:'#5c1111',emissiveIntensity:.12})); edge.rotation.x=Math.PI/2; edge.position.y=.105; scene.add(edge);
-    const startMat=new THREE.MeshStandardMaterial({color:'#a7adb6',roughness:.75}); [-.5,.5].forEach(z=>{const line=new THREE.Mesh(new THREE.BoxGeometry(.85,.012,.045),startMat);line.position.set(0,.1,z);scene.add(line);});
-    const ringLights=new THREE.Mesh(new THREE.TorusGeometry(maxRadius+.25,.018,8,112),new THREE.MeshBasicMaterial({color:'#3b82f6',transparent:true,opacity:.5})); ringLights.rotation.x=Math.PI/2;ringLights.position.y=-.02;scene.add(ringLights);
+    // Gerçek dohyo görünümü: siyah mücadele yüzeyi ve çevresinde beyaz sınır bandı.
+    // 1 Three.js birimi = 20 cm; beyaz bandın genişliği çapın yaklaşık %3,1'idir.
+    const boundaryWidth=maxRadius*.0625;
+    const playableRadius=maxRadius-boundaryWidth;
+    const platformMargin=boundaryWidth*1.65;
+    const platformThickness=Math.max(.055,maxRadius*.06);
+    const plinth=new THREE.Mesh(new THREE.CylinderGeometry(maxRadius+platformMargin,maxRadius+platformMargin,platformThickness,128),new THREE.MeshStandardMaterial({color:'#343b45',metalness:.08,roughness:.82}));
+    plinth.position.y=-platformThickness/2; plinth.receiveShadow=true; plinth.castShadow=true; scene.add(plinth);
+    // Beyaz üst tabla; siyah iç disk beyaz kenarı kapatmayacak şekilde daha küçük tutulur.
+    const dohyoBase=new THREE.Mesh(new THREE.CylinderGeometry(maxRadius,maxRadius,.075,128),new THREE.MeshStandardMaterial({color:'#f4f4f1',roughness:.92}));
+    dohyoBase.position.y=.055; dohyoBase.receiveShadow=true; dohyoBase.castShadow=true; scene.add(dohyoBase);
+    const blackSurface=new THREE.Mesh(new THREE.CylinderGeometry(playableRadius,playableRadius,.078,128),new THREE.MeshStandardMaterial({color:'#090b0e',roughness:.96,metalness:0}));
+    blackSurface.position.y=.0565; blackSurface.receiveShadow=true; blackSurface.castShadow=false; scene.add(blackSurface);
+    // Başlangıç çizgileri de dohyo ve robot boyutuna göre ölçeklenir; robotlar merkeze bakacak şekilde yerleşir.
+    const startLineLength=Math.max(preset.width*1.35,maxRadius*.20);
+    const startLineOffset=maxRadius*.28;
+    const startMat=new THREE.MeshStandardMaterial({color:'#f7f7f4',roughness:.88});
+    [-startLineOffset,startLineOffset].forEach(x=>{const line=new THREE.Mesh(new THREE.BoxGeometry(.018,.006,startLineLength),startMat);line.position.set(x,.097,0);scene.add(line);});
 
     const player=makeRobot(props.current.robotColor,'#8fc2ff',props.current.bladeType,preset.robotScale,false,preset);
     const rival=makeRobot('#d84b4b','#ffb36b','Geniş kama',preset.robotScale,true,preset); scene.add(player,rival);
@@ -126,9 +140,9 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
       if(p.running&&!state.winner){
         state.elapsed+=dt;const configuredMass=Math.max(.03,(p.totalWeight||cls.mass*1000)/1000);const maxSpeed=cls.maxSpeed*(p.speed/100)*clamp(Math.sqrt(cls.mass/configuredMass),.72,1.12);
         // Edge sensors read the actual white dohyo boundary at five physical sensor positions.
-        const playerSensors=player.userData.sensors.map(s=>sensorWorld(state,s.x,s.z,maxRadius));
+        const playerSensors=player.userData.sensors.map(s=>sensorWorld(state,s.x,s.z,playableRadius));
         const rivalProxy={x:state.rx,z:state.rz,a:state.ra};
-        const rivalSensors=rival.userData.sensors.map(s=>sensorWorld(rivalProxy,s.x,s.z,maxRadius));
+        const rivalSensors=rival.userData.sensors.map(s=>sensorWorld(rivalProxy,s.x,s.z,playableRadius));
         const pFront=playerSensors.slice(0,3).some(s=>s.edge),pRear=playerSensors.slice(3).some(s=>s.edge);
         const rFront=rivalSensors.slice(0,3).some(s=>s.edge),rRear=rivalSensors.slice(3).some(s=>s.edge);
         state.playerEdge=pFront||pRear;state.rivalEdge=rFront||rRear;
@@ -172,14 +186,16 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           return Math.abs(axis.x*right.x+axis.z*right.z)*halfW + Math.abs(axis.x*forward.x+axis.z*forward.z)*halfL;
         };
         // Çarpışma hacmi şasi + öne uzanan kama alanını kapsar; kama rakibin gövdesinin içinden görsel olarak geçmez.
-        const pBladeExt=.43*(preset.length/1.02)*preset.robotScale;
-        const rBladeExt=pBladeExt;
+        const playerBladeLength=p.bladeType==='Uzun alçak kama'?.98:.76;
+        const rivalBladeLength=.76;
+        const pBladeExt=Math.max(0,playerBladeLength-.32)*preset.length*preset.robotScale;
+        const rBladeExt=Math.max(0,rivalBladeLength-.32)*preset.length*preset.robotScale;
         const pForwardX=Math.sin(state.a),pForwardZ=Math.cos(state.a);
         const rForwardX=Math.sin(state.ra),rForwardZ=Math.cos(state.ra);
         const pCenterX=state.x+pForwardX*pBladeExt*.5,pCenterZ=state.z+pForwardZ*pBladeExt*.5;
         const rCenterX=state.rx+rForwardX*rBladeExt*.5,rCenterZ=state.rz+rForwardZ*rBladeExt*.5;
         const dxBody=rCenterX-pCenterX,dzBody=rCenterZ-pCenterZ;
-        const pHalfW=preset.width*preset.robotScale*.5, pHalfL=(preset.length*preset.robotScale+pBladeExt)*.5;
+        const pHalfW=preset.width*preset.robotScale*.53, pHalfL=(preset.length*preset.robotScale+pBladeExt)*.5;
         const rHalfW=pHalfW, rHalfL=(preset.length*preset.robotScale+rBladeExt)*.5;
         const candidates=[...axes(state.a),...axes(state.ra)];
         let minOverlap=Infinity, collisionNormal=null;
@@ -266,7 +282,8 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         // Surface friction and natural deceleration.
         const friction=Math.max(0,1-dt*.55);state.vx*=friction;state.vz*=friction;state.rvx*=friction;state.rvz*=friction;
         // Resmi sumo yaklaşımı: gövdenin herhangi bir bölümü dohyo dışına temas ederse ring-out.
-        const footprintRadius=Math.hypot(preset.width*.5,(preset.length*.5+.43*(preset.length/1.02)));
+        const activeBladeLength=p.bladeType==='Uzun alçak kama'?.98:.76;
+        const footprintRadius=Math.hypot(preset.width*.53,(preset.length*(activeBladeLength+.18)));
         const outP=Math.hypot(state.x,state.z)+footprintRadius>maxRadius+.015;
         const outR=Math.hypot(state.rx,state.rz)+footprintRadius>maxRadius+.015;
         if(outP||outR){state.winner=outP?'RAKİP KAZANDI':'SEN KAZANDIN';state.finishReason=outP?'Oyuncu robot dohyo dışına çıktı':'Rakip robot dohyo dışına çıktı';}

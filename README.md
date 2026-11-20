@@ -2,6 +2,16 @@
 
 PARS SUMOLAB, sumo robotlarını tasarlamak, programlamak ve sanal dohyo üzerinde karşılaştırmak için hazırlanmış React + Vite + Three.js tabanlı eğitim simülatörüdür.
 
+## v0.14.0 yenilikleri
+
+- Dohyo yüzeyi gerçek sumo düzenine uygun olarak siyah yapıldı; çevresine beyaz sınır bandı eklendi.
+- Kırmızı sınır halkası kaldırıldı. Çizgi sensörleri siyah yüzeyden beyaz banda geçişte uyarı verir.
+- Ring-out kontrolü platformun dış kenarına göre çalışır; beyaz bantta bulunmak tek başına ring-out değildir.
+- Beyaz sınır bandı, platform payı ve başlangıç çizgileri dohyo çapına göre orantılı ölçeklenir.
+- Başlangıç çizgileri robot ölçülerine ve dohyo çapına göre ayarlanır.
+- Robot tekerlekleri ve kama çarpışma uzantısı fiziksel gövde ölçülerine daha yakın hale getirildi.
+- Micro, Mini, Mega ve diğer sınıflarda robot/dohyo oranı fiziksel ölçü profillerine göre korunur.
+
 ## v0.13.0 yenilikleri
 
 - Robotu sol fare tuşuyla sürüklerken fare tekerleğini çevirerek aynı anda döndürebilirsin. Her tekerlek adımı 6° yön değiştirir.

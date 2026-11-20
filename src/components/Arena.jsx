@@ -351,7 +351,7 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
         if(maxOverlap>CONTACT_SKIN&&collisionNormal){
           const nx=collisionNormal.x,nz=collisionNormal.z;
           // Yalnızca doğrulanmış fiziksel temas sonrası gövdeleri ayır.
-          const separation=maxOverlap+.002;
+          const separation=Math.max(0,maxOverlap-.0002);
           state.x-=nx*separation*.5;state.z-=nz*separation*.5;
           state.rx+=nx*separation*.5;state.rz+=nz*separation*.5;
           const pForward=state.vx*nx+state.vz*nz;
@@ -375,7 +375,9 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
           const pushRival=rNose>.48&&rF>.05?rivalDrive.usableForceN*clamp(rF,0,1)*clamp(rNose,0,1):0;
           const pushImpulse=(pushPlayer+pushRival)*dt*5; // N·s / kg -> simülasyon hız birimi
           if(pushImpulse!==0){
-            state.vx-=pushImpulse*nx/pMass;state.vz-=pushImpulse*nz/pMass;
+            // Temaslı itişte saldıran robotun motor ivmesini yapay olarak geri alma.
+            // İtme kuvveti hedef robota aktarılır; konum çözümü iki gövdeyi temas
+            // yüzeyinde tutar ve saldıran robot teması sürdürerek ilerleyebilir.
             state.rvx+=pushImpulse*nx/rMass;state.rvz+=pushImpulse*nz/rMass;
           }
           // Kama ancak robot gerçekten öne bakıyor ve rakibe doğru ilerliyorsa altına girmiş sayılır.

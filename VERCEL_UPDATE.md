@@ -1,11 +1,11 @@
-# Vercel güncelleme rehberi – PARS SUMOLAB v0.21.9
+# Vercel güncelleme rehberi – PARS SUMOLAB v0.22.0
 
 1. ZIP arşivini bilgisayarına indirip çıkar.
 2. Proje dosyalarını GitHub deposundaki mevcut dosyalarla değiştir.
 3. Aşağıdaki Türkçe commit mesajını kullan:
 
 ```text
-PARS SUMOLAB v0.21.9: Ön sensör saldırı davranışını düzelt Oyuncu ve rakip ağırlık özetlerini eşitle
+PARS SUMOLAB v0.22.0: Ön sensör saldırı davranışını düzelt Oyuncu ve rakip ağırlık özetlerini eşitle
 ```
 
 4. Değişiklikleri bağlı dala gönder. Vercel otomatik dağıtımı başlatır.
@@ -14,6 +14,6 @@ PARS SUMOLAB v0.21.9: Ön sensör saldırı davranışını düzelt Oyuncu ve ra
 Yerel kontrol için `npm install` ve `npm run build` komutlarını çalıştır.
 
 
-## v0.21.9
+## v0.22.0
 
 Bu sürüm v0.21.5 tabanını korur ve yalnızca v0.21.8 motor çıkış devri düzeltmesini içerir.

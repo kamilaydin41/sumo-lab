@@ -1,6 +1,12 @@
-# PARS SUMOLAB v0.21.9
+# PARS SUMOLAB v0.22.0
 
-## v0.21.9
+- Robotlar kafa kafaya iterken yapay geri tepme kaldırıldı; itme impulsu hedef robota aktarılıyor.
+- Çarpışma konum düzeltmesindeki fazladan ayırma payı azaltıldı; robotlar temas yüzeyinde kalacak şekilde düzenlendi.
+- v0.21.9 temelindeki diğer özellikler ve fizik ayarları korundu.
+
+# PARS SUMOLAB v0.22.0
+
+## v0.22.0
 - v0.21.5 kod tabanı korundu.
 - v0.21.8'deki motor çıkış devri / ileri hareket düzeltmesi bu tabana uygulandı.
 - Motor RPM değeri tekerlek tarafındaki redüktör çıkış devri olarak kullanılıyor; hız hesabında ikinci kez redüksiyon oranına bölünmüyor.

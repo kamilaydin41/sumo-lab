@@ -1,16 +1,10 @@
-# Değişiklik Günlüğü
+# PARS SUMOLAB v0.21.9
 
-## v0.21.8
-- İleri hareket hız hesabındaki çift redüksiyon bölmesi düzeltildi. Motor RPM ayarı artık redüktör çıkış devri olarak yorumlanıyor.
-- Redüksiyon oranı tork hesabında korunuyor; tekerlek hızı gereksiz yere tekrar bölünmüyor.
-- Oyuncu ve rakip motor ayarlarında devir etiketi "Redüktör çıkış devri" olarak netleştirildi.
-
-## v0.21.8
-- Simülasyonun varsayılan kontrol modu Arduino C++ olarak değiştirildi.
-- Varsayılan kod dili Arduino C++ yapıldı; başlangıçta Arduino örnek programı yüklenir.
-- Ana simülasyon başlatma düğmeleri artık Arduino sketch'inin `setup()` ve `loop()` fonksiyonlarını çalıştırır.
-- Simülasyon duraklatıldığında veya sıfırlandığında Arduino sketch motor komutları durdurulur.
-- Sayfa alt bilgisi, paket sürümü ve dağıtım belgeleri güncellendi.
+## v0.21.9
+- v0.21.5 kod tabanı korundu.
+- v0.21.8'deki motor çıkış devri / ileri hareket düzeltmesi bu tabana uygulandı.
+- Motor RPM değeri tekerlek tarafındaki redüktör çıkış devri olarak kullanılıyor; hız hesabında ikinci kez redüksiyon oranına bölünmüyor.
+- Oyuncu ve rakip ayarlarında devir alanı yeniden adlandırıldı.
 
 # PARS SUMOLAB v0.21.5
 

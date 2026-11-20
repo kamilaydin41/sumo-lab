@@ -1,19 +1,22 @@
-# Vercel ve GitHub güncelleme adımları
+# Vercel Güncelleme Rehberi - PARS SUMOLAB v0.9.0
 
-1. `pars-sumo-lab-v0.8.0.zip` dosyasını bilgisayarına indirip aç.
-2. Proje dosyalarını GitHub deposundaki mevcut dosyalarla değiştir.
-3. Değişiklikleri şu Türkçe commit mesajıyla kaydet:
+1. `pars-sumo-lab-v0.9.0.zip` arşivini bilgisayarınıza indirin.
+2. Arşivi açın ve proje dosyalarını GitHub deponuzdaki mevcut dosyalarla değiştirin.
+3. `package.json` sürümünün `0.9.0` olduğunu kontrol edin.
+4. GitHub commit mesajı olarak aşağıdaki Türkçe açıklamayı kullanabilirsiniz:
 
-```text
-PARS SUMO LAB v0.8.0: Çarpışma fiziği, kama itişi ve sınıf profilleri
-```
+   `PARS SUMOLAB v0.9.0: Robot boyut profilleri ve DIP taktik seçimi`
 
-4. Bağlı dala gönder. Vercel deposu izliyorsa yeni dağıtımı otomatik başlatır.
-5. Dağıtım tamamlandıktan sonra simülasyonu masaüstü ve mobil tarayıcıda kontrol et.
+5. Değişiklikleri Vercel projenizin bağlı olduğu dala gönderin. Otomatik dağıtım açıksa Vercel yeni sürümü oluşturur.
+6. Yayınlandıktan sonra tarayıcı önbelleğini yenileyin ve sekme başlığında **PARS SUMOLAB** yazdığını kontrol edin.
 
 ## Kontrol listesi
-- Robot sınıfı değişince gövde ağırlığı, bileşenler ve dohyo profili değişiyor mu?
-- İki robot temas ettiğinde gövdeler birbirinin içine geçmeden ayrılıyor mu?
-- Kama teması rakibi itiyor ve bazı çarpışmalarda devrilme oluşturuyor mu?
-- Dohyo dışına çıkan robot maçı kaybediyor mu?
-- RC, otonom, Arduino ve DIP-switch kontrolleri çalışıyor mu?
+
+- [ ] Sekme başlığı PARS SUMOLAB
+- [ ] Micro Sumo boyutu 50 × 50 mm
+- [ ] Mini Sumo boyutu 100 × 100 mm
+- [ ] Diğer robot sınıflarında gövde ve tekerlek boyutları değişiyor
+- [ ] DIP profil seçimi üç anahtarı güncelliyor
+- [ ] DIP anahtarlarını tek tek değiştirmek taktik kodunu güncelliyor
+- [ ] Otonom modda DIP taktiği davranışı değiştiriyor
+- [ ] Arduino C++ kodunda D12, D13 ve A5 girişleri okunuyor

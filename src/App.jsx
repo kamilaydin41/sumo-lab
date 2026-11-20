@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import Arena from './components/Arena.jsx';
 
-const jsStarter = `// PARS SUMO LAB v0.8.0 | JavaScript sumo kontrol algoritması
+const jsStarter = `// PARS SUMOLAB v0.9.0 | JavaScript sumo kontrol algoritması
 // Simülatörün beş çizgi sensörüne ve iki rakip sensörüne göre örnek davranış.
 
 function decide(sensor) {
@@ -32,7 +32,7 @@ function decide(sensor) {
 
 // Örnek: const motorCommand = decide(sensorData);`;
 
-const cppStarter = `// PARS SUMO LAB v0.8.0 | Arduino C++ örnek sumo algoritması
+const cppStarter = `// PARS SUMOLAB v0.9.0 | Arduino C++ örnek sumo algoritması
 // Örnek kart: Arduino UNO + TB6612FNG
 // QTR/çizgi sensörleri: ön-sol A0, ön-orta A1, ön-sağ A2, arka-sol A3, arka-sağ A4
 // Rakip IR sensörleri: sol D2, ön D3, sağ D11
@@ -68,12 +68,19 @@ void loop() {
   bool rl=analogRead(EDGE_RL)>EDGE_THRESHOLD;
   bool rr=analogRead(EDGE_RR)>EDGE_THRESHOLD;
   bool oppL=digitalRead(OPP_LEFT), oppF=digitalRead(OPP_FRONT), oppR=digitalRead(OPP_RIGHT);
-  // DIP-1: agresif tarama, DIP-2: hızlı saldırı, DIP-3: savunmacı yaklaşım
-  bool tacticAggressive=digitalRead(DIP_1);
-  bool tacticFast=digitalRead(DIP_2);
-  bool tacticDefensive=digitalRead(DIP_3);
-  int searchPower=tacticAggressive?170:115;
-  int attackPower=tacticFast?255:(tacticDefensive?190:225);
+  // SW1 en düşük bit olacak şekilde 000-111 arasında 8 taktik.
+  int tactic=(digitalRead(DIP_1)?1:0) | (digitalRead(DIP_2)?2:0) | (digitalRead(DIP_3)?4:0);
+  int searchPower=115, attackPower=220, turnPower=190;
+  switch(tactic) {
+    case 0: searchPower=115; attackPower=210; turnPower=170; break; // Dengeli
+    case 1: searchPower=175; attackPower=245; turnPower=205; break; // Agresif
+    case 2: searchPower=145; attackPower=220; turnPower=245; break; // Hızlı tarama
+    case 3: searchPower=190; attackPower=255; turnPower=225; break; // Tam hücum
+    case 4: searchPower=95;  attackPower=185; turnPower=155; break; // Kenar güvenliği
+    case 5: searchPower=165; attackPower=225; turnPower=235; break; // Çevresel tarama
+    case 6: searchPower=120; attackPower=205; turnPower=180; break; // Kontrollü hücum
+    case 7: searchPower=210; attackPower=255; turnPower=255; break; // Maksimum saldırı
+  }
 
   // Çizgi güvenliği saldırıdan önce gelir.
   if(fl || fc || fr) {
@@ -84,9 +91,9 @@ void loop() {
   } else if(oppF || (oppL && oppR)) {
     motor(attackPower,attackPower);
   } else if(oppL) {
-    motor(105,230);
+    motor(attackPower-turnPower/2,attackPower);
   } else if(oppR) {
-    motor(230,105);
+    motor(attackPower,attackPower-turnPower/2);
   } else {
     motor(searchPower,-searchPower); // Rakip ara
   }
@@ -117,16 +124,29 @@ const partCatalog = [
 
 const defaultParts = ['Arduino UNO R3', 'TB6612FNG', 'N20 metal redüktörlü motor', 'Dijital IR mesafe sensörü', 'QTR-1A yansıtıcı sensör', '2S LiPo batarya', 'Alüminyum kama'];
 const ROBOT_PROFILES = {
-  'Pico Sumo (50 g)': { limit:50, body:12, parts:['Seeed XIAO RP2040','TB6612FNG','6 mm mikro motor','Mini IR sensör','Mikro çizgi sensörü','1S mikro LiPo','Polimer mini kama'], arena:'micro', diameter:38, blade:'Dar hassas kama', dims:'4.2 × 4.6 cm' },
-  'Micro Sumo (100 g)': { limit:100, body:25, parts:['Arduino Nano','TB6612FNG','6 mm mikro motor','Mini IR sensör','Mikro çizgi sensörü','1S mikro LiPo','Polimer mini kama'], arena:'micro', diameter:38, blade:'Dar hassas kama', dims:'6.9 × 7.7 cm' },
-  'Mini Sumo (500 g)': { limit:500, body:95, parts:defaultParts, arena:'mini', diameter:80, blade:'Standart kama', dims:'18.4 × 20.4 cm' },
-  '1 Kg Sumo': { limit:1000, body:180, parts:defaultParts, arena:'mini', diameter:100, blade:'Geniş kama', dims:'22.8 × 25.1 cm' },
-  'Klasik 1 Kg Sumo': { limit:1000, body:180, parts:defaultParts, arena:'mini', diameter:100, blade:'Geniş kama', dims:'22.8 × 25.1 cm' },
-  'Mega Sumo (3 Kg)': { limit:3000, body:650, parts:['ESP32 DevKit','Cytron çift motor sürücü','12V yüksek tork motor çifti','Dijital IR mesafe sensörü','QTR-8A sensör dizisi','3S LiPo batarya','Çelik geniş kama'], arena:'mega', diameter:154, blade:'Geniş kama', dims:'32.2 × 36 cm' },
-  'Açık Sınıf (5 Kg)': { limit:5000, body:1200, parts:['ESP32 DevKit','Cytron çift motor sürücü','12V yüksek tork motor çifti','Dijital IR mesafe sensörü','QTR-8A sensör dizisi','3S LiPo batarya','Çelik geniş kama'], arena:'mega', diameter:200, blade:'Geniş kama', dims:'39.7 × 43.8 cm' },
-  'LEGO Sumo (1 Kg)': { limit:1000, body:220, parts:['Arduino Nano','TB6612FNG','N20 metal redüktörlü motor','Mini IR sensör','Mikro çizgi sensörü','2S LiPo batarya','Polimer mini kama'], arena:'mini', diameter:80, blade:'Standart kama', dims:'21.2 × 23.3 cm' },
-  'RC Sumo (500 g)': { limit:500, body:110, parts:['ESP32 DevKit','TB6612FNG','N20 metal redüktörlü motor','Dijital IR mesafe sensörü','QTR-1A yansıtıcı sensör','2S LiPo batarya','Alüminyum kama'], arena:'mini', diameter:80, blade:'Standart kama', dims:'18.4 × 20.4 cm' },
+  'Pico Sumo (50 g)': { limit:50, body:12, parts:['Seeed XIAO RP2040','TB6612FNG','6 mm mikro motor','Mini IR sensör','Mikro çizgi sensörü','1S mikro LiPo','Polimer mini kama'], arena:'micro', diameter:38, blade:'Dar hassas kama', dims:'40 × 40 × 20 mm' },
+  'Micro Sumo (100 g)': { limit:100, body:25, parts:['Arduino Nano','TB6612FNG','6 mm mikro motor','Mini IR sensör','Mikro çizgi sensörü','1S mikro LiPo','Polimer mini kama'], arena:'micro', diameter:38, blade:'Dar hassas kama', dims:'50 × 50 × 22 mm' },
+  'Mini Sumo (500 g)': { limit:500, body:95, parts:defaultParts, arena:'mini', diameter:80, blade:'Standart kama', dims:'100 × 100 × 30 mm' },
+  '1 Kg Sumo': { limit:1000, body:180, parts:defaultParts, arena:'mini', diameter:100, blade:'Geniş kama', dims:'150 × 150 × 40 mm' },
+  'Klasik 1 Kg Sumo': { limit:1000, body:180, parts:defaultParts, arena:'mini', diameter:100, blade:'Geniş kama', dims:'150 × 150 × 40 mm' },
+  'Mega Sumo (3 Kg)': { limit:3000, body:650, parts:['ESP32 DevKit','Cytron çift motor sürücü','12V yüksek tork motor çifti','Dijital IR mesafe sensörü','QTR-8A sensör dizisi','3S LiPo batarya','Çelik geniş kama'], arena:'mega', diameter:154, blade:'Geniş kama', dims:'200 × 200 × 50 mm' },
+  'Açık Sınıf (5 Kg)': { limit:5000, body:1200, parts:['ESP32 DevKit','Cytron çift motor sürücü','12V yüksek tork motor çifti','Dijital IR mesafe sensörü','QTR-8A sensör dizisi','3S LiPo batarya','Çelik geniş kama'], arena:'mega', diameter:200, blade:'Geniş kama', dims:'250 × 250 × 60 mm' },
+  'LEGO Sumo (1 Kg)': { limit:1000, body:220, parts:['Arduino Nano','TB6612FNG','N20 metal redüktörlü motor','Mini IR sensör','Mikro çizgi sensörü','2S LiPo batarya','Polimer mini kama'], arena:'mini', diameter:80, blade:'Standart kama', dims:'150 × 150 × 45 mm' },
+  'RC Sumo (500 g)': { limit:500, body:110, parts:['ESP32 DevKit','TB6612FNG','N20 metal redüktörlü motor','Dijital IR mesafe sensörü','QTR-1A yansıtıcı sensör','2S LiPo batarya','Alüminyum kama'], arena:'mini', diameter:80, blade:'Standart kama', dims:'100 × 100 × 30 mm' },
 };
+
+
+const TACTIC_PRESETS = [
+  { name: 'Dengeli başlangıç', description: 'Orta hızda ara, güvenli şekilde saldır.', bits: [false,false,false] },
+  { name: 'Agresif saldırı', description: 'Rakibi hızlı bul ve doğrudan hücum et.', bits: [true,false,false] },
+  { name: 'Hızlı tarama', description: 'Rakibi bulmak için hızlı dönüşlerle tara.', bits: [false,true,false] },
+  { name: 'Tam hücum', description: 'Yüksek motor gücüyle öncelikli saldırı.', bits: [true,true,false] },
+  { name: 'Kenar güvenliği', description: 'Dohyo çizgisinden kaçışa öncelik ver.', bits: [false,false,true] },
+  { name: 'Çevresel tarama', description: 'Geniş tarama ve kontrollü yaklaşma.', bits: [true,false,true] },
+  { name: 'Kontrollü hücum', description: 'Rakibe yaklaşırken kenar güvenliğini koru.', bits: [false,true,true] },
+  { name: 'Maksimum saldırı', description: 'En yüksek arama ve saldırı profili.', bits: [true,true,true] },
+];
+const dipValue = (bits) => bits.reduce((n, bit, i) => n + (bit ? (1 << i) : 0), 0);
 
 function VirtualStick({ title, axis, value, onChange }) {
   const [knob, setKnob] = useState({ x: 50, y: 50 });
@@ -271,6 +291,8 @@ export default function App() {
   const partsWeight = useMemo(() => selectedParts.reduce((sum, name) => sum + (partCatalog.find(p => p.name === name)?.weight || 0), 0), [selectedParts]);
   const totalWeight = partsWeight + bodyWeight;
   const weightLimit = ROBOT_PROFILES[robotClass]?.limit || 500;
+  const selectedTactic = dipValue(dipSwitches);
+  const applyTactic = (value) => setDipSwitches(TACTIC_PRESETS[Number(value)]?.bits || [false,false,false]);
   const applyRobotProfile = (nextClass) => { const profile=ROBOT_PROFILES[nextClass] || ROBOT_PROFILES['Mini Sumo (500 g)']; setRobotClass(nextClass); setBodyWeight(profile.body); setSelectedParts(profile.parts); setArenaSize(profile.arena); setArenaDiameterCm(profile.diameter); setBladeType(profile.blade || 'Standart kama'); setResetKey(v=>v+1); setRunning(false); };
   const weightOk = totalWeight <= weightLimit;
 
@@ -292,7 +314,7 @@ export default function App() {
 
   return <div className="app-shell">
     <header className="topbar">
-      <div className="brand"><div className="brand-mark"><Swords size={21}/></div><div><div className="brand-name">PARS<span> SUMO LAB</span></div><div className="brand-sub">ROBOTİK SİMÜLASYON ATÖLYESİ</div></div></div>
+      <div className="brand"><div className="brand-mark"><Swords size={21}/></div><div><div className="brand-name">PARS<span> SUMOLAB</span></div><div className="brand-sub">ROBOTİK SİMÜLASYON ATÖLYESİ</div></div></div>
       <nav className="topnav">
         <button className={tab === 'sim' ? 'nav-item active' : 'nav-item'} onClick={() => setTab('sim')}><Layers3 size={16}/> Simülatör</button>
         <button className={tab === 'design' ? 'nav-item active' : 'nav-item'} onClick={() => setTab('design')}><Bot size={16}/> Robot tasarımı</button>
@@ -313,13 +335,13 @@ export default function App() {
         <button onClick={() => setTab('code')} className={`side-link ${tab === 'code' ? 'selected' : ''}`}><Code2 size={17}/> Kod editörü <span className="soon">JS / C++</span></button>
         <div className="side-label section-label">ROBOT ÖZETİ</div>
         <div className="profile-row"><span>Robot sınıfı</span><strong>{robotClass}</strong></div>
-        <div className="profile-row"><span>Ağırlık tahmini</span><strong>{totalWeight} g</strong></div>
+        <div className="profile-row"><span>Referans boyut</span><strong>{ROBOT_PROFILES[robotClass]?.dims}</strong></div><div className="profile-row"><span>Ağırlık tahmini</span><strong>{totalWeight} g</strong></div>
         <div className="profile-row"><span>Kontrol kartı</span><strong>{selectedParts.some(x => x.includes('ESP32')) ? 'ESP32' : selectedParts.includes('Seeed XIAO RP2040') ? 'XIAO RP2040' : selectedParts.includes('Arduino Nano') ? 'Arduino Nano' : 'Arduino UNO'}</strong></div>
         <div className="side-divider"/>
         <div className="side-label">SENSÖR DURUMU</div>
         <div className="sensor-chip"><span className="sensor-dot blue"/> Rakip algılama <b>Simüle</b></div>
         <div className="sensor-chip"><span className="sensor-dot orange"/> Çizgi algılama <b>Simüle</b></div>
-        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>PARS SUMO LAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">PARS SUMO LAB <span>v0.8.0 · ARDUINO + DIP</span></div></div>
+        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>PARS SUMOLAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">PARS SUMOLAB <span>v0.9.0 · ARDUINO + DIP</span></div></div>
       </aside>
 
       <section className="main-content">
@@ -331,7 +353,7 @@ export default function App() {
           <div className="sim-toolbar"><div className="toolbar-left"><div className="section-icon"><Swords size={17}/></div><div><strong>{robotClass} Dohyo</strong><span>{arenaDiameterCm} cm çap · {arenaSize === 'micro' ? 'Micro' : arenaSize === 'mega' ? 'Mega' : 'Mini'} Sumo arena profili</span></div><span className={`status-pill ${running ? 'status-running' : ''}`}><i/> {running ? 'CANLI' : 'HAZIR'}</span></div><div className="toolbar-right"><button className="tool-btn" onClick={() => { setResetKey(v => v + 1); setRunning(false); }}><RotateCcw size={15}/> Sıfırla</button><button className="tool-btn" onClick={() => setRunning(false)}><Pause size={15}/> Durdur</button><button className="tool-btn active-tool" onClick={() => setRunning(true)}><Play size={14}/> Başlat</button></div></div>
           <div className="arena-wrap"><Arena running={running} speed={speed} mode={mode} driveInput={rcInput} arduinoCommand={arduinoCommand} dipSwitches={dipSwitches} resetKey={resetKey} onTelemetry={setTelemetry} robotColor={robotColor} arenaSize={arenaSize} arenaDiameterCm={arenaDiameterCm} bladeType={bladeType} robotClass={robotClass} totalWeight={totalWeight}/></div>
           <div className="bottom-panels">
-            <div className="panel control-panel"><div className="panel-title"><div><Gauge size={17}/><strong>Robot kontrolü</strong></div><span className="muted-tag">OYUNCU 1</span></div>{mode === 'ARDUINO' && <div className="arduino-live-strip"><span className="sensor-dot blue"/> Arduino kodu aktif <div className="dip-live">{dipSwitches.map((on,i)=><button key={i} className={on?'on':''} onClick={()=>setDipSwitches(prev=>prev.map((v,j)=>j===i?!v:v))}>SW{i+1}: {on?'ON':'OFF'}</button>)}</div><button onClick={stopArduino}>Kodu durdur</button></div>}<div className="mode-switch"><button className={mode === 'RC' ? 'mode-active' : ''} onClick={() => { stopArduino(); setMode('RC'); }}>RC / Manuel</button><button className={mode === 'AUTO' ? 'mode-active' : ''} onClick={() => { stopArduino(); setMode('AUTO'); setRcInput({ throttle: 0, steer: 0, throttleActive: false, steerActive: false }); }}>Otonom</button></div><div className="speed-row"><label>Motor gücü</label><strong>{speed}%</strong></div><input className="range" type="range" min="10" max="100" step="5" value={speed} onChange={e => setSpeed(+e.target.value)}/><div className="range-labels"><span>Hassas</span><span>Maksimum</span></div>{mode === 'RC' ? <><div className="rc-console"><VirtualStick title="SOL STICK" axis="throttle" onChange={(v, active) => setRcInput(prev => ({ ...prev, throttle: v, throttleActive: active }))}/><VirtualStick title="SAĞ STICK" axis="steer" onChange={(v, active) => setRcInput(prev => ({ ...prev, steer: v, steerActive: active }))}/></div><div className="keyboard-hint"><Keyboard size={15}/><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>klavye veya sanal kumanda</span></div><div className="gamepad-status"><span className={`sensor-dot ${gamepadName === 'Gamepad bağlı değil' ? 'orange' : 'blue'}`}/><span>{gamepadName}</span><small>USB / Bluetooth gamepad</small></div></> : <div className="auto-status"><span className="sensor-dot blue"/> Otonom sürüş aktif: çizgi sensörü öncelikli, rakip arama ve saldırı otomatik.</div>}</div>
+            <div className="panel control-panel"><div className="panel-title"><div><Gauge size={17}/><strong>Robot kontrolü</strong></div><span className="muted-tag">OYUNCU 1</span></div>{mode === 'ARDUINO' && <div className="arduino-live-strip"><span className="sensor-dot blue"/> Arduino kodu aktif <div className="dip-live">{dipSwitches.map((on,i)=><button key={i} className={on?'on':''} onClick={()=>setDipSwitches(prev=>prev.map((v,j)=>j===i?!v:v))}>SW{i+1}: {on?'ON':'OFF'}</button>)}</div><button onClick={stopArduino}>Kodu durdur</button></div>}<div className="mode-switch"><button className={mode === 'RC' ? 'mode-active' : ''} onClick={() => { stopArduino(); setMode('RC'); }}>RC / Manuel</button><button className={mode === 'AUTO' ? 'mode-active' : ''} onClick={() => { stopArduino(); setMode('AUTO'); setRcInput({ throttle: 0, steer: 0, throttleActive: false, steerActive: false }); }}>Otonom</button></div><div className="tactic-quick"><label>3'lü DIP taktiği <em>Otonom / Arduino modunda</em></label><select className="select-input" value={selectedTactic} onChange={e => applyTactic(e.target.value)}>{TACTIC_PRESETS.map((t,i)=><option key={i} value={i}>{i.toString(2).padStart(3,'0')} · {t.name}</option>)}</select><small>{TACTIC_PRESETS[selectedTactic].description}</small><div className="tactic-mini-switches">{dipSwitches.map((on,i)=><button key={i} className={on?'on':''} onClick={()=>setDipSwitches(prev=>prev.map((v,j)=>j===i?!v:v))}>SW{i+1} {on?'ON':'OFF'}</button>)}</div></div><div className="speed-row"><label>Motor gücü</label><strong>{speed}%</strong></div><input className="range" type="range" min="10" max="100" step="5" value={speed} onChange={e => setSpeed(+e.target.value)}/><div className="range-labels"><span>Hassas</span><span>Maksimum</span></div>{mode === 'RC' ? <><div className="rc-console"><VirtualStick title="SOL STICK" axis="throttle" onChange={(v, active) => setRcInput(prev => ({ ...prev, throttle: v, throttleActive: active }))}/><VirtualStick title="SAĞ STICK" axis="steer" onChange={(v, active) => setRcInput(prev => ({ ...prev, steer: v, steerActive: active }))}/></div><div className="keyboard-hint"><Keyboard size={15}/><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>klavye veya sanal kumanda</span></div><div className="gamepad-status"><span className={`sensor-dot ${gamepadName === 'Gamepad bağlı değil' ? 'orange' : 'blue'}`}/><span>{gamepadName}</span><small>USB / Bluetooth gamepad</small></div></> : <div className="auto-status"><span className="sensor-dot blue"/> Otonom sürüş aktif: çizgi sensörü öncelikli, rakip arama ve saldırı otomatik.</div>}</div>
             <div className="panel telemetry-panel"><div className="panel-title"><div><Radio size={17}/><strong>Canlı telemetri</strong></div><span className="live-label"><i/> SİMÜLASYON</span></div><div className="metrics"><div className="metric"><span>Rakibe mesafe</span><strong>{telemetry.distance}<small> m</small></strong></div><div className="metric"><span>Motor gücü</span><strong>{telemetry.speed}<small> %</small></strong></div><div className="metric"><span>Temas sayısı</span><strong>{telemetry.collisions || 0}</strong></div><div className="metric"><span>İtme teması</span><strong>{telemetry.pushes || 0}</strong></div></div><div className="telemetry-foot"><span className={`sensor-dot ${telemetry.edge === 'UYARI' ? 'orange' : 'blue'}`}/> Ring sınırı <b>{telemetry.edge || 'GÜVENLİ'}</b><span className="sensor-dot orange"/> Rakip sensörü <b>Aktif</b><span className="sensor-dot blue"/> Çizgi sensörü <b>{telemetry.lineSensors || 'Hazır'}</b>{(telemetry.playerTipped||telemetry.rivalTipped)&&<><span className="sensor-dot orange"/><b>TAKLA / DEVRİLME</b></>}</div></div>
           </div>
           {telemetry.winner && <div className="result-banner"><Trophy size={20}/><div><strong>{telemetry.winner}</strong><span>{telemetry.finishReason}</span></div><button className="outline-btn" onClick={() => { setResetKey(v => v + 1); setRunning(false); }}>Yeni maç</button></div>}<div className="notice-line"><ShieldCheck size={15}/> Fizik modeli eğitim amaçlıdır. Sınıf ağırlıkları ve dohyo ölçüleri organizasyonun güncel teknik şartnamesine göre doğrulanmalıdır.</div>
@@ -341,7 +363,7 @@ export default function App() {
           <div className="panel design-panel"><div className="panel-title"><div><Bot size={18}/><strong>Robot kimliği</strong></div><span className="muted-tag">ÖZELLEŞTİR</span></div>
             <label className="field-label">Robot adı</label><input className="text-input" value={robotName} maxLength={24} onChange={e => setRobotName(e.target.value)}/>
             <label className="field-label">Robot sınıfı</label><select className="select-input" value={robotClass} onChange={e => applyRobotProfile(e.target.value)}><option>Pico Sumo (50 g)</option><option>Micro Sumo (100 g)</option><option>Mini Sumo (500 g)</option><option>1 Kg Sumo</option><option>Klasik 1 Kg Sumo</option><option>Mega Sumo (3 Kg)</option><option>Açık Sınıf (5 Kg)</option><option>LEGO Sumo (1 Kg)</option><option>RC Sumo (500 g)</option></select>
-            <label className="field-label">Gövde ağırlığı <strong>{bodyWeight} g</strong></label><input className="range" type="range" min="5" max={Math.max(20,Math.min(2000,weightLimit-partsWeight))} step="5" value={bodyWeight} onChange={e => setBodyWeight(Number(e.target.value))}/><div className="range-labels"><span>Hafif gövde · 5 g</span><span>Azami gövde · {Math.max(20,Math.min(2000,weightLimit-partsWeight))} g</span></div><p className="muted-copy">Bu değer şasi, üst kapak ve bağlantı elemanlarının toplam ağırlığını temsil eder. Seçili sınıf: {ROBOT_PROFILES[robotClass]?.dims}; azami toplam kütle {weightLimit} g.</p>
+            <label className="field-label">Gövde ağırlığı <strong>{bodyWeight} g</strong></label><input className="range" type="range" min="5" max={Math.max(20,Math.min(2000,weightLimit-partsWeight))} step="5" value={bodyWeight} onChange={e => setBodyWeight(Number(e.target.value))}/><div className="range-labels"><span>Hafif gövde · 5 g</span><span>Azami gövde · {Math.max(20,Math.min(2000,weightLimit-partsWeight))} g</span></div><p className="muted-copy">Bu değer şasi, üst kapak ve bağlantı elemanlarının toplam ağırlığını temsil eder. Seçili sınıf referans gövde ölçüsü: {ROBOT_PROFILES[robotClass]?.dims}; azami toplam kütle {weightLimit} g.</p>
             <label className="field-label">Gövde rengi</label><div className="color-options">{['#3978ed', '#16a085', '#e34f4f', '#8b5cf6', '#e59b27', '#e5e7eb'].map(c => <button key={c} aria-label={`Renk ${c}`} className={`color-swatch ${robotColor === c ? 'chosen' : ''}`} style={{ background: c }} onClick={() => setRobotColor(c)}/>)}</div>
             <label className="field-label">Ön bıçak / kama tipi</label><select className="select-input" value={bladeType} onChange={e => setBladeType(e.target.value)}><option>Standart kama</option><option>Geniş kama</option><option>Dar hassas kama</option><option>Çift kademeli</option></select><p className="muted-copy">Robotun önündeki alçak metal kama rakibin altına girerek itme avantajı sağlar. 3B modelde +Z yönü robotun önüdür.</p>
             <label className="field-label">Dohyo sınıfı</label><select className="select-input" value={arenaSize} onChange={e => { const type = e.target.value; setArenaSize(type); setArenaDiameterCm(type === 'micro' ? 38 : type === 'mega' ? 154 : 80); }}><option value="micro">Micro Sumo dohyo</option><option value="mini">Mini Sumo dohyo</option><option value="mega">Mega Sumo dohyo</option></select><label className="field-label">Dohyo genişliği / çapı <strong>{arenaDiameterCm} cm</strong></label><input className="range" type="range" min="30" max="200" step="1" value={arenaDiameterCm} onChange={e => setArenaDiameterCm(Number(e.target.value))}/><div className="range-labels"><span>30 cm</span><span>200 cm</span></div><p className="muted-copy">Dohyo dairesel olarak modellenir. Seçilen sınıf başlangıç ölçüsünü belirler; kaydırıcıyla çapı değiştirebilirsin.</p>
@@ -350,11 +372,11 @@ export default function App() {
           <div className="panel weight-panel"><div className="panel-title"><div><Weight size={18}/><strong>Ağırlık kontrolü</strong></div><span className={`weight-status ${weightOk ? 'ok' : 'over'}`}>{weightOk ? 'LİMİT İÇİNDE' : 'LİMİT AŞILDI'}</span></div><div className="weight-number">{totalWeight}<small> / {weightLimit} g</small></div><div className="weight-track"><span style={{ width: `${Math.min(100, totalWeight / weightLimit * 100)}%` , background: weightOk ? '#22c58b' : '#ef6464' }}/></div><p className="muted-copy">Pico 50 g, Micro 100 g, Mini 500 g, 1 kg, Mega 3 kg, açık sınıf, LEGO ve RC formatları desteklenir. Sınıf adları ve limitler organizasyonun teknik şartnamesine göre değişebilir.</p><div className="weight-list">{selectedParts.map(name => <div key={name}><span>{name}</span><b>{partCatalog.find(p => p.name === name)?.weight || 0} g</b></div>)}<div><span>Gövde / şasi ağırlığı</span><b>{bodyWeight} g</b></div><div><span>Elektronik ve mekanik bileşenler</span><b>{partsWeight} g</b></div></div><button className="outline-btn full-btn" onClick={() => setTab('parts')}>Bileşenleri düzenle <ChevronRight size={15}/></button></div>
         </div>}
 
-        {tab === 'code' && <div className="panel code-workspace"><div className="code-toolbar"><div><TerminalSquare size={18}/><strong>Robot programı</strong><span className="muted-tag">KOD ŞABLONU</span></div><select value={language} onChange={e => setLanguage(e.target.value)}><option>JavaScript</option><option>Arduino C++</option></select></div><div className="code-note"><Zap size={16}/> Arduino C++ için temel Arduino API uyumluluk katmanı aktiftir. Yaygın pinMode, digitalRead, analogRead, digitalWrite, analogWrite, setup() ve loop() yapıları desteklenir; tüm Arduino kütüphaneleri ve donanım sürücüleri desteklenmez.</div><textarea className="code-editor" spellCheck="false" value={code} onChange={e => setCode(e.target.value)} aria-label="Robot kod editörü"/><div className="code-footer"><span>UTF-8 · {language} · {code.split('\n').length} satır</span><div className="code-actions"><button className="outline-btn" onClick={copyCode}>{copied ? <Check size={15}/> : <Copy size={15}/>} {copied ? 'Kopyalandı' : 'Kopyala'}</button><button className="outline-btn" onClick={downloadCode}><Download size={15}/> Dosyayı indir</button><button className="primary-btn" onClick={startArduino}><Play size={15}/> Arduino kodunu çalıştır</button></div></div><div className="arduino-lab"><div className="arduino-head"><strong><Cpu size={16}/> 3'LÜ DIP-SWITCH TAKTİK SEÇİCİ</strong><span>Arduino pinleri: D12 · D13 · A5</span></div><div className="dip-switches">{dipSwitches.map((on,i)=><button key={i} className={`dip-switch ${on?'dip-on':''}`} onClick={()=>setDipSwitches(prev=>prev.map((v,j)=>j===i?!v:v))}><span className="dip-track"><i/></span><b>SW{i+1}</b><small>{on?'ON':'OFF'}</small></button>)}</div><div className="dip-binary">Taktik kodu: <b>{dipSwitches.map(v=>v?'1':'0').join('')}</b> · Decimal: <b>{dipSwitches.reduce((n,v,i)=>n+(v?2**i:0),0)}</b><span>Örnek: digitalRead(12), digitalRead(13), digitalRead(A5)</span></div><div className="arduino-run-row"><div><b>{arduinoStatus}</b><small>3 DIP anahtarı kod tarafından dijital giriş olarak okunur.</small></div><button className="outline-btn" onClick={stopArduino}><Pause size={14}/> Kodu durdur</button></div></div></div>}
+        {tab === 'code' && <div className="panel code-workspace"><div className="code-toolbar"><div><TerminalSquare size={18}/><strong>Robot programı</strong><span className="muted-tag">KOD ŞABLONU</span></div><select value={language} onChange={e => setLanguage(e.target.value)}><option>JavaScript</option><option>Arduino C++</option></select></div><div className="code-note"><Zap size={16}/> Arduino C++ için temel Arduino API uyumluluk katmanı aktiftir. Yaygın pinMode, digitalRead, analogRead, digitalWrite, analogWrite, setup() ve loop() yapıları desteklenir; tüm Arduino kütüphaneleri ve donanım sürücüleri desteklenmez.</div><textarea className="code-editor" spellCheck="false" value={code} onChange={e => setCode(e.target.value)} aria-label="Robot kod editörü"/><div className="code-footer"><span>UTF-8 · {language} · {code.split('\n').length} satır</span><div className="code-actions"><button className="outline-btn" onClick={copyCode}>{copied ? <Check size={15}/> : <Copy size={15}/>} {copied ? 'Kopyalandı' : 'Kopyala'}</button><button className="outline-btn" onClick={downloadCode}><Download size={15}/> Dosyayı indir</button><button className="primary-btn" onClick={startArduino}><Play size={15}/> Arduino kodunu çalıştır</button></div></div><div className="arduino-lab"><div className="arduino-head"><strong><Cpu size={16}/> 3'LÜ DIP-SWITCH TAKTİK SEÇİCİ</strong><span>Arduino pinleri: D12 · D13 · A5</span></div><div className="tactic-select-row"><label>Hazır taktik profili</label><select className="select-input" value={selectedTactic} onChange={e=>applyTactic(e.target.value)}>{TACTIC_PRESETS.map((t,i)=><option key={i} value={i}>{i.toString(2).padStart(3,'0')} · {t.name}</option>)}</select><small>{TACTIC_PRESETS[selectedTactic].description}</small></div><div className="dip-switches">{dipSwitches.map((on,i)=><button key={i} className={`dip-switch ${on?'dip-on':''}`} onClick={()=>setDipSwitches(prev=>prev.map((v,j)=>j===i?!v:v))}><span className="dip-track"><i/></span><b>SW{i+1}</b><small>{on?'ON':'OFF'}</small></button>)}</div><div className="dip-binary">Taktik kodu (SW3-SW2-SW1): <b>{dipSwitches.slice().reverse().map(v=>v?'1':'0').join('')}</b> · Decimal: <b>{selectedTactic}</b><span>Örnek: digitalRead(12), digitalRead(13), digitalRead(A5)</span></div><div className="arduino-run-row"><div><b>{arduinoStatus}</b><small>3 DIP anahtarı kod tarafından dijital giriş olarak okunur.</small></div><button className="outline-btn" onClick={stopArduino}><Pause size={14}/> Kodu durdur</button></div></div></div>}
 
         {tab === 'parts' && <div className="panel parts-workspace"><div className="panel-title"><div><Package size={18}/><strong>Donanım bileşenleri</strong></div><span className="muted-tag">{selectedParts.length} PARÇA SEÇİLİ</span></div><p className="parts-intro">Robotunda kullanacağın parçaları seç. Seçimler ağırlık hesabına ve robot profiline yansır.</p><div className="parts-grid">{partCatalog.map(part => { const Icon = part.icon; const active = selectedParts.includes(part.name); return <button key={part.name} className={`part-card ${active ? 'part-selected' : ''}`} onClick={() => togglePart(part.name)}><div className="part-icon"><Icon size={20}/></div><div className="part-copy"><strong>{part.name}</strong><span>{part.category} · {part.detail}</span></div><div className="part-weight">{part.weight} g</div><div className={`part-check ${active ? 'checked' : ''}`}>{active ? <Check size={13}/> : '+'}</div></button>; })}</div><div className="parts-summary"><div><span>Toplam robot ağırlığı</span><strong>{totalWeight} g</strong></div><div><span>İzin verilen ağırlık</span><strong>{weightLimit} g</strong></div><button className="primary-btn" onClick={() => { saveProject(); setTab('design'); }}><Save size={15}/> Seçimleri kaydet</button></div></div>}
 
-        <footer className="main-footer"><span>PARS SUMO LAB · Robot sumo eğitim ve simülasyon platformu</span><span>v0.8.0 · Fizik ve sınıf profilleri</span></footer>
+        <footer className="main-footer"><span>PARS SUMOLAB · Robot sumo eğitim ve simülasyon platformu</span><span>v0.9.0 · Fizik ve sınıf profilleri</span></footer>
       </section>
     </main>
     <iframe ref={runtimeFrame} title="Arduino kod çalışma alanı" sandbox="allow-scripts" srcDoc={runtimeDoc} className="arduino-runtime-frame"/>

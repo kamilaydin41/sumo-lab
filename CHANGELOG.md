@@ -1,13 +1,15 @@
-# Sürüm notları
+# Sürüm Notları
 
-## v0.8.0 – PARS SUMO LAB
-- Marka adı ve sayfa başlığı PARS SUMO LAB olarak değiştirildi.
-- Robot gövdeleri için yönelimli çarpışma ve çakışma giderme eklendi.
-- Kütleye bağlı momentum aktarımı ve kama yönüne bağlı itiş eklendi.
-- Çarpışma momentiyle devrilme/takla görselleştirmesi eklendi.
-- Dohyo dışına itilen robot için maç bitişi korundu.
-- Robot sınıfına bağlı boyut, kütle, hız, gövde ağırlığı, bileşen ve dohyo profilleri eklendi.
-- Önceki RC, otonom, Arduino C++ ve DIP-switch özellikleri korundu.
+## v0.9.0 - PARS SUMOLAB adı, robot boyutları ve DIP taktikleri
 
-## Sınırlamalar
-Fizik modeli eğitim amaçlı yaklaşık modeldir. Üretim derlemesi ve gerçek tarayıcı testi bu paketin hazırlanması sırasında henüz tamamlanmamıştır.
+- Simülasyon arayüzündeki marka adı ve tarayıcı sekmesi başlığı PARS SUMOLAB olarak değiştirildi.
+- Robot sınıflarına göre fiziksel ölçü profilleri güncellendi.
+- Micro Sumo 50 × 50 mm, Mini Sumo 100 × 100 mm referans taban ölçülerine getirildi.
+- Diğer robot sınıflarının gövde, tekerlek, sensör ve kama geometrileri kendi ölçülerine göre ölçeklendi.
+- Üçlü DIP-switch için sekiz seçilebilir taktik profili eklendi.
+- DIP kombinasyonları Otonom mod davranışına bağlandı.
+- Arduino C++ örnek kodunda 000-111 arasındaki sekiz taktik için eşleme yapıldı.
+
+## Önceki sürümler
+
+Önceki sürüm değişiklikleri için Git geçmişine bakın.

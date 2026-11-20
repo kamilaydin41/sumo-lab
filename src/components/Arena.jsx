@@ -5,15 +5,16 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
 const CLASS_PRESETS = {
-  'Pico Sumo (50 g)': { robotScale: .48, maxSpeed: 1.55, mass: .05, width: .44, length: .48, height: .18 },
-  'Micro Sumo (100 g)': { robotScale: .62, maxSpeed: 1.85, mass: .10, width: .56, length: .62, height: .20 },
-  'Mini Sumo (500 g)': { robotScale: 1, maxSpeed: 2.15, mass: .50, width: .92, length: 1.02, height: .25 },
-  '1 Kg Sumo': { robotScale: 1.12, maxSpeed: 2.05, mass: 1, width: 1.02, length: 1.12, height: .29 },
-  'Klasik 1 Kg Sumo': { robotScale: 1.12, maxSpeed: 2.05, mass: 1, width: 1.02, length: 1.12, height: .29 },
-  'Mega Sumo (3 Kg)': { robotScale: 1.34, maxSpeed: 1.9, mass: 3, width: 1.20, length: 1.34, height: .34 },
-  'Açık Sınıf (5 Kg)': { robotScale: 1.48, maxSpeed: 1.75, mass: 5, width: 1.34, length: 1.48, height: .38 },
-  'LEGO Sumo (1 Kg)': { robotScale: 1.08, maxSpeed: 1.75, mass: 1, width: .98, length: 1.08, height: .32 },
-  'RC Sumo (500 g)': { robotScale: 1, maxSpeed: 2.2, mass: .5, width: .92, length: 1.02, height: .25 },
+  // Boyutlar mm'den Three.js birimine çevrilir: 1 birim = 200 mm.
+  'Pico Sumo (50 g)': { robotScale:1, maxSpeed:1.45, mass:.05, width:.20, length:.20, height:.10 }, // 40x40x20 mm
+  'Micro Sumo (100 g)': { robotScale:1, maxSpeed:1.65, mass:.10, width:.25, length:.25, height:.11 }, // 50x50x22 mm
+  'Mini Sumo (500 g)': { robotScale:1, maxSpeed:2.05, mass:.50, width:.50, length:.50, height:.15 }, // 100x100x30 mm
+  '1 Kg Sumo': { robotScale:1, maxSpeed:1.95, mass:1, width:.75, length:.75, height:.20 }, // 150x150x40 mm
+  'Klasik 1 Kg Sumo': { robotScale:1, maxSpeed:1.95, mass:1, width:.75, length:.75, height:.20 },
+  'Mega Sumo (3 Kg)': { robotScale:1, maxSpeed:1.8, mass:3, width:1, length:1, height:.25 }, // 200x200x50 mm
+  'Açık Sınıf (5 Kg)': { robotScale:1, maxSpeed:1.65, mass:5, width:1.25, length:1.25, height:.30 }, // 250x250x60 mm
+  'LEGO Sumo (1 Kg)': { robotScale:1, maxSpeed:1.7, mass:1, width:.75, length:.75, height:.225 }, // 150x150x45 mm
+  'RC Sumo (500 g)': { robotScale:1, maxSpeed:2.05, mass:.5, width:.50, length:.50, height:.175 }, // 100x100x35 mm
 };
 
 function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensions = { width: .92, length: 1.02, height: .25 }) {
@@ -23,41 +24,42 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   const darkMat = new THREE.MeshStandardMaterial({ color: '#111827', metalness: .25, roughness: .65 });
   const accentMat = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: .18, metalness: .3 });
   const body = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.length), bodyMat);
-  body.position.y = .12 + dimensions.height / 2; body.castShadow = true; root.add(body);
-  const top = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width * .62, .07, dimensions.length * .55), darkMat);
-  top.position.set(0, .19 + dimensions.height, -.02); top.castShadow = true; root.add(top);
+  body.position.y = .105 + dimensions.height / 2; body.castShadow = true; root.add(body);
+  const top = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width * .62, dimensions.width * .07, dimensions.length * .55), darkMat);
+  top.position.set(0, .105 + dimensions.height + dimensions.width * .035, -.02); top.castShadow = true; root.add(top);
 
   const blade = new THREE.Group();
   const width = (bladeType === 'Geniş kama' ? 1.08 : bladeType === 'Dar hassas kama' ? .72 : bladeType === 'Çift kademeli' ? .96 : .94) * dimensions.width / .92;
   const length = (bladeType === 'Uzun alçak kama' ? .98 : .76) * dimensions.length / 1.02;
-  const rearZ = .18, tipZ = rearZ + length;
-  const y0 = .105, yRear = .30, yTip = bladeType === 'Çift kademeli' ? .18 : .145;
+  const rearZ = dimensions.length * .18, tipZ = rearZ + length;
+  const y0 = .105 + dimensions.width * .10, yRear = .105 + dimensions.width * .30, yTip = .105 + (bladeType === 'Çift kademeli' ? dimensions.width * .18 : dimensions.width * .145);
   const h = width / 2;
-  const verts = [-h,y0,rearZ, h,y0,rearZ, -h,yRear,rearZ, h,yRear,rearZ, -h,.085,tipZ, h,.085,tipZ, -h,yTip,tipZ, h,yTip,tipZ];
+  const verts = [-h,y0,rearZ, h,y0,rearZ, -h,yRear,rearZ, h,yRear,rearZ, -h,.105+dimensions.width*.02,tipZ, h,.105+dimensions.width*.02,tipZ, -h,yTip,tipZ, h,yTip,tipZ];
   const idx = [];
   const face = (a,b,c,d) => idx.push(a,b,c,a,c,d);
   face(0,1,5,4); face(2,3,7,6); face(0,2,6,4); face(1,5,7,3); face(0,1,3,2); face(4,6,7,5);
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(verts,3)); geo.setIndex(idx); geo.computeVertexNormals();
   const metal = new THREE.MeshStandardMaterial({ color: '#aeb9c5', metalness: .92, roughness: .22, side: THREE.DoubleSide });
   const wedge = new THREE.Mesh(geo, metal); wedge.castShadow = true; wedge.receiveShadow = true; blade.add(wedge);
-  const lip = new THREE.Mesh(new THREE.BoxGeometry(width,.022,.028), new THREE.MeshStandardMaterial({color:'#e5edf5',metalness:1,roughness:.16}));
-  lip.position.set(0,yTip-.012,tipZ-.008); blade.add(lip);
+  const lip = new THREE.Mesh(new THREE.BoxGeometry(width,dimensions.width*.022,dimensions.width*.028), new THREE.MeshStandardMaterial({color:'#e5edf5',metalness:1,roughness:.16}));
+  lip.position.set(0,yTip-dimensions.width*.012,tipZ-dimensions.width*.008); blade.add(lip);
   for (const x of [-h*.68,h*.68]) {
-    const mount = new THREE.Mesh(new THREE.BoxGeometry(.09,.055,.22),accentMat); mount.position.set(x,.235,.28); blade.add(mount);
-    const screw = new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.014,12),darkMat); screw.rotation.x=Math.PI/2; screw.position.set(x,.27,.31); blade.add(screw);
+    const mount = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width*.09,dimensions.width*.055,dimensions.length*.22),accentMat); mount.position.set(x,.105+dimensions.height*.78,dimensions.length*.28); blade.add(mount);
+    const screw = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.022,dimensions.width*.022,dimensions.width*.014,12),darkMat); screw.rotation.x=Math.PI/2; screw.position.set(x,.105+dimensions.height*.9,dimensions.length*.31); blade.add(screw);
   }
   root.add(blade);
   for (const x of [-dimensions.width*.53,dimensions.width*.53]) {
-    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.12,24),darkMat); wheel.rotation.z=Math.PI/2; wheel.position.set(x,.22,-dimensions.length*.12); wheel.castShadow=true; root.add(wheel);
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(.065,.065,.125,16),accentMat); hub.rotation.z=Math.PI/2; hub.position.copy(wheel.position); root.add(hub);
+    const wheelRadius=dimensions.width*.17, wheelWidth=dimensions.width*.13;
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius,wheelRadius,wheelWidth,24),darkMat); wheel.rotation.z=Math.PI/2; wheel.position.set(x,.0925+wheelRadius,-dimensions.length*.12); wheel.castShadow=true; root.add(wheel);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius*.42,wheelRadius*.42,wheelWidth*1.04,16),accentMat); hub.rotation.z=Math.PI/2; hub.position.copy(wheel.position); root.add(hub);
   }
   // Five visible line sensors: three front, two rear. Their state is updated from the dohyo surface.
   const sensors = [];
   for (const [x,z] of [[-dimensions.width*.34,dimensions.length*.49],[0,dimensions.length*.54],[dimensions.width*.34,dimensions.length*.49],[-dimensions.width*.32,-dimensions.length*.42],[dimensions.width*.32,-dimensions.length*.42]]) {
-    const mesh = new THREE.Mesh(new THREE.SphereGeometry(.043,12,10),new THREE.MeshBasicMaterial({color:'#35d7f4'}));
-    mesh.position.set(x,.17,z); root.add(mesh); sensors.push({mesh,x,z});
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(dimensions.width*.045,12,10),new THREE.MeshBasicMaterial({color:'#35d7f4'}));
+    mesh.position.set(x,.0925+dimensions.width*.045,z); root.add(mesh); sensors.push({mesh,x,z});
   }
-  const beacon = new THREE.Mesh(new THREE.CylinderGeometry(.11,.11,.035,24),accentMat); beacon.position.set(0,.55,-.02); root.add(beacon);
+  const beacon = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.07,dimensions.width*.07,dimensions.width*.025,24),accentMat); beacon.position.set(0,.105+dimensions.height+dimensions.width*.055,-.02); root.add(beacon);
   root.userData = { sensors, bladeType, label: isRival ? 'RAKİP' : 'OYUNCU', dimensions };
   return root;
 }
@@ -95,7 +97,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
 
     const player=makeRobot(props.current.robotColor,'#8fc2ff',props.current.bladeType,preset.robotScale,false,preset);
     const rival=makeRobot('#d84b4b','#ffb36b','Geniş kama',preset.robotScale,true,preset); scene.add(player,rival);
-    const shadows=[]; for(const [color,op] of [['#3b82f6',.14],['#ef4444',.12]]){const m=new THREE.Mesh(new THREE.CircleGeometry(.68*preset.robotScale,32),new THREE.MeshBasicMaterial({color,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.y=.105;scene.add(m);shadows.push(m);}
+    const shadows=[]; for(const [color,op] of [['#3b82f6',.14],['#ef4444',.12]]){const m=new THREE.Mesh(new THREE.CircleGeometry(Math.max(preset.width,preset.length)*.72,32),new THREE.MeshBasicMaterial({color,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.y=.105;scene.add(m);shadows.push(m);}
     const startState=()=>({x:-maxRadius*.52,z:0,a:Math.PI/2,vx:0,vz:0,turn:0,rx:maxRadius*.52,rz:0,ra:-Math.PI/2,rvx:0,rvz:0,rturn:0,collisions:0,pushes:0,playerRoll:0,playerPitch:0,rivalRoll:0,rivalPitch:0,playerTipped:false,rivalTipped:false,playerEdge:false,rivalEdge:false,winner:null,finishReason:'',lastHit:0,elapsed:0});
     const state=startState(); const keys={forward:false,back:false,left:false,right:false};
     const keyMap={KeyW:'forward',ArrowUp:'forward',KeyS:'back',ArrowDown:'back',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
@@ -111,16 +113,18 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
       if(p.running&&!state.winner){
         state.elapsed+=dt;const configuredMass=Math.max(.03,(p.totalWeight||cls.mass*1000)/1000);const maxSpeed=cls.maxSpeed*(p.speed/100)*clamp(Math.sqrt(cls.mass/configuredMass),.72,1.12);
         // Edge sensors read the actual white dohyo boundary at five physical sensor positions.
-        const playerSensors=player.userData.sensors.map(s=>sensorWorld(state,s.x*cls.robotScale,s.z*cls.robotScale,maxRadius));
+        const playerSensors=player.userData.sensors.map(s=>sensorWorld(state,s.x,s.z,maxRadius));
         const rivalProxy={x:state.rx,z:state.rz,a:state.ra};
-        const rivalSensors=rival.userData.sensors.map(s=>sensorWorld(rivalProxy,s.x*cls.robotScale,s.z*cls.robotScale,maxRadius));
+        const rivalSensors=rival.userData.sensors.map(s=>sensorWorld(rivalProxy,s.x,s.z,maxRadius));
         const pFront=playerSensors.slice(0,3).some(s=>s.edge),pRear=playerSensors.slice(3).some(s=>s.edge);
         const rFront=rivalSensors.slice(0,3).some(s=>s.edge),rRear=rivalSensors.slice(3).some(s=>s.edge);
         state.playerEdge=pFront||pRear;state.rivalEdge=rFront||rRear;
         let pF=0,pT=0;
         if(state.playerTipped){pF=0;pT=0;} else if(p.mode==='AUTO'||p.mode==='OTONOM'){
+          const tactic=(p.dipSwitches||[]).reduce((n,on,i)=>n+(on?(1<<i):0),0);
+          const aggressive=[1,3,5,7].includes(tactic), fastScan=[2,5,7].includes(tactic), cautious=[4,6].includes(tactic);
           const dx=state.rx-state.x,dz=state.rz-state.z,dist=Math.hypot(dx,dz);const desired=Math.atan2(dx,dz);const err=wrapAngle(desired-state.a);
-          if(pFront){pF=-.88;pT=err>=0?-.95:.95;} else if(pRear){pF=.45;pT=err>=0?.7:-.7;} else if(dist<1.55){pF=1;pT=clamp(err*1.5,-1,1);} else {pF=.35;pT=err>.12?1:err<-.12?-1:.18;}
+          if(pFront){pF=cautious?-.98:-.88;pT=err>=0?-.95:.95;} else if(pRear){pF=.48;pT=err>=0?.75:-.75;} else if(dist<1.55){pF=aggressive?1:.88;pT=clamp(err*(aggressive?1.7:1.35),-1,1);} else {pF=fastScan?.28:(cautious?.22:.35);pT=err>.12?(fastScan?1:.78):err<-.12?(fastScan?-1:-.78):(fastScan?.42:.18);}
         } else if(p.mode==='ARDUINO') {
           const left=clamp(p.arduinoCommand?.left||0,-1,1), right=clamp(p.arduinoCommand?.right||0,-1,1);
           pF=(left+right)/2; pT=(right-left);
@@ -144,7 +148,9 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         const dx=state.x-state.rx,dz=state.z-state.rz,dist=Math.hypot(dx,dz),targetAngle=Math.atan2(dx,dz),err=wrapAngle(targetAngle-state.ra);
         let rF=0,rT=0;
         if(state.rivalTipped){rF=0;rT=0;}else if(rFront){rF=-.92;rT=err>=0?-.9:.9;}else if(rRear){rF=.5;rT=err>=0?.7:-.7;}else if(dist>1.25){rF=.9;rT=clamp(err*1.65,-1,1);}else{rF=1;rT=clamp(err*1.2,-.55,.55);}
-        drive(state,pF,pT,dt,maxSpeed);drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,cls.maxSpeed*.88);
+        const autoTactic=(p.dipSwitches||[]).reduce((n,on,i)=>n+(on?(1<<i):0),0);
+        const playerSpeedScale=(p.mode==='AUTO'||p.mode==='OTONOM')?([1,3,5,7].includes(autoTactic)?1.08:([4,6].includes(autoTactic)?.88:1)):1;
+        drive(state,pF,pT,dt,maxSpeed*playerSpeedScale);drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,cls.maxSpeed*.88);
 
         // Yönelimli dikdörtgen gövde çarpışması (OBB/SAT): robotlar birbirinin içinden geçemez.
         const axes = (angle) => [{x:Math.cos(angle),z:-Math.sin(angle)},{x:Math.sin(angle),z:Math.cos(angle)}];
@@ -242,7 +248,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
 
   useEffect(()=>{if(api.current){Object.assign(api.current.state,api.current.startState());}},[resetKey,robotClass]);
   return <div className="arena-canvas" ref={host}>
-    <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> PARS SUMO LAB · RC / OTONOM / ARDUINO C++</div>
+    <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> PARS SUMOLAB · RC / OTONOM / ARDUINO C++</div>
     <div className="arena-help"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> sürüş <span>·</span> Sensörler dohyo dışını algılar <span>·</span> Fare: kamera</div>
   </div>;
 }

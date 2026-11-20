@@ -1,25 +1,65 @@
-# PARS SUMO LAB v0.8.0
+# PARS SUMOLAB
 
-PARS SUMO LAB; sumo robotlarını tasarlamak, programlamak ve 3B dohyo üzerinde eğitim amaçlı mücadele ettirmek için geliştirilen tarayıcı tabanlı simülatördür.
+PARS SUMOLAB, sumo robotlarını tasarlamak, programlamak ve sanal dohyo üzerinde karşılaştırmak için hazırlanmış React + Vite + Three.js tabanlı eğitim simülatörüdür.
 
-## Bu sürümde
-- Uygulama adı PARS SUMO LAB olarak güncellendi.
-- Yönelimli dikdörtgen gövde çarpışması (OBB/SAT) ile robotların birbirinin içinden geçmesi önlendi.
-- Çarpışma sonrası konum düzeltmesi, kütleye bağlı itiş ve momentum aktarımı eklendi.
-- Ön kama teması rakibin altına girme ve itiş avantajı oluşturur.
-- Çarpışma şiddeti ve yönüne bağlı pitch/roll hareketleriyle devrilme/takla görselleştirmesi eklendi.
-- Dohyo dışına itilen robot merkez konumu sınırı geçtiğinde maç sona erer.
-- Pico, Micro, Mini, 1 Kg, Klasik 1 Kg, Mega, Açık, LEGO ve RC sınıfları için boyut, kütle, hız ve donanım profilleri eklendi.
-- Sınıf seçimi gövde ağırlığını, önerilen bileşenleri ve dohyo profilini otomatik değiştirir.
-- RC, otonom, Arduino C++ ve 3'lü DIP-switch özellikleri korunmuştur.
+## v0.9.0 yenilikleri
 
-## Fizik modelinin kapsamı
-Bu sürüm 2B düzlemde yönelimli gövde çarpışması ve 3B görsel devrilme yaklaşımı kullanır. Kama ile altına girme, itme ve takla davranışları eğitim amaçlı yaklaşık modellerdir; gerçek rijit cisim fiziği, esnek deformasyon, gerçek tekerlek sürtünmesi ve tam temas geometrisi henüz modellenmemektedir. Yarışma kuralları ve ölçüler organizasyonun güncel teknik şartnamesinden doğrulanmalıdır.
+- Uygulama adı ve tarayıcı sekmesi başlığı **PARS SUMOLAB** olarak güncellendi.
+- Robot sınıflarına göre ayrı 3B boyut profilleri eklendi. Mini Sumo başlangıç ölçüsü 100 × 100 × 30 mm, Micro Sumo 50 × 50 × 22 mm olarak tanımlandı.
+- Pico, 1 Kg, Klasik 1 Kg, Mega, Açık Sınıf, LEGO ve RC profillerinin gövde, tekerlek, sensör ve kama ölçekleri sınıfa göre ayarlanır.
+- Üçlü DIP-switch için sekiz hazır taktik profili eklendi. SW1 en düşük anlamlı bittir; D12, D13 ve A5 girişleri kullanılır.
+- DIP anahtarları hem simülasyon kontrol panelinden hem Kod Laboratuvarı'ndan değiştirilebilir.
+- Otonom mod, seçilen DIP kombinasyonuna göre arama ve saldırı davranışını değiştirir.
+- Arduino C++ örnek programında sekiz DIP kombinasyonunun tamamı için taktik eşlemesi bulunur.
 
-## Geliştirme
+## Robot ölçü profilleri
+
+| Sınıf | Simülatör referans ölçüsü |
+|---|---:|
+| Pico Sumo | 40 × 40 × 20 mm |
+| Micro Sumo | 50 × 50 × 22 mm |
+| Mini Sumo | 100 × 100 × 30 mm |
+| 1 Kg / Klasik 1 Kg | 150 × 150 × 40 mm |
+| Mega Sumo | 200 × 200 × 50 mm |
+| Açık Sınıf | 250 × 250 × 60 mm |
+| LEGO Sumo | 150 × 150 × 45 mm |
+| RC Sumo | 100 × 100 × 35 mm |
+
+Bu ölçüler simülatörün başlangıç tasarım profilleridir; her yarışmanın resmi teknik şartnamesi olarak kabul edilmemelidir. Gerçek etkinlik kurallarına göre güncellenmelidir.
+
+## DIP-switch taktikleri
+
+| SW3 SW2 SW1 | Decimal | Taktik |
+|---|---:|---|
+| 000 | 0 | Dengeli başlangıç |
+| 001 | 1 | Agresif saldırı |
+| 010 | 2 | Hızlı tarama |
+| 011 | 3 | Tam hücum |
+| 100 | 4 | Kenar güvenliği |
+| 101 | 5 | Çevresel tarama |
+| 110 | 6 | Kontrollü hücum |
+| 111 | 7 | Maksimum saldırı |
+
+SW1 = D12, SW2 = D13, SW3 = A5. Arduino çalışma ortamında `digitalRead()` ile okunur. Otonom modda da seçilen kombinasyon robotun arama ve saldırı davranışını değiştirir. RC/Manuel modda DIP konumu ayarlanabilir; sürüşü kullanıcı kumandası belirler.
+
+## Kurulum
+
 ```bash
 npm install
 npm run dev
 ```
 
-Üretim derlemesi: `npm run build`
+Üretim derlemesi:
+
+```bash
+npm run build
+npm run preview
+```
+
+## Yayınlama
+
+Projeyi GitHub deposuna yükleyip bağlı Vercel projesinde ilgili dalı dağıtabilirsiniz. Ayrıntılar için `VERCEL_UPDATE.md` dosyasına bakın.
+
+## Sınırlamalar
+
+Simülasyon eğitim amaçlı yaklaşık bir fizik modelidir. Robot ölçüleri ve ağırlık limitleri organizasyon kurallarıyla doğrulanmalıdır. Arduino çalışma alanı temel API uyumluluğuna sahiptir; bütün Arduino kütüphanelerini veya gerçek donanım sürücülerini çalıştırmaz.

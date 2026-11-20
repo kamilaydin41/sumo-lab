@@ -380,6 +380,20 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
             // yüzeyinde tutar ve saldıran robot teması sürdürerek ilerleyebilir.
             state.rvx+=pushImpulse*nx/rMass;state.rvz+=pushImpulse*nz/rMass;
           }
+          // Burun buruna temas kilidi: itilen robotun normal yönde hızlanması,
+          // iki gövde arasında görünür boşluk oluşturmasın. Temas halinde yalnızca
+          // birbirinden UZAKLAŞTIRAN bağıl normal hız bileşenini sıfırla;
+          // teğetsel hareket ve motorların ileri itişi korunur.
+          if(pNose>.48&&rNose>.48){
+            const separatingSpeed=(state.rvx-state.vx)*nx+(state.rvz-state.vz)*nz;
+            if(separatingSpeed>0){
+              const contactImpulse=separatingSpeed/(1/pMass+1/rMass);
+              state.vx+=contactImpulse*nx/pMass;
+              state.vz+=contactImpulse*nz/pMass;
+              state.rvx-=contactImpulse*nx/rMass;
+              state.rvz-=contactImpulse*nz/rMass;
+            }
+          }
           // Kama ancak robot gerçekten öne bakıyor ve rakibe doğru ilerliyorsa altına girmiş sayılır.
           // Yalnızca kafa kafaya temas etmek takla oluşturmaz.
           const pBladeFactor=p.bladeType==='Uzun alçak kama'?1.18:p.bladeType==='Geniş kama'?1.08:p.bladeType==='Çift kademeli'?1.0:p.bladeType==='Dar hassas kama'?.62:.88;

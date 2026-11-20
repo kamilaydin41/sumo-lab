@@ -1,4 +1,7 @@
-## v0.22.0 düzeltmesi
+## v0.22.1 – Temaslı itiş düzeltmesi
+Karşılıklı burun buruna itişte robotların birbirinden uzaklaşmasına neden olan bağıl normal hız giderildi.
+
+## v0.22.1 düzeltmesi
 
 - Temel alınan sürüm v0.21.5'tir; v0.21.6–v0.21.8 arasındaki diğer değişiklikler taşınmamıştır.
 - v0.21.8'deki ileri hareket düzeltmesi uygulandı: motor RPM değeri redüktör çıkış devri kabul edilir ve hız hesabında tekrar redüksiyon oranına bölünmez.

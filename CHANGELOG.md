@@ -1,12 +1,18 @@
-# PARS SUMOLAB v0.22.0
+# PARS SUMOLAB v0.22.1
+
+## Temaslı itiş düzeltmesi
+- Karşılıklı burun teması sırasında itilen robotun normal yönde uzaklaşma hızı sınırlandırıldı.
+- Temas kilidi yalnızca iki robot da öne dönük temas ederken çalışır; yanal çarpışma ve teğetsel hareket korunur.
+
+# PARS SUMOLAB v0.22.1
 
 - Robotlar kafa kafaya iterken yapay geri tepme kaldırıldı; itme impulsu hedef robota aktarılıyor.
 - Çarpışma konum düzeltmesindeki fazladan ayırma payı azaltıldı; robotlar temas yüzeyinde kalacak şekilde düzenlendi.
 - v0.21.9 temelindeki diğer özellikler ve fizik ayarları korundu.
 
-# PARS SUMOLAB v0.22.0
+# PARS SUMOLAB v0.22.1
 
-## v0.22.0
+## v0.22.1
 - v0.21.5 kod tabanı korundu.
 - v0.21.8'deki motor çıkış devri / ileri hareket düzeltmesi bu tabana uygulandı.
 - Motor RPM değeri tekerlek tarafındaki redüktör çıkış devri olarak kullanılıyor; hız hesabında ikinci kez redüksiyon oranına bölünmüyor.

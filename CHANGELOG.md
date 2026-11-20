@@ -1,3 +1,19 @@
+# Changelog
+
+## v0.21.0 – Motor ve lastik temelli sürüş fiziği
+- Oyuncu ve rakip robot için motor torku (mNm), redüksiyon oranı, motor devri, tekerlek çapı ve lastik sürtünme katsayısı bağımsız ayarlanabilir.
+- İvmelenme, iki motorun redüksiyon sonrası tekerlek torkundan hesaplanan çekiş kuvveti ile lastik tutuşunun izin verdiği kuvvetin küçüğüne göre hesaplanır.
+- Azami hız, motor devri / redüksiyon oranı / tekerlek çevresinden hesaplanır.
+- Fiziksel temas doğrulandığında motor torku ve lastik tutuşuna bağlı sürekli itme kuvveti uygulanır.
+- Tekerlek çapı görsel tekerlek ve çarpışma geometrisine de yansıtılır.
+- Proje kaydına iki robotun ayrı tahrik sistemi parametreleri eklenir.
+
+## v0.19.0
+- Robot kütlesi sürüş ivmesine ve tekerlek tutuşuna dahil edildi.
+- Oyuncu ve rakip robotun gerçek toplam ağırlıkları bağımsız fizik parametresi olarak kullanılıyor.
+- Çarpışma impulsu kütleye göre hesaplanıyor; ağır robot aynı darbede daha az hız değiştiriyor.
+- Kama ile kaldırma ve yandan devrilme etkileri hedef/saldırgan kütle oranına göre ölçekleniyor.
+
 ## v0.18.0
 - Realistic low-profile sumo chassis with exposed drive wheels and motor pods.
 - Rebuilt wedge as a full-width triangular blade with an exact pointed nose and near-zero ground clearance.

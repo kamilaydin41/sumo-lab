@@ -18,10 +18,13 @@ const CLASS_PRESETS = {
   'RC Sumo (500 g)': { robotScale:1, maxSpeed:2.05, mass:.5, width:.50, length:.50, height:.175 }, // 100x100x35 mm
 };
 
-function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensions = { width: .92, length: 1.02, height: .25 }, opponentSensorCount = 3) {
+function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensions = { width: .92, length: 1.02, height: .25 }, opponentSensorCount = 3, wheelDiameterMm = 30) {
   const root = new THREE.Group();
   root.scale.setScalar(scale);
-  const bodyMat = new THREE.MeshStandardMaterial({ color, metalness: .42, roughness: .38 });
+  const bodyMat = new THREE.MeshStandardMaterial({ color: '#171b22', metalness: .72, roughness: .31 });
+  const steelMat = new THREE.MeshStandardMaterial({ color: '#c7cdd3', metalness: .96, roughness: .23 });
+  const redMat = new THREE.MeshStandardMaterial({ color: '#d71920', metalness: .48, roughness: .32 });
+  const rubberMat = new THREE.MeshStandardMaterial({ color: '#080a0d', metalness: .04, roughness: .96 });
   const darkMat = new THREE.MeshStandardMaterial({ color: '#111827', metalness: .25, roughness: .65 });
   const accentMat = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: .18, metalness: .3 });
   // Gerçek mini-sumo görünümü: dar ve alçak üst şasi, dışarı taşan tahrik tekerlekleri.
@@ -32,16 +35,44 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   const bodyRadius = Math.min(bodyWidth, dimensions.height, bodyLength) * .055;
   const body = new THREE.Mesh(new RoundedBoxGeometry(bodyWidth, dimensions.height, bodyLength, 5, bodyRadius), bodyMat);
   body.position.y = bodyBottom + dimensions.height / 2; body.castShadow = true; body.receiveShadow = true; root.add(body);
+  // Yan kapaklar: referans PARS robotundaki siyah, köşeli metal yan gövde.
+  for (const side of [-1,1]) {
+    const cheek = new THREE.Mesh(new RoundedBoxGeometry(dimensions.width*.075, dimensions.height*.78, bodyLength*.78, 3, dimensions.width*.012), darkMat);
+    cheek.position.set(side*bodyWidth*.49, bodyBottom+dimensions.height*.43, -dimensions.length*.015); cheek.castShadow=true; root.add(cheek);
+    const trim = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width*.008, dimensions.height*.035, bodyLength*.68), redMat);
+    trim.position.set(side*bodyWidth*.535, bodyBottom+dimensions.height*.79, -dimensions.length*.015); root.add(trim);
+  }
   // Alçak elektronik kapak; robotun üstünü büyük bir kutu gibi kaplamaz.
   const deck = new THREE.Mesh(new RoundedBoxGeometry(bodyWidth*.72, Math.max(.009, dimensions.height*.075), bodyLength*.66, 3, bodyRadius*.35), darkMat);
   deck.position.set(0, bodyTop-dimensions.height*.075, -.015); deck.castShadow=true; root.add(deck);
-  // Düşük profilli kontrol kartı ve iki küçük sürücü modülü.
-  const controller = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.30, Math.max(.008,dimensions.height*.045), bodyLength*.22), new THREE.MeshStandardMaterial({color:'#263445',metalness:.42,roughness:.5}));
-  controller.position.set(0,bodyTop-dimensions.height*.025,-dimensions.length*.075); root.add(controller);
-  for (const x of [-1,1]) {
-    const module = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.12,Math.max(.008,dimensions.height*.06),bodyLength*.20),new THREE.MeshStandardMaterial({color:'#1c6b58',metalness:.25,roughness:.6}));
-    module.position.set(x*bodyWidth*.30,bodyTop-dimensions.height*.02,-dimensions.length*.08); root.add(module);
+  // PARS referansındaki açıkta duran siyah PCB, kırmızı baskı çizgileri ve güç modülleri.
+  const pcbMat = new THREE.MeshStandardMaterial({color:'#090d13',metalness:.58,roughness:.38});
+  const pcb = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.88, Math.max(.009,dimensions.height*.055), bodyLength*.78), pcbMat);
+  pcb.position.set(0,bodyTop+dimensions.height*.012,-dimensions.length*.045); pcb.castShadow=true; root.add(pcb);
+  const pcbY=bodyTop+dimensions.height*.043;
+  for (const side of [-1,1]) {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.39,dimensions.height*.012,dimensions.length*.012),redMat);
+    rail.position.set(side*bodyWidth*.245,pcbY,-dimensions.length*.055); root.add(rail);
+    const driver = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.19,dimensions.height*.055,bodyLength*.22),new THREE.MeshStandardMaterial({color:'#171d26',metalness:.65,roughness:.35}));
+    driver.position.set(side*bodyWidth*.29,pcbY+dimensions.height*.025,-dimensions.length*.09); root.add(driver);
+    const inductor = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.12,dimensions.height*.075,bodyLength*.13),new THREE.MeshStandardMaterial({color:'#20252b',metalness:.35,roughness:.55}));
+    inductor.position.set(side*bodyWidth*.12,pcbY+dimensions.height*.035,-dimensions.length*.10); root.add(inductor);
+    const terminal = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.13,dimensions.height*.13,dimensions.length*.10),new THREE.MeshStandardMaterial({color:'#218b42',metalness:.18,roughness:.5}));
+    terminal.position.set(side*bodyWidth*.39,pcbY+dimensions.height*.07,dimensions.length*.13); root.add(terminal);
+    for(let pin=0;pin<3;pin++){const screw=new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.009,dimensions.width*.009,dimensions.height*.018,10),steelMat);screw.position.set(side*bodyWidth*.39+(pin-1)*bodyWidth*.035,pcbY+dimensions.height*.145,dimensions.length*.13);root.add(screw);}
   }
+  const mcu = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.22,dimensions.height*.075,bodyLength*.19),new THREE.MeshStandardMaterial({color:'#202832',metalness:.45,roughness:.4}));
+  mcu.position.set(0,pcbY+dimensions.height*.045,-dimensions.length*.02); root.add(mcu);
+  for(let i=0;i<4;i++){const pin=new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.012,dimensions.height*.025,bodyLength*.025),steelMat);pin.position.set(-bodyWidth*.13+i*bodyWidth*.087,pcbY+dimensions.height*.065,-dimensions.length*.02);root.add(pin);}
+  const led = new THREE.Mesh(new THREE.SphereGeometry(dimensions.width*.018,12,10),new THREE.MeshBasicMaterial({color:'#168cff'})); led.position.set(bodyWidth*.20,pcbY+dimensions.height*.075,dimensions.length*.03);root.add(led);
+  // Üst kart üzerinde referans görseldeki PARS marka plakası.
+  const logoCanvas=document.createElement('canvas'); logoCanvas.width=512; logoCanvas.height=160; const logoCtx=logoCanvas.getContext('2d');
+  logoCtx.clearRect(0,0,512,160); logoCtx.fillStyle='#f4f6f8'; logoCtx.font='900 104px Arial'; logoCtx.textAlign='center'; logoCtx.fillText('PARS',256,112); logoCtx.fillStyle='#e21b2b'; logoCtx.fillRect(72,128,368,9);
+  const logoTexture=new THREE.CanvasTexture(logoCanvas); const logo=new THREE.Mesh(new THREE.PlaneGeometry(bodyWidth*.38,bodyLength*.12),new THREE.MeshBasicMaterial({map:logoTexture,transparent:true,side:THREE.DoubleSide}));
+  logo.rotation.x=-Math.PI/2; logo.position.set(0,pcbY+dimensions.height*.078,-dimensions.length*.055); root.add(logo);
+  // XT60 güç konnektörü ve kırmızı/siyah kablo demeti.
+  const plug = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.20,dimensions.height*.13,dimensions.length*.13),new THREE.MeshStandardMaterial({color:'#e7a51b',metalness:.18,roughness:.5})); plug.position.set(bodyWidth*.24,pcbY+dimensions.height*.075,-dimensions.length*.29);root.add(plug);
+  for(const [i,c] of [[0,'#d51d25'],[1,'#111111']]){const curve=new THREE.CatmullRomCurve3([new THREE.Vector3((i?-.06:.06)*bodyWidth,bodyTop+dimensions.height*.10,-dimensions.length*.31),new THREE.Vector3((i?-.20:.20)*bodyWidth,bodyTop+dimensions.height*.18,-dimensions.length*.37),new THREE.Vector3((i?-.32:.32)*bodyWidth,bodyTop+dimensions.height*.08,-dimensions.length*.28)]);const cable=new THREE.Mesh(new THREE.TubeGeometry(curve,16,dimensions.width*.012,8,false),new THREE.MeshStandardMaterial({color:c,roughness:.45}));root.add(cable);}
   for (const x of [-1,1]) for (const z of [-1,1]) {
     const bolt = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.012,dimensions.width*.012,dimensions.height*.018,10),new THREE.MeshStandardMaterial({color:'#d5dce5',metalness:.95,roughness:.2}));
     bolt.position.set(x*bodyWidth*.40,bodyTop-dimensions.height*.025,z*bodyLength*.40); root.add(bolt);
@@ -53,9 +84,9 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   const bladeLength = (bladeType === 'Uzun alçak kama' ? .98 : .76) * dimensions.length / 1.02;
   const rearZ = dimensions.length * .16, tipZ = rearZ + bladeLength;
   const half = bladeWidth*.5;
-  const floorY = .0962; // Dohyo üst yüzeyine neredeyse sıfır boşluk.
+  const floorY = .0955; // Dohyo üst yüzeyi: 0.0565 + 0.039 = 0.0955; bıçak altı tam temas düzleminde.
   const rearTopY = bodyBottom + dimensions.height*.54;
-  const tipTopY = floorY + .0012;
+  const tipTopY = floorY + .0010; // Kesici ağızda yaklaşık 0.2 mm metal kalınlığı; alt yüzey zeminle sıfır boşlukta.
   const verts = [
     -half,floorY,rearZ,   half,floorY,rearZ,   0,floorY,tipZ,
     -half,rearTopY,rearZ, half,rearTopY,rearZ, 0,tipTopY,tipZ
@@ -70,8 +101,10 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   const bladeGeo = new THREE.BufferGeometry();
   bladeGeo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
   bladeGeo.setIndex(indices); bladeGeo.computeVertexNormals();
-  const bladeMetal = new THREE.MeshStandardMaterial({color:'#aebbc9',metalness:.98,roughness:.16,side:THREE.DoubleSide});
+  const bladeMetal = new THREE.MeshStandardMaterial({color:'#c4cbd1',metalness:.98,roughness:.22,side:THREE.DoubleSide});
   const wedge = new THREE.Mesh(bladeGeo,bladeMetal); wedge.castShadow=true; wedge.receiveShadow=true; blade.add(wedge);
+  // Üst rampadaki PARS tipi üç siyah sensör penceresi ve ince kesici ağız çizgisi.
+  for(const x of [-half*.48,0,half*.48]){const windowMesh=new THREE.Mesh(new THREE.BoxGeometry(bladeWidth*.19,dimensions.height*.012,dimensions.length*.065),new THREE.MeshStandardMaterial({color:'#080b10',metalness:.18,roughness:.42}));windowMesh.position.set(x,floorY+(rearTopY-floorY)*.38,rearZ+bladeLength*.40);windowMesh.rotation.x=-Math.atan2(rearTopY-tipTopY,bladeLength);blade.add(windowMesh);}
   // Ön uç tek bir geometrik noktada birleşir; geniş veya düz bir tampon yoktur.
   // Düşük montaj kulakları ve bağlantı vidaları.
   for (const x of [-half*.72,half*.72]) {
@@ -83,12 +116,12 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   root.add(blade);
 
   // İki yanda belirgin lastik tahrik tekerlekleri ve kompakt motor muhafazaları.
-  const wheelRadius=dimensions.width*.155, wheelWidth=dimensions.width*.13;
+  const wheelRadius=clamp(wheelDiameterMm,15,60)/400, wheelWidth=dimensions.width*.13;
   for (const side of [-1,1]) {
     const x=side*dimensions.width*.455;
     const motorPod = new THREE.Mesh(new RoundedBoxGeometry(dimensions.width*.19,dimensions.height*.40,dimensions.length*.34,4,dimensions.width*.035),darkMat);
     motorPod.position.set(side*dimensions.width*.36,bodyBottom+dimensions.height*.34,-dimensions.length*.105); root.add(motorPod);
-    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius,wheelRadius,wheelWidth,36),new THREE.MeshStandardMaterial({color:'#090d13',metalness:.08,roughness:.92}));
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius,wheelRadius,wheelWidth,36),rubberMat);
     wheel.rotation.z=Math.PI/2; wheel.position.set(x,.0955+wheelRadius,-dimensions.length*.105); wheel.castShadow=true; root.add(wheel);
     // Lastik sırt kanalları ve metal göbek.
     for(let tread=0;tread<12;tread++){
@@ -141,11 +174,11 @@ function readOpponentSensors(robot, self, target, range=1.75) {
   return { any:active.length>0, left, right, front:active.length>0 && (Math.abs(bearing)<=.25 || (left&&right)), readings, distance, bearing };
 }
 
-export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', playerOpponentSensorCount=3, rivalOpponentSensorCount=3, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
+export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', playerOpponentSensorCount=3, rivalOpponentSensorCount=3, driveSpec={motorTorque:12,gearRatio:50,motorRpm:10000,wheelDiameter:30,tireMu:.9}, rivalDriveSpec={motorTorque:12,gearRatio:50,motorRpm:10000,wheelDiameter:30,tireMu:.9}, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
   const host = useRef(null);
   const api = useRef(null);
-  const props = useRef({running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange});
-  useEffect(()=>{props.current={running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange};},[running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange]);
+  const props = useRef({running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,driveSpec,rivalDriveSpec,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange});
+  useEffect(()=>{props.current={running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,driveSpec,rivalDriveSpec,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange};},[running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,driveSpec,rivalDriveSpec,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange]);
 
   useEffect(()=>{
     const el=host.current; if(!el) return;
@@ -179,8 +212,8 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     const startMat=new THREE.MeshStandardMaterial({color:'#f7f7f4',roughness:.88});
     [-startLineOffset,startLineOffset].forEach(x=>{const line=new THREE.Mesh(new THREE.BoxGeometry(.018,.006,startLineLength),startMat);line.position.set(x,.097,0);scene.add(line);});
 
-    const player=makeRobot(props.current.robotColor,'#8fc2ff',props.current.bladeType,preset.robotScale,false,preset,props.current.playerOpponentSensorCount||3);
-    const rival=makeRobot(props.current.rivalColor,'#ffb36b',props.current.rivalBladeType,rivalPreset.robotScale,true,rivalPreset,props.current.rivalOpponentSensorCount||3); scene.add(player,rival);
+    const player=makeRobot(props.current.robotColor,'#8fc2ff',props.current.bladeType,preset.robotScale,false,preset,props.current.playerOpponentSensorCount||3,props.current.driveSpec?.wheelDiameter||30);
+    const rival=makeRobot(props.current.rivalColor,'#ffb36b',props.current.rivalBladeType,rivalPreset.robotScale,true,rivalPreset,props.current.rivalOpponentSensorCount||3,props.current.rivalDriveSpec?.wheelDiameter||30); scene.add(player,rival);
     const shadows=[]; for(const [color,op,profile] of [['#3b82f6',.14,preset],['#ef4444',.12,rivalPreset]]){const m=new THREE.Mesh(new THREE.CircleGeometry(Math.max(profile.width,profile.length)*.72,32),new THREE.MeshBasicMaterial({color,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.y=.105;scene.add(m);shadows.push(m);}
     const startState=()=>({x:(props.current.playerPosition?.x??-.52)*maxRadius,z:(props.current.playerPosition?.z??0)*maxRadius,a:(props.current.playerHeading??90)*Math.PI/180,vx:0,vz:0,turn:0,rx:(props.current.rivalPosition?.x??.52)*maxRadius,rz:(props.current.rivalPosition?.z??0)*maxRadius,ra:(props.current.rivalHeading??270)*Math.PI/180,rvx:0,rvz:0,rturn:0,collisions:0,pushes:0,playerRoll:0,playerPitch:0,rivalRoll:0,rivalPitch:0,playerRollRate:0,playerPitchRate:0,rivalRollRate:0,rivalPitchRate:0,lastPush:0,playerTipped:false,rivalTipped:false,playerEdge:false,rivalEdge:false,winner:null,finishReason:'',lastHit:0,elapsed:0});
     const state=startState(); const keys={forward:false,back:false,left:false,right:false};
@@ -202,14 +235,49 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     renderer.domElement.style.cursor='grab';renderer.domElement.addEventListener('pointerdown',pointerDown);renderer.domElement.addEventListener('pointermove',pointerMove);renderer.domElement.addEventListener('pointerup',pointerUp);renderer.domElement.addEventListener('pointercancel',pointerUp);renderer.domElement.addEventListener('wheel',wheelRotate,{passive:false,capture:true});window.addEventListener('keydown',rotateKey);
     const resize=()=>{const w=el.clientWidth,h=Math.max(1,el.clientHeight);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);}; const ro=new ResizeObserver(resize);ro.observe(el);
     let frame,lastTelemetry=0,last=performance.now();
-    const drive=(r,forward,turn,dt,maxSpeed)=>{r.turn=turn;r.a=wrapAngle(r.a+turn*2.45*dt);const fx=Math.sin(r.a),fz=Math.cos(r.a);const targetV=forward*maxSpeed;r.vx+=(fx*targetV-r.vx)*Math.min(1,dt*7);r.vz+=(fz*targetV-r.vz)*Math.min(1,dt*7);r.x+=r.vx*dt;r.z+=r.vz*dt;};
+    // Motor/şanzıman/tekerlek/lastik modeli. Simülasyonda 1 birim = 0.2 m.
+    // motorTorque: motor milindeki tork (mNm); iki tahrik motoru varsayılır.
+    const drive=(r,forward,turn,dt,classMaxSpeed,massKg,spec={})=>{
+      const mass=Math.max(.03,massKg||.5);
+      const motorTorqueNm=Math.max(1,Number(spec.motorTorque)||12)/1000;
+      const gearRatio=clamp(Number(spec.gearRatio)||50,1,150);
+      const motorRpm=clamp(Number(spec.motorRpm)||10000,500,30000);
+      const wheelDiameterM=clamp(Number(spec.wheelDiameter)||30,10,100)/1000;
+      const wheelRadiusM=wheelDiameterM/2;
+      const mu=clamp(Number(spec.tireMu)||.9,.2,2);
+      const drivetrainEfficiency=.72;
+      const wheelTorquePerMotor=motorTorqueNm*gearRatio*drivetrainEfficiency;
+      const motorForceN=(2*wheelTorquePerMotor)/Math.max(.004,wheelRadiusM);
+      const tractionForceN=mu*mass*9.81;
+      const usableForceN=Math.min(motorForceN,tractionForceN);
+      const accelerationSim=(usableForceN/mass)*5; // m/s² -> simülasyon birimi/s²
+      const wheelRpm=motorRpm/gearRatio;
+      const wheelSpeedMps=(wheelRpm/60)*Math.PI*wheelDiameterM;
+      const motorSpeedSim=wheelSpeedMps*5;
+      const targetSpeed=Math.min(classMaxSpeed,motorSpeedSim);
+      r.turn=turn;
+      const turnGrip=clamp(Math.sqrt(mu/.9),.55,1.28);
+      r.a=wrapAngle(r.a+turn*2.45*dt*turnGrip);
+      const fx=Math.sin(r.a),fz=Math.cos(r.a),targetV=forward*targetSpeed;
+      let dvx=fx*targetV-r.vx,dvz=fz*targetV-r.vz;
+      const dv=Math.hypot(dvx,dvz),maxDv=accelerationSim*dt;
+      if(dv>maxDv&&dv>0){dvx*=maxDv/dv;dvz*=maxDv/dv;}
+      r.vx+=dvx;r.vz+=dvz;
+      const speed=Math.hypot(r.vx,r.vz);
+      if(speed>motorSpeedSim&&speed>0){r.vx*=motorSpeedSim/speed;r.vz*=motorSpeedSim/speed;}
+      r.x+=r.vx*dt;r.z+=r.vz*dt;
+      return {mass,mu,motorForceN,tractionForceN,usableForceN,accelerationSim,motorSpeedSim,wheelTorquePerMotor};
+    };
     const tick=now=>{
       frame=requestAnimationFrame(tick);const dt=Math.min((now-last)/1000,.035);last=now;const p=props.current;
       if(player.children[0]?.material?.color)player.children[0].material.color.set(p.robotColor);
       const cls=CLASS_PRESETS[p.robotClass]||CLASS_PRESETS['Mini Sumo (500 g)'];
       const rivalCls=CLASS_PRESETS[p.rivalRobotClass]||CLASS_PRESETS['Mini Sumo (500 g)'];
       if(p.running&&!state.winner){
-        state.elapsed+=dt;const configuredMass=Math.max(.03,(p.totalWeight||cls.mass*1000)/1000);const maxSpeed=cls.maxSpeed*(p.speed/100)*clamp(Math.sqrt(cls.mass/configuredMass),.72,1.12);
+        state.elapsed+=dt;
+        const playerMassKg=Math.max(.03,(p.totalWeight||cls.mass*1000)/1000);
+        const rivalMassKg=Math.max(.03,(p.rivalTotalWeight||rivalCls.mass*1000)/1000);
+        const maxSpeed=cls.maxSpeed*(p.speed/100);
         // Edge sensors read the actual white dohyo boundary at five physical sensor positions.
         const playerSensors=player.userData.sensors.map(s=>sensorWorld(state,s.x,s.z,playableRadius));
         const rivalProxy={x:state.rx,z:state.rz,a:state.ra};
@@ -248,7 +316,8 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         if(state.rivalTipped){rF=0;rT=0;}else if(rFront){rF=-.92;rT=err>=0?-.9:.9;}else if(rRear){rF=.5;rT=err>=0?.7:-.7;}else if(rivalTarget.any){if(rivalTarget.front){rF=1;rT=clamp(err*1.2,-.45,.45);}else{rF=.18;rT=rivalTarget.left?-.9:.9;}}else{rF=.35;rT=.78;}
         const autoTactic=(p.dipSwitches||[]).reduce((n,on,i)=>n+(on?(1<<i):0),0);
         const playerSpeedScale=(p.mode==='AUTO'||p.mode==='OTONOM')?([1,3,5,7].includes(autoTactic)?1.08:([4,6].includes(autoTactic)?.88:1)):1;
-        drive(state,pF,pT,dt,maxSpeed*playerSpeedScale);drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,rivalCls.maxSpeed*.88*clamp(Math.sqrt(rivalCls.mass/Math.max(.03,(p.rivalTotalWeight||rivalCls.mass*1000)/1000)),.72,1.12));
+        const playerDrive=drive(state,pF,pT,dt,maxSpeed*playerSpeedScale,playerMassKg,p.driveSpec);
+        const rivalDrive=drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,rivalCls.maxSpeed*.88,rivalMassKg,p.rivalDriveSpec);
 
         // Fiziksel temas: görünür gövde, iki lastik ve gerçek sivri üçgen bıçak için ayrı çokgenler.
         // Sensör menzili veya yaklaşık büyük dikdörtgenler çarpışma sayılmaz.
@@ -257,7 +326,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           return local.map(([lx,lz])=>({x:x+lx*c+lz*sn,z:z-lx*sn+lz*c}));
         };
         const circlePolygon=(cx,cz,r,n=12)=>Array.from({length:n},(_,i)=>[cx+Math.cos(i*2*Math.PI/n)*r,cz+Math.sin(i*2*Math.PI/n)*r]);
-        const makeCollisionPolygons=(x,z,a,profile,bladeType)=>{
+        const makeCollisionPolygons=(x,z,a,profile,bladeType,driveSpec)=>{
           const bw=profile.width*.78, bl=profile.length*.82;
           const bladeW=(bladeType==='Geniş kama'?1.08:bladeType==='Dar hassas kama'?.72:bladeType==='Çift kademeli'?.96:.94)*profile.width/.92;
           const bladeL=(bladeType==='Uzun alçak kama'?.98:.76)*profile.length/1.02;
@@ -266,12 +335,12 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
             [[-bw/2,-bl/2],[bw/2,-bl/2],[bw/2,bl/2],[-bw/2,bl/2]],
             [[-half,rear],[half,rear],[0,tip]]
           ];
-          const wheelR=profile.width*.155, wheelZ=-profile.length*.105;
+          const wheelR=clamp(Number(driveSpec?.wheelDiameter)||30,15,60)/400, wheelZ=-profile.length*.105;
           for(const side of [-1,1]) local.push(circlePolygon(side*profile.width*.455,wheelZ,wheelR,14));
           return local.map(poly=>toWorldPolygon(x,z,a,poly));
         };
-        const pShapes=makeCollisionPolygons(state.x,state.z,state.a,preset,p.bladeType);
-        const rShapes=makeCollisionPolygons(state.rx,state.rz,state.ra,rivalPreset,p.rivalBladeType);
+        const pShapes=makeCollisionPolygons(state.x,state.z,state.a,preset,p.bladeType,p.driveSpec);
+        const rShapes=makeCollisionPolygons(state.rx,state.rz,state.ra,rivalPreset,p.rivalBladeType,p.rivalDriveSpec);
         let maxOverlap=0, collisionNormal=null;
         const polygonContact=(A,B)=>{
           let minOverlap=Infinity, normal=null;
@@ -308,8 +377,8 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           const rForward=-(state.rvx*nx+state.rvz*nz);
           const pNose=Math.sin(state.a)*nx+Math.cos(state.a)*nz;
           const rNose=-(Math.sin(state.ra)*nx+Math.cos(state.ra)*nz);
-          const pMass=Math.max(.05,(p.totalWeight||preset.mass*1000)/1000);
-          const rMass=Math.max(.03,(p.rivalTotalWeight||rivalPreset.mass*1000)/1000);
+          const pMass=playerMassKg;
+          const rMass=rivalMassKg;
           const relative=(state.vx-state.rvx)*nx+(state.vz-state.rvz)*nz;
           const closingSpeed=Math.max(0,relative);
           // Sumo dohyo'sunda darbeler çoğunlukla elastik sekme değil, lastik tutuşuyla itiş üretir.
@@ -318,6 +387,15 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
             const impulse=(1+restitution)*closingSpeed/(1/pMass+1/rMass);
             state.vx-=impulse*nx/pMass;state.vz-=impulse*nz/pMass;
             state.rvx+=impulse*nx/rMass;state.rvz+=impulse*nz/rMass;
+          }
+          // Sürekli itiş kuvveti yalnızca SAT çarpışması doğrulandıktan sonra uygulanır.
+          // Motor torku ve lastik tutuşu iki robot için ayrı ayrı sınırlandırılır.
+          const pushPlayer=pNose>.48&&pF>.05?playerDrive.usableForceN*clamp(pF,0,1)*clamp(pNose,0,1):0;
+          const pushRival=rNose>.48&&rF>.05?rivalDrive.usableForceN*clamp(rF,0,1)*clamp(rNose,0,1):0;
+          const pushImpulse=(pushPlayer+pushRival)*dt*5; // N·s / kg -> simülasyon hız birimi
+          if(pushImpulse!==0){
+            state.vx-=pushImpulse*nx/pMass;state.vz-=pushImpulse*nz/pMass;
+            state.rvx+=pushImpulse*nx/rMass;state.rvz+=pushImpulse*nz/rMass;
           }
           // Kama ancak robot gerçekten öne bakıyor ve rakibe doğru ilerliyorsa altına girmiş sayılır.
           // Yalnızca kafa kafaya temas etmek takla oluşturmaz.
@@ -330,8 +408,12 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           const comHeightM=preset.height*.20*.38;
           const supportHalfM=preset.length*.20*.34;
           const vulnerability=clamp(comHeightM/Math.max(.001,supportHalfM*.72),.22,.82);
-          const liftDriveP=pWedge?clamp((pForward-.42)*2.0,0,1.8)*pBladeFactor:0;
-          const liftDriveR=rWedge?clamp((rForward-.42)*2.0,0,1.8)*rBladeFactor:0;
+          // Kütle oranı kaldırma etkisini belirler: ağır hedefi kaldırmak daha zordur;
+          // daha ağır ve hızlı gelen saldırganın kama etkisi ise nispeten artar.
+          const pLiftMassFactor=clamp(Math.sqrt(pMass/rMass),.38,1.65);
+          const rLiftMassFactor=clamp(Math.sqrt(rMass/pMass),.38,1.65);
+          const liftDriveP=pWedge?clamp((pForward-.42)*2.0,0,1.8)*pBladeFactor*pLiftMassFactor:0;
+          const liftDriveR=rWedge?clamp((rForward-.42)*2.0,0,1.8)*rBladeFactor*rLiftMassFactor:0;
           // Kama altına girdikçe hedefin ön desteği boşalır; eğim kademeli birikir.
           // Düşük hızlı sürtünme/temas veya düz çarpışma tek başına takla attırmaz.
           if(liftDriveP>0&&!state.rivalTipped){
@@ -347,9 +429,12 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           const sideContact=Math.abs(pNose)<.48||Math.abs(rNose)<.48;
           if(sideContact&&lateralSpeed>1.45){
             const sideSign=Math.sign((state.vx-state.rvx)*(-nz)+(state.vz-state.rvz)*nx)||1;
-            const sideLoad=clamp((lateralSpeed-1.45)*.65,0,1.0)*vulnerability;
-            if(!state.playerTipped)state.playerRollRate+=sideSign*sideLoad*dt;
-            if(!state.rivalTipped)state.rivalRollRate-=sideSign*sideLoad*dt;
+            const pSideResistance=clamp(Math.sqrt(preset.mass/pMass),.55,1.45);
+            const rSideResistance=clamp(Math.sqrt(rivalPreset.mass/rMass),.55,1.45);
+            const sideLoadP=clamp((lateralSpeed-1.45)*.65,0,1.0)*vulnerability/pSideResistance;
+            const sideLoadR=clamp((lateralSpeed-1.45)*.65,0,1.0)*vulnerability/rSideResistance;
+            if(!state.playerTipped)state.playerRollRate+=sideSign*sideLoadP*dt;
+            if(!state.rivalTipped)state.rivalRollRate-=sideSign*sideLoadR*dt;
           }
           if((liftDriveP>0||liftDriveR>0)&&now-state.lastPush>350){state.pushes++;state.lastPush=now;}
           if(now-state.lastHit>260){state.collisions++;state.lastHit=now;}
@@ -373,7 +458,9 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           state.rivalTipped=Math.abs(state.rivalRoll)>1.34||Math.abs(state.rivalPitch)>1.38;
         }
         // Surface friction and natural deceleration.
-        const friction=Math.max(0,1-dt*.55);state.vx*=friction;state.vz*=friction;state.rvx*=friction;state.rvz*=friction;
+        const playerSurfaceDamping=Math.max(0,1-dt*(.16+playerDrive.mu*.42));
+        const rivalSurfaceDamping=Math.max(0,1-dt*(.16+rivalDrive.mu*.42));
+        state.vx*=playerSurfaceDamping;state.vz*=playerSurfaceDamping;state.rvx*=rivalSurfaceDamping;state.rvz*=rivalSurfaceDamping;
         // Ring-out yalnızca robotun merkezi dohyonun fiziksel dış kenarını geçtiğinde oluşur.
         // Gövde/kama boyutunu merkeze eklemek robot kenara yaklaşır yaklaşmaz hatalı galibiyet veriyordu.
         // Beyaz sınır bandı ring-out değildir; gerçek platform dış kenarı maxRadius'tır.

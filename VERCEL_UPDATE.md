@@ -1,15 +1,9 @@
-# Deploy SUMO LAB v0.3.0 to Vercel
+# Updating SUMO LAB on Vercel — v0.4.0
 
-1. Extract this ZIP archive.
-2. Open the existing GitHub repository `sumo-lab`.
-3. Replace the repository files with the contents of this folder. Keep `package.json`, `index.html`, `.gitignore`, and the complete `src` folder at repository root.
-4. Commit with message: `SUMO LAB v0.3.0 - sumo pushing and line sensors`.
-5. Push to the branch connected to Vercel. Vercel should start a new deployment automatically.
+1. Extract `sumo-lab-v0.4.0.zip`.
+2. Replace the contents of the existing GitHub `sumo-lab` repository with the extracted project contents. Keep `package.json` at repository root.
+3. Commit with message: `SUMO LAB v0.4.0 - RC and Autonomous Controls`.
+4. Push to the branch connected to Vercel.
+5. Vercel should automatically build and deploy. Build command: `npm run build`; output directory: `dist`.
 
-Vercel settings:
-- Framework: Vite
-- Install: `npm install`
-- Build: `npm run build`
-- Output: `dist`
-
-After deployment, test both robots, line sensors, manual drive, autonomous mode, contact pushing and winner detection. This release has passed source syntax transpilation checks; package installation/build could not be completed in the authoring environment because npm registry access timed out.
+If deployment fails, open the Vercel deployment log and check the first build error. Run `npm install` and `npm run build` locally before retrying.

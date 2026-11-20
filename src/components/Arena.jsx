@@ -68,11 +68,11 @@ function sensorWorld(robot, x, z, radius) {
   return { x: wx, z: wz, edge: Math.hypot(wx,wz) > radius - .10 };
 }
 
-export default function Arena({ running, speed, mode, resetKey, onTelemetry, robotColor='#3978ed', arenaSize='standard', bladeType='Standart kama', robotClass='Mini Sumo (500 g)' }) {
+export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, resetKey, onTelemetry, robotColor='#3978ed', arenaSize='standard', bladeType='Standart kama', robotClass='Mini Sumo (500 g)' }) {
   const host = useRef(null);
   const api = useRef(null);
-  const props = useRef({running,speed,mode,onTelemetry,robotColor,arenaSize,bladeType,robotClass});
-  useEffect(()=>{props.current={running,speed,mode,onTelemetry,robotColor,arenaSize,bladeType,robotClass};},[running,speed,mode,onTelemetry,robotColor,arenaSize,bladeType,robotClass]);
+  const props = useRef({running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass});
+  useEffect(()=>{props.current={running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass};},[running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass]);
 
   useEffect(()=>{
     const el=host.current; if(!el) return;
@@ -120,9 +120,12 @@ export default function Arena({ running, speed, mode, resetKey, onTelemetry, rob
           if(pFront){pF=-.88;pT=err>=0?-.95:.95;} else if(pRear){pF=.45;pT=err>=0?.7:-.7;} else if(dist<1.55){pF=1;pT=clamp(err*1.5,-1,1);} else {pF=.35;pT=err>.12?1:err<-.12?-1:.18;}
         } else {
           pF=(keys.forward?1:0)-(keys.back?1:0);pT=(keys.left?1:0)-(keys.right?1:0);
-          // Optional USB/Bluetooth gamepad: left stick Y drives, left stick X steers.
-          const pad=navigator.getGamepads?.()?.[0];
-          if(pad){const axisY=Math.abs(pad.axes?.[1]||0)>.12?-(pad.axes[1]):0;const axisX=Math.abs(pad.axes?.[0]||0)>.12?pad.axes[0]:0;pF=clamp(axisY,-1,1);pT=clamp(axisX,-1,1);if(pad.buttons?.[7]?.pressed)pF=1;if(pad.buttons?.[6]?.pressed)pF=-1;}
+          // Browser virtual RC transmitter: independent throttle and steering sticks.
+          if(p.driveInput?.throttleActive) pF=clamp(p.driveInput.throttle,-1,1);
+          if(p.driveInput?.steerActive) pT=clamp(p.driveInput.steer,-1,1);
+          // Standard USB/Bluetooth gamepad: left stick Y drives, left stick X steers.
+          const pads=navigator.getGamepads?.()||[];const pad=Array.from(pads).find(Boolean);
+          if(pad){const axisY=Math.abs(pad.axes?.[1]||0)>.12?-(pad.axes[1]):0;const axisX=Math.abs(pad.axes?.[0]||0)>.12?pad.axes[0]:0;if(Math.abs(axisY)>.12||Math.abs(axisX)>.12){pF=clamp(axisY,-1,1);pT=clamp(axisX,-1,1);}if(pad.buttons?.[7]?.pressed)pF=1;if(pad.buttons?.[6]?.pressed)pF=-1;}
         }
         // Opponent controller: edge avoidance has priority over target seeking and attack.
         const dx=state.x-state.rx,dz=state.z-state.rz,dist=Math.hypot(dx,dz),targetAngle=Math.atan2(dx,dz),err=wrapAngle(targetAngle-state.ra);
@@ -170,7 +173,7 @@ export default function Arena({ running, speed, mode, resetKey, onTelemetry, rob
 
   useEffect(()=>{if(api.current){Object.assign(api.current.state,api.current.startState());}},[resetKey,robotClass]);
   return <div className="arena-canvas" ref={host}>
-    <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> GERÇEKÇİ TEMAS / ÇİZGİ SENSÖRLERİ</div>
+    <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> RC KUMANDA / OTONOM / ÇİZGİ SENSÖRLERİ</div>
     <div className="arena-help"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> sürüş <span>·</span> Sensörler dohyo dışını algılar <span>·</span> Fare: kamera</div>
   </div>;
 }

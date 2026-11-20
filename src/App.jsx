@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Swords, Bot, Cpu, Code2, Play, Pause, RotateCcw, Gauge, Radio, Settings2,
   Layers3, Wifi, TerminalSquare, Zap, Target, Download, Copy, Check, ChevronRight,
@@ -97,11 +97,44 @@ const partCatalog = [
 
 const defaultParts = ['Arduino UNO R3', 'TB6612FNG', 'N20 metal redüktörlü motor', 'Dijital IR mesafe sensörü', 'QTR-1A yansıtıcı sensör', '2S LiPo batarya', 'Alüminyum kama'];
 
+function VirtualStick({ title, axis, value, onChange }) {
+  const [knob, setKnob] = useState({ x: 50, y: 50 });
+  const active = useRef(false);
+  const update = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const radius = Math.min(rect.width, rect.height) * 0.38;
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const nx = Math.max(-1, Math.min(1, (event.clientX - cx) / radius));
+    const ny = Math.max(-1, Math.min(1, (event.clientY - cy) / radius));
+    setKnob({ x: 50 + nx * 36, y: 50 + ny * 36 });
+    onChange(axis === 'throttle' ? -ny : nx, true);
+  };
+  const release = () => {
+    active.current = false;
+    setKnob({ x: 50, y: 50 });
+    onChange(0, false);
+  };
+  return <div className="rc-stick-wrap">
+    <div className="rc-stick-title">{title}</div>
+    <div className="rc-stick" role="application" aria-label={title}
+      onPointerDown={e => { active.current = true; e.currentTarget.setPointerCapture(e.pointerId); update(e); }}
+      onPointerMove={e => { if (active.current) update(e); }}
+      onPointerUp={release} onPointerCancel={release} onLostPointerCapture={release}>
+      <span className="stick-cross horizontal"/><span className="stick-cross vertical"/>
+      <span className="stick-knob" style={{ left: `${knob.x}%`, top: `${knob.y}%` }}/>
+    </div>
+    <div className="rc-stick-caption">{axis === 'throttle' ? 'İleri / Geri' : 'Sol / Sağ dönüş'}</div>
+  </div>;
+}
+
 export default function App() {
   const [tab, setTab] = useState('sim');
   const [running, setRunning] = useState(false);
   const [speed, setSpeed] = useState(75);
-  const [mode, setMode] = useState('MANUEL');
+  const [mode, setMode] = useState('RC');
+  const [rcInput, setRcInput] = useState({ throttle: 0, steer: 0, throttleActive: false, steerActive: false });
+  const [gamepadName, setGamepadName] = useState('Gamepad aranıyor');
   const [resetKey, setResetKey] = useState(0);
   const [language, setLanguage] = useState('JavaScript');
   const [code, setCode] = useState(jsStarter);
@@ -111,7 +144,7 @@ export default function App() {
   const [arenaSize, setArenaSize] = useState('standard');
   const [bladeType, setBladeType] = useState('Standart kama');
   const [selectedParts, setSelectedParts] = useState(defaultParts);
-  const [telemetry, setTelemetry] = useState({ distance: '—', speed: 0, mode: 'MANUEL', collisions: 0, edge: 'GÜVENLİ' });
+  const [telemetry, setTelemetry] = useState({ distance: '—', speed: 0, mode: 'RC', collisions: 0, edge: 'GÜVENLİ' });
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -129,6 +162,13 @@ export default function App() {
   }, []);
 
   useEffect(() => { setCode(language === 'JavaScript' ? jsStarter : cppStarter); }, [language]);
+
+  useEffect(() => {
+    const check = () => { const pads = navigator.getGamepads?.() || []; const pad = Array.from(pads).find(Boolean); const nextName = pad ? (pad.id || 'Gamepad bağlı') : 'Gamepad bağlı değil'; setGamepadName(prev => prev === nextName ? prev : nextName); };
+    check(); window.addEventListener('gamepadconnected', check); window.addEventListener('gamepaddisconnected', check);
+    const timer = window.setInterval(check, 700);
+    return () => { window.clearInterval(timer); window.removeEventListener('gamepadconnected', check); window.removeEventListener('gamepaddisconnected', check); };
+  }, []);
 
   const totalWeight = useMemo(() => selectedParts.reduce((sum, name) => sum + (partCatalog.find(p => p.name === name)?.weight || 0), 0) + 95, [selectedParts]);
   const weightLimit = robotClass.startsWith('Pico') ? 50 : robotClass.startsWith('Micro') ? 100 : robotClass.startsWith('1 Kg') || robotClass.startsWith('LEGO') ? 1000 : robotClass.startsWith('Mega') ? 3000 : robotClass.startsWith('Açık') ? 5000 : 500;
@@ -179,7 +219,7 @@ export default function App() {
         <div className="side-label">SENSÖR DURUMU</div>
         <div className="sensor-chip"><span className="sensor-dot blue"/> Rakip algılama <b>Simüle</b></div>
         <div className="sensor-chip"><span className="sensor-dot orange"/> Çizgi algılama <b>Simüle</b></div>
-        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>SUMO LAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">SUMO LAB <span>v0.3.0 · PHYSICS BETA</span></div></div>
+        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>SUMO LAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">SUMO LAB <span>v0.4.0 · RC + AUTONOMOUS</span></div></div>
       </aside>
 
       <section className="main-content">
@@ -189,9 +229,9 @@ export default function App() {
 
         {tab === 'sim' && <>
           <div className="sim-toolbar"><div className="toolbar-left"><div className="section-icon"><Swords size={17}/></div><div><strong>{robotClass} Dohyo</strong><span>Sınıfa göre ölçeklenen arena · itme fiziği</span></div><span className={`status-pill ${running ? 'status-running' : ''}`}><i/> {running ? 'CANLI' : 'HAZIR'}</span></div><div className="toolbar-right"><button className="tool-btn" onClick={() => { setResetKey(v => v + 1); setRunning(false); }}><RotateCcw size={15}/> Sıfırla</button><button className="tool-btn" onClick={() => setRunning(false)}><Pause size={15}/> Durdur</button><button className="tool-btn active-tool" onClick={() => setRunning(true)}><Play size={14}/> Başlat</button></div></div>
-          <div className="arena-wrap"><Arena running={running} speed={speed} mode={mode} resetKey={resetKey} onTelemetry={setTelemetry} robotColor={robotColor} arenaSize={arenaSize} bladeType={bladeType} robotClass={robotClass}/></div>
+          <div className="arena-wrap"><Arena running={running} speed={speed} mode={mode} driveInput={rcInput} resetKey={resetKey} onTelemetry={setTelemetry} robotColor={robotColor} arenaSize={arenaSize} bladeType={bladeType} robotClass={robotClass}/></div>
           <div className="bottom-panels">
-            <div className="panel control-panel"><div className="panel-title"><div><Gauge size={17}/><strong>Robot kontrolü</strong></div><span className="muted-tag">OYUNCU 1</span></div><div className="mode-switch"><button className={mode === 'MANUEL' ? 'mode-active' : ''} onClick={() => setMode('MANUEL')}>Manuel / RC sürüş</button><button className={mode === 'AUTO' ? 'mode-active' : ''} onClick={() => setMode('AUTO')}>Otonom takip</button></div><div className="speed-row"><label>Motor gücü</label><strong>{speed}%</strong></div><input className="range" type="range" min="10" max="100" step="5" value={speed} onChange={e => setSpeed(+e.target.value)}/><div className="range-labels"><span>Hassas</span><span>Maksimum</span></div><div className="keyboard-hint"><Keyboard size={15}/><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>ok tuşları / gamepad</span></div></div>
+            <div className="panel control-panel"><div className="panel-title"><div><Gauge size={17}/><strong>Robot kontrolü</strong></div><span className="muted-tag">OYUNCU 1</span></div><div className="mode-switch"><button className={mode === 'RC' ? 'mode-active' : ''} onClick={() => setMode('RC')}>RC / Manuel</button><button className={mode === 'AUTO' ? 'mode-active' : ''} onClick={() => { setMode('AUTO'); setRcInput({ throttle: 0, steer: 0, throttleActive: false, steerActive: false }); }}>Otonom</button></div><div className="speed-row"><label>Motor gücü</label><strong>{speed}%</strong></div><input className="range" type="range" min="10" max="100" step="5" value={speed} onChange={e => setSpeed(+e.target.value)}/><div className="range-labels"><span>Hassas</span><span>Maksimum</span></div>{mode === 'RC' ? <><div className="rc-console"><VirtualStick title="SOL STICK" axis="throttle" onChange={(v, active) => setRcInput(prev => ({ ...prev, throttle: v, throttleActive: active }))}/><VirtualStick title="SAĞ STICK" axis="steer" onChange={(v, active) => setRcInput(prev => ({ ...prev, steer: v, steerActive: active }))}/></div><div className="keyboard-hint"><Keyboard size={15}/><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>klavye veya sanal kumanda</span></div><div className="gamepad-status"><span className={`sensor-dot ${gamepadName === 'Gamepad bağlı değil' ? 'orange' : 'blue'}`}/><span>{gamepadName}</span><small>USB / Bluetooth gamepad</small></div></> : <div className="auto-status"><span className="sensor-dot blue"/> Otonom sürüş aktif: çizgi sensörü öncelikli, rakip arama ve saldırı otomatik.</div>}</div>
             <div className="panel telemetry-panel"><div className="panel-title"><div><Radio size={17}/><strong>Canlı telemetri</strong></div><span className="live-label"><i/> SİMÜLASYON</span></div><div className="metrics"><div className="metric"><span>Rakibe mesafe</span><strong>{telemetry.distance}<small> m</small></strong></div><div className="metric"><span>Motor gücü</span><strong>{telemetry.speed}<small> %</small></strong></div><div className="metric"><span>Temas sayısı</span><strong>{telemetry.collisions || 0}</strong></div><div className="metric"><span>İtme teması</span><strong>{telemetry.pushes || 0}</strong></div></div><div className="telemetry-foot"><span className={`sensor-dot ${telemetry.edge === 'UYARI' ? 'orange' : 'blue'}`}/> Ring sınırı <b>{telemetry.edge || 'GÜVENLİ'}</b><span className="sensor-dot orange"/> Rakip sensörü <b>Aktif</b><span className="sensor-dot blue"/> Çizgi sensörü <b>{telemetry.lineSensors || 'Hazır'}</b></div></div>
           </div>
           {telemetry.winner && <div className="result-banner"><Trophy size={20}/><div><strong>{telemetry.winner}</strong><span>{telemetry.finishReason}</span></div><button className="outline-btn" onClick={() => { setResetKey(v => v + 1); setRunning(false); }}>Yeni maç</button></div>}<div className="notice-line"><ShieldCheck size={15}/> Fizik modeli eğitim amaçlıdır. Sınıf ağırlıkları ve dohyo ölçüleri organizasyonun güncel teknik şartnamesine göre doğrulanmalıdır.</div>
@@ -213,7 +253,7 @@ export default function App() {
 
         {tab === 'parts' && <div className="panel parts-workspace"><div className="panel-title"><div><Package size={18}/><strong>Donanım bileşenleri</strong></div><span className="muted-tag">{selectedParts.length} PARÇA SEÇİLİ</span></div><p className="parts-intro">Robotunda kullanacağın parçaları seç. Seçimler ağırlık hesabına ve robot profiline yansır.</p><div className="parts-grid">{partCatalog.map(part => { const Icon = part.icon; const active = selectedParts.includes(part.name); return <button key={part.name} className={`part-card ${active ? 'part-selected' : ''}`} onClick={() => togglePart(part.name)}><div className="part-icon"><Icon size={20}/></div><div className="part-copy"><strong>{part.name}</strong><span>{part.category} · {part.detail}</span></div><div className="part-weight">{part.weight} g</div><div className={`part-check ${active ? 'checked' : ''}`}>{active ? <Check size={13}/> : '+'}</div></button>; })}</div><div className="parts-summary"><div><span>Seçili bileşen ağırlığı</span><strong>{totalWeight} g</strong></div><div><span>İzin verilen ağırlık</span><strong>{weightLimit} g</strong></div><button className="primary-btn" onClick={() => { saveProject(); setTab('design'); }}><Save size={15}/> Seçimleri kaydet</button></div></div>}
 
-        <footer className="main-footer"><span>SUMO LAB · Eğitim ve prototipleme simülatörü</span><span>v0.3.0 · Aşama 3 / 6</span></footer>
+        <footer className="main-footer"><span>SUMO LAB · Eğitim ve prototipleme simülatörü</span><span>v0.4.0 · Aşama 4 / 6</span></footer>
       </section>
     </main>
   </div>;

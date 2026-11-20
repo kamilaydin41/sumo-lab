@@ -1,10 +1,13 @@
-# Changelog
+# Değişiklik Günlüğü
 
-## v0.4.0 — RC + Autonomous control
-- Added dual on-screen virtual RC sticks: left stick controls throttle/reverse; right stick controls steering.
-- Added touch and pointer support for mobile/tablet use.
-- Added USB/Bluetooth gamepad detection and support through the browser Gamepad API.
-- Kept keyboard driving (WASD and arrow keys).
-- Added a clear RC / Autonomous mode switch.
-- Autonomous mode uses opponent seeking/attack behavior while prioritizing edge-line sensor escape.
-- Added gamepad connection status and control instructions.
+## v0.5.0 — Gövde ağırlığı ayarı
+- Robot tasarımı alanına 20–300 g aralığında gövde / şasi ağırlığı kaydırıcısı eklendi.
+- Gövde ağırlığı proje ayarlarıyla birlikte tarayıcıya kaydedilir ve yeniden açıldığında yüklenir.
+- Toplam ağırlık, gövde ağırlığı ile seçili elektronik ve mekanik parçaların toplamından hesaplanır.
+- Ağırlık kontrol panelinde gövde ve bileşen ağırlıkları ayrı satırlarda gösterilir.
+- Simülasyonda oyuncu robotunun toplam ağırlığı itiş fiziği hesabına dahil edildi.
+- GitHub README ve Vercel güncelleme yönergeleri Türkçeleştirildi.
+
+## v0.4.0 — RC ve otonom sürüş
+- Sanal çift joystick, klavye ve tarayıcı oyun kumandası desteği.
+- RC / Manuel ve Otonom sürüş modları.

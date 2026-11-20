@@ -5,7 +5,7 @@
 @media(max-width:520px){.page-heading h1{font-size:21px}.sim-toolbar{align-items:flex-start;gap:10px;flex-direction:column}.toolbar-right{width:100%;justify-content:flex-end}.arena-wrap{height:310px}.arena-help{font-size:7px;gap:3px;bottom:8px}.arena-help kbd{font-size:7px;padding:2px 4px}.metrics{gap:5px}.metric{padding:8px}.metric strong{font-size:17px}.telemetry-foot{flex-wrap:wrap}.main-footer{font-size:8px;gap:10px}.code-footer{align-items:flex-start;gap:10px;flex-direction:column}.code-actions{width:100%}.code-actions>*{flex:1}.parts-summary{flex-wrap:wrap}.parts-summary .primary-btn{width:100%;margin-left:0}}
 .metrics{grid-template-columns:repeat(4,minmax(0,1fr))}.result-banner{display:flex;align-items:center;gap:12px;margin-top:13px;padding:13px 15px;border:1px solid #5c4a24;border-radius:9px;background:linear-gradient(110deg,#332814,#1b2533);color:#f5c96a}.result-banner>div{display:flex;flex-direction:column;gap:3px;flex:1}.result-banner strong{font-size:12px;color:#ffe4a3}.result-banner span{font-size:9px;color:#c4b38e}.result-banner .outline-btn{white-space:nowrap}@media(max-width:520px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.result-banner{flex-wrap:wrap}.result-banner .outline-btn{width:100%}}
 
-/* SUMO LAB v0.4.0 — RC transmitter and autonomous mode */
+/* SUMO LAB v0.5.0 — Adjustable chassis weight */
 .rc-console{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;padding:12px;background:#0c1829;border:1px solid #263950;border-radius:9px}
 .rc-stick-wrap{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;touch-action:none;user-select:none}
 .rc-stick-title{font-size:8px;letter-spacing:.12em;color:#9eb5d2;font-weight:800}

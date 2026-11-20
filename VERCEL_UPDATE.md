@@ -1,9 +1,20 @@
-# Updating SUMO LAB on Vercel — v0.4.0
+# Vercel Güncelleme Rehberi — SUMO LAB v0.5.0
 
-1. Extract `sumo-lab-v0.4.0.zip`.
-2. Replace the contents of the existing GitHub `sumo-lab` repository with the extracted project contents. Keep `package.json` at repository root.
-3. Commit with message: `SUMO LAB v0.4.0 - RC and Autonomous Controls`.
-4. Push to the branch connected to Vercel.
-5. Vercel should automatically build and deploy. Build command: `npm run build`; output directory: `dist`.
+1. `sumo-lab-v0.5.0.zip` dosyasını bilgisayarına indir ve klasöre çıkart.
+2. GitHub deposunu aç.
+3. Yeni sürümdeki proje dosyalarını depodaki eski dosyalarla değiştir.
+4. Değişiklikleri kaydetmek için şu commit mesajını kullan:
 
-If deployment fails, open the Vercel deployment log and check the first build error. Run `npm install` and `npm run build` locally before retrying.
+   `SUMO LAB v0.5.0: Gövde ağırlığı ayarı ve ağırlığa bağlı itiş`
+
+5. Değişiklikleri Vercel projesine bağlı GitHub dalına gönder.
+6. Vercel otomatik dağıtımı başlatır. Dağıtım tamamlandığında siteyi açıp Robot tasarımı sekmesindeki gövde ağırlığı kaydırıcısını kontrol et.
+
+## Yerel kontrol
+
+```bash
+npm install
+npm run build
+```
+
+Derleme başarılı olursa `dist` klasörü üretilecektir.

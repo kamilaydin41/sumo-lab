@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import Arena from './components/Arena.jsx';
 
-const jsStarter = `// SUMO LAB v0.3.0 | JavaScript sumo kontrol algoritması
+const jsStarter = `// SUMO LAB v0.5.0 | JavaScript sumo kontrol algoritması
 // Simülatörün beş çizgi sensörüne ve iki rakip sensörüne göre örnek davranış.
 
 function decide(sensor) {
@@ -32,7 +32,7 @@ function decide(sensor) {
 
 // Örnek: const motorCommand = decide(sensorData);`;
 
-const cppStarter = `// SUMO LAB v0.3.0 | Arduino C++ örnek sumo algoritması
+const cppStarter = `// SUMO LAB v0.5.0 | Arduino C++ örnek sumo algoritması
 // Örnek kart: Arduino UNO + TB6612FNG
 // QTR/çizgi sensörleri: ön-sol A0, ön-orta A1, ön-sağ A2, arka-sol A3, arka-sağ A4
 // Rakip IR sensörleri: sol D2, ön D3, sağ D11
@@ -144,6 +144,7 @@ export default function App() {
   const [arenaSize, setArenaSize] = useState('standard');
   const [bladeType, setBladeType] = useState('Standart kama');
   const [selectedParts, setSelectedParts] = useState(defaultParts);
+  const [bodyWeight, setBodyWeight] = useState(95);
   const [telemetry, setTelemetry] = useState({ distance: '—', speed: 0, mode: 'RC', collisions: 0, edge: 'GÜVENLİ' });
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -157,6 +158,7 @@ export default function App() {
         setRobotColor(savedConfig.robotColor || '#3978ed');
         setBladeType(savedConfig.bladeType || 'Standart kama');
         setSelectedParts(savedConfig.selectedParts || defaultParts);
+        setBodyWeight(Number.isFinite(savedConfig.bodyWeight) ? savedConfig.bodyWeight : 95);
       }
     } catch { /* ignore invalid local project data */ }
   }, []);
@@ -170,12 +172,13 @@ export default function App() {
     return () => { window.clearInterval(timer); window.removeEventListener('gamepadconnected', check); window.removeEventListener('gamepaddisconnected', check); };
   }, []);
 
-  const totalWeight = useMemo(() => selectedParts.reduce((sum, name) => sum + (partCatalog.find(p => p.name === name)?.weight || 0), 0) + 95, [selectedParts]);
+  const partsWeight = useMemo(() => selectedParts.reduce((sum, name) => sum + (partCatalog.find(p => p.name === name)?.weight || 0), 0), [selectedParts]);
+  const totalWeight = partsWeight + bodyWeight;
   const weightLimit = robotClass.startsWith('Pico') ? 50 : robotClass.startsWith('Micro') ? 100 : robotClass.startsWith('1 Kg') || robotClass.startsWith('LEGO') ? 1000 : robotClass.startsWith('Mega') ? 3000 : robotClass.startsWith('Açık') ? 5000 : 500;
   const weightOk = totalWeight <= weightLimit;
 
   const saveProject = () => {
-    localStorage.setItem('sumo-lab-project', JSON.stringify({ robotName, robotClass, robotColor, bladeType, selectedParts }));
+    localStorage.setItem('sumo-lab-project', JSON.stringify({ robotName, robotClass, robotColor, bladeType, selectedParts, bodyWeight }));
     setSaved(true); window.setTimeout(() => setSaved(false), 1800);
   };
   const copyCode = async () => {
@@ -219,7 +222,7 @@ export default function App() {
         <div className="side-label">SENSÖR DURUMU</div>
         <div className="sensor-chip"><span className="sensor-dot blue"/> Rakip algılama <b>Simüle</b></div>
         <div className="sensor-chip"><span className="sensor-dot orange"/> Çizgi algılama <b>Simüle</b></div>
-        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>SUMO LAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">SUMO LAB <span>v0.4.0 · RC + AUTONOMOUS</span></div></div>
+        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>SUMO LAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">SUMO LAB <span>v0.5.0 · RC + OTONOM</span></div></div>
       </aside>
 
       <section className="main-content">
@@ -229,7 +232,7 @@ export default function App() {
 
         {tab === 'sim' && <>
           <div className="sim-toolbar"><div className="toolbar-left"><div className="section-icon"><Swords size={17}/></div><div><strong>{robotClass} Dohyo</strong><span>Sınıfa göre ölçeklenen arena · itme fiziği</span></div><span className={`status-pill ${running ? 'status-running' : ''}`}><i/> {running ? 'CANLI' : 'HAZIR'}</span></div><div className="toolbar-right"><button className="tool-btn" onClick={() => { setResetKey(v => v + 1); setRunning(false); }}><RotateCcw size={15}/> Sıfırla</button><button className="tool-btn" onClick={() => setRunning(false)}><Pause size={15}/> Durdur</button><button className="tool-btn active-tool" onClick={() => setRunning(true)}><Play size={14}/> Başlat</button></div></div>
-          <div className="arena-wrap"><Arena running={running} speed={speed} mode={mode} driveInput={rcInput} resetKey={resetKey} onTelemetry={setTelemetry} robotColor={robotColor} arenaSize={arenaSize} bladeType={bladeType} robotClass={robotClass}/></div>
+          <div className="arena-wrap"><Arena running={running} speed={speed} mode={mode} driveInput={rcInput} resetKey={resetKey} onTelemetry={setTelemetry} robotColor={robotColor} arenaSize={arenaSize} bladeType={bladeType} robotClass={robotClass} totalWeight={totalWeight}/></div>
           <div className="bottom-panels">
             <div className="panel control-panel"><div className="panel-title"><div><Gauge size={17}/><strong>Robot kontrolü</strong></div><span className="muted-tag">OYUNCU 1</span></div><div className="mode-switch"><button className={mode === 'RC' ? 'mode-active' : ''} onClick={() => setMode('RC')}>RC / Manuel</button><button className={mode === 'AUTO' ? 'mode-active' : ''} onClick={() => { setMode('AUTO'); setRcInput({ throttle: 0, steer: 0, throttleActive: false, steerActive: false }); }}>Otonom</button></div><div className="speed-row"><label>Motor gücü</label><strong>{speed}%</strong></div><input className="range" type="range" min="10" max="100" step="5" value={speed} onChange={e => setSpeed(+e.target.value)}/><div className="range-labels"><span>Hassas</span><span>Maksimum</span></div>{mode === 'RC' ? <><div className="rc-console"><VirtualStick title="SOL STICK" axis="throttle" onChange={(v, active) => setRcInput(prev => ({ ...prev, throttle: v, throttleActive: active }))}/><VirtualStick title="SAĞ STICK" axis="steer" onChange={(v, active) => setRcInput(prev => ({ ...prev, steer: v, steerActive: active }))}/></div><div className="keyboard-hint"><Keyboard size={15}/><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>klavye veya sanal kumanda</span></div><div className="gamepad-status"><span className={`sensor-dot ${gamepadName === 'Gamepad bağlı değil' ? 'orange' : 'blue'}`}/><span>{gamepadName}</span><small>USB / Bluetooth gamepad</small></div></> : <div className="auto-status"><span className="sensor-dot blue"/> Otonom sürüş aktif: çizgi sensörü öncelikli, rakip arama ve saldırı otomatik.</div>}</div>
             <div className="panel telemetry-panel"><div className="panel-title"><div><Radio size={17}/><strong>Canlı telemetri</strong></div><span className="live-label"><i/> SİMÜLASYON</span></div><div className="metrics"><div className="metric"><span>Rakibe mesafe</span><strong>{telemetry.distance}<small> m</small></strong></div><div className="metric"><span>Motor gücü</span><strong>{telemetry.speed}<small> %</small></strong></div><div className="metric"><span>Temas sayısı</span><strong>{telemetry.collisions || 0}</strong></div><div className="metric"><span>İtme teması</span><strong>{telemetry.pushes || 0}</strong></div></div><div className="telemetry-foot"><span className={`sensor-dot ${telemetry.edge === 'UYARI' ? 'orange' : 'blue'}`}/> Ring sınırı <b>{telemetry.edge || 'GÜVENLİ'}</b><span className="sensor-dot orange"/> Rakip sensörü <b>Aktif</b><span className="sensor-dot blue"/> Çizgi sensörü <b>{telemetry.lineSensors || 'Hazır'}</b></div></div>
@@ -241,19 +244,20 @@ export default function App() {
           <div className="panel design-panel"><div className="panel-title"><div><Bot size={18}/><strong>Robot kimliği</strong></div><span className="muted-tag">ÖZELLEŞTİR</span></div>
             <label className="field-label">Robot adı</label><input className="text-input" value={robotName} maxLength={24} onChange={e => setRobotName(e.target.value)}/>
             <label className="field-label">Robot sınıfı</label><select className="select-input" value={robotClass} onChange={e => setRobotClass(e.target.value)}><option>Pico Sumo (50 g)</option><option>Micro Sumo (100 g)</option><option>Mini Sumo (500 g)</option><option>1 Kg Sumo</option><option>Mega Sumo (3 Kg)</option><option>Açık Sınıf (5 Kg)</option><option>LEGO Sumo (1 Kg)</option><option>RC Sumo (500 g)</option></select>
+            <label className="field-label">Gövde ağırlığı <strong>{bodyWeight} g</strong></label><input className="range" type="range" min="20" max="300" step="5" value={bodyWeight} onChange={e => setBodyWeight(Number(e.target.value))}/><div className="range-labels"><span>Hafif gövde · 20 g</span><span>Ağır gövde · 300 g</span></div><p className="muted-copy">Bu değer şasi, üst kapak ve bağlantı elemanlarının toplam ağırlığını temsil eder.</p>
             <label className="field-label">Gövde rengi</label><div className="color-options">{['#3978ed', '#16a085', '#e34f4f', '#8b5cf6', '#e59b27', '#e5e7eb'].map(c => <button key={c} aria-label={`Renk ${c}`} className={`color-swatch ${robotColor === c ? 'chosen' : ''}`} style={{ background: c }} onClick={() => setRobotColor(c)}/>)}</div>
             <label className="field-label">Ön bıçak / kama tipi</label><select className="select-input" value={bladeType} onChange={e => setBladeType(e.target.value)}><option>Standart kama</option><option>Geniş kama</option><option>Dar hassas kama</option><option>Çift kademeli</option></select><p className="muted-copy">Robotun önündeki alçak metal kama rakibin altına girerek itme avantajı sağlar. 3B modelde +Z yönü robotun önüdür.</p>
             <label className="field-label">Arena profili</label><select className="select-input" value={arenaSize} onChange={e => setArenaSize(e.target.value)}><option value="standard">Standart dohyo</option><option value="training">Antrenman modu</option></select>
             <button className="primary-btn full-btn" onClick={saveProject}><Save size={15}/>{saved ? 'Proje kaydedildi' : 'Robot ayarlarını kaydet'}</button>
           </div>
-          <div className="panel weight-panel"><div className="panel-title"><div><Weight size={18}/><strong>Ağırlık kontrolü</strong></div><span className={`weight-status ${weightOk ? 'ok' : 'over'}`}>{weightOk ? 'LİMİT İÇİNDE' : 'LİMİT AŞILDI'}</span></div><div className="weight-number">{totalWeight}<small> / {weightLimit} g</small></div><div className="weight-track"><span style={{ width: `${Math.min(100, totalWeight / weightLimit * 100)}%` , background: weightOk ? '#22c58b' : '#ef6464' }}/></div><p className="muted-copy">Pico 50 g, Micro 100 g, Mini 500 g, 1 kg, Mega 3 kg, açık sınıf, LEGO ve RC formatları desteklenir. Sınıf adları ve limitler organizasyonun teknik şartnamesine göre değişebilir.</p><div className="weight-list">{selectedParts.map(name => <div key={name}><span>{name}</span><b>{partCatalog.find(p => p.name === name)?.weight || 0} g</b></div>)}<div><span>Şasi ve bağlantı elemanları (tahmini)</span><b>95 g</b></div></div><button className="outline-btn full-btn" onClick={() => setTab('parts')}>Bileşenleri düzenle <ChevronRight size={15}/></button></div>
+          <div className="panel weight-panel"><div className="panel-title"><div><Weight size={18}/><strong>Ağırlık kontrolü</strong></div><span className={`weight-status ${weightOk ? 'ok' : 'over'}`}>{weightOk ? 'LİMİT İÇİNDE' : 'LİMİT AŞILDI'}</span></div><div className="weight-number">{totalWeight}<small> / {weightLimit} g</small></div><div className="weight-track"><span style={{ width: `${Math.min(100, totalWeight / weightLimit * 100)}%` , background: weightOk ? '#22c58b' : '#ef6464' }}/></div><p className="muted-copy">Pico 50 g, Micro 100 g, Mini 500 g, 1 kg, Mega 3 kg, açık sınıf, LEGO ve RC formatları desteklenir. Sınıf adları ve limitler organizasyonun teknik şartnamesine göre değişebilir.</p><div className="weight-list">{selectedParts.map(name => <div key={name}><span>{name}</span><b>{partCatalog.find(p => p.name === name)?.weight || 0} g</b></div>)}<div><span>Gövde / şasi ağırlığı</span><b>{bodyWeight} g</b></div><div><span>Elektronik ve mekanik bileşenler</span><b>{partsWeight} g</b></div></div><button className="outline-btn full-btn" onClick={() => setTab('parts')}>Bileşenleri düzenle <ChevronRight size={15}/></button></div>
         </div>}
 
         {tab === 'code' && <div className="panel code-workspace"><div className="code-toolbar"><div><TerminalSquare size={18}/><strong>Robot programı</strong><span className="muted-tag">KOD ŞABLONU</span></div><select value={language} onChange={e => setLanguage(e.target.value)}><option>JavaScript</option><option>Arduino C++</option></select></div><div className="code-note"><Zap size={16}/> Kodunu düzenleyebilir, panoya kopyalayabilir veya dosya olarak indirebilirsin. Simülatör içinde özel kod çalıştırma motoru henüz etkin değildir.</div><textarea className="code-editor" spellCheck="false" value={code} onChange={e => setCode(e.target.value)} aria-label="Robot kod editörü"/><div className="code-footer"><span>UTF-8 · {language} · {code.split('\n').length} satır</span><div className="code-actions"><button className="outline-btn" onClick={copyCode}>{copied ? <Check size={15}/> : <Copy size={15}/>} {copied ? 'Kopyalandı' : 'Kopyala'}</button><button className="primary-btn" onClick={downloadCode}><Download size={15}/> Dosyayı indir</button></div></div></div>}
 
-        {tab === 'parts' && <div className="panel parts-workspace"><div className="panel-title"><div><Package size={18}/><strong>Donanım bileşenleri</strong></div><span className="muted-tag">{selectedParts.length} PARÇA SEÇİLİ</span></div><p className="parts-intro">Robotunda kullanacağın parçaları seç. Seçimler ağırlık hesabına ve robot profiline yansır.</p><div className="parts-grid">{partCatalog.map(part => { const Icon = part.icon; const active = selectedParts.includes(part.name); return <button key={part.name} className={`part-card ${active ? 'part-selected' : ''}`} onClick={() => togglePart(part.name)}><div className="part-icon"><Icon size={20}/></div><div className="part-copy"><strong>{part.name}</strong><span>{part.category} · {part.detail}</span></div><div className="part-weight">{part.weight} g</div><div className={`part-check ${active ? 'checked' : ''}`}>{active ? <Check size={13}/> : '+'}</div></button>; })}</div><div className="parts-summary"><div><span>Seçili bileşen ağırlığı</span><strong>{totalWeight} g</strong></div><div><span>İzin verilen ağırlık</span><strong>{weightLimit} g</strong></div><button className="primary-btn" onClick={() => { saveProject(); setTab('design'); }}><Save size={15}/> Seçimleri kaydet</button></div></div>}
+        {tab === 'parts' && <div className="panel parts-workspace"><div className="panel-title"><div><Package size={18}/><strong>Donanım bileşenleri</strong></div><span className="muted-tag">{selectedParts.length} PARÇA SEÇİLİ</span></div><p className="parts-intro">Robotunda kullanacağın parçaları seç. Seçimler ağırlık hesabına ve robot profiline yansır.</p><div className="parts-grid">{partCatalog.map(part => { const Icon = part.icon; const active = selectedParts.includes(part.name); return <button key={part.name} className={`part-card ${active ? 'part-selected' : ''}`} onClick={() => togglePart(part.name)}><div className="part-icon"><Icon size={20}/></div><div className="part-copy"><strong>{part.name}</strong><span>{part.category} · {part.detail}</span></div><div className="part-weight">{part.weight} g</div><div className={`part-check ${active ? 'checked' : ''}`}>{active ? <Check size={13}/> : '+'}</div></button>; })}</div><div className="parts-summary"><div><span>Toplam robot ağırlığı</span><strong>{totalWeight} g</strong></div><div><span>İzin verilen ağırlık</span><strong>{weightLimit} g</strong></div><button className="primary-btn" onClick={() => { saveProject(); setTab('design'); }}><Save size={15}/> Seçimleri kaydet</button></div></div>}
 
-        <footer className="main-footer"><span>SUMO LAB · Eğitim ve prototipleme simülatörü</span><span>v0.4.0 · Aşama 4 / 6</span></footer>
+        <footer className="main-footer"><span>SUMO LAB · Eğitim ve prototipleme simülatörü</span><span>v0.5.0 · Aşama 5 / 6</span></footer>
       </section>
     </main>
   </div>;

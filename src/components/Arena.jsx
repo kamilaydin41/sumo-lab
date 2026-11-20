@@ -68,11 +68,11 @@ function sensorWorld(robot, x, z, radius) {
   return { x: wx, z: wz, edge: Math.hypot(wx,wz) > radius - .10 };
 }
 
-export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, resetKey, onTelemetry, robotColor='#3978ed', arenaSize='standard', bladeType='Standart kama', robotClass='Mini Sumo (500 g)' }) {
+export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, resetKey, onTelemetry, robotColor='#3978ed', arenaSize='standard', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595 }) {
   const host = useRef(null);
   const api = useRef(null);
-  const props = useRef({running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass});
-  useEffect(()=>{props.current={running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass};},[running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass]);
+  const props = useRef({running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight});
+  useEffect(()=>{props.current={running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight};},[running,speed,mode,driveInput,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight]);
 
   useEffect(()=>{
     const el=host.current; if(!el) return;
@@ -143,10 +143,11 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           const rNose=-(Math.sin(state.ra)*nx+Math.cos(state.ra)*nz);
           const pBlade=pNose>.48;const rBlade=rNose>.48;
           const pForce=Math.max(0,pForward)*(pBlade?1.8:1.08);const rForce=Math.max(0,rForward)*(rBlade?1.8:1.08);
-          const total=cls.mass*2;
+          const playerMass=Math.max(.05,(p.totalWeight||cls.mass*1000)/1000);
+          const rivalMass=cls.mass;
           const impulse=(pForce-rForce)*dt*2.6;
-          state.rvx+=nx*impulse/Math.max(.15,cls.mass*.75);state.rvz+=nz*impulse/Math.max(.15,cls.mass*.75);
-          state.vx-=nx*impulse/Math.max(.15,cls.mass*.75);state.vz-=nz*impulse/Math.max(.15,cls.mass*.75);
+          state.rvx+=nx*impulse/Math.max(.15,rivalMass*.75);state.rvz+=nz*impulse/Math.max(.15,rivalMass*.75);
+          state.vx-=nx*impulse/Math.max(.15,playerMass*.75);state.vz-=nz*impulse/Math.max(.15,playerMass*.75);
           // Blade-on-body alignment gives a short extra shove, rather than allowing meshes to pass through.
           if((pBlade&&pForward>.05)||(rBlade&&rForward>.05)){state.pushes++;}
           if(now-state.lastHit>280){state.collisions++;state.lastHit=now;}

@@ -2,7 +2,7 @@
 
 PARS SUMOLAB, sumo robotlarını tasarlamak, programlamak ve sanal dohyo üzerinde karşılaştırmak için hazırlanmış React + Vite + Three.js tabanlı eğitim simülatörüdür.
 
-## v0.9.0 yenilikleri
+## v0.10.0 yenilikleri
 
 - Uygulama adı ve tarayıcı sekmesi başlığı **PARS SUMOLAB** olarak güncellendi.
 - Robot sınıflarına göre ayrı 3B boyut profilleri eklendi. Mini Sumo başlangıç ölçüsü 100 × 100 × 30 mm, Micro Sumo 50 × 50 × 22 mm olarak tanımlandı.
@@ -63,3 +63,10 @@ Projeyi GitHub deposuna yükleyip bağlı Vercel projesinde ilgili dalı dağıt
 ## Sınırlamalar
 
 Simülasyon eğitim amaçlı yaklaşık bir fizik modelidir. Robot ölçüleri ve ağırlık limitleri organizasyon kurallarıyla doğrulanmalıdır. Arduino çalışma alanı temel API uyumluluğuna sahiptir; bütün Arduino kütüphanelerini veya gerçek donanım sürücülerini çalıştırmaz.
+
+
+## v0.10.0 — Robot başlangıç yönü
+- Simülasyon öncesinde oyuncu ve rakip robotun yönü ayrı ayrı 0–359 derece arasında ayarlanabilir.
+- Dört hızlı yön seçeneği (0°, 90°, 180°, 270°) eklendi.
+- Başlangıç yönleri proje kaydına dahil edildi.
+- Simülasyon çalışırken yön ayarları kilitlenir; durdurulduğunda değişiklikler anında uygulanır.

@@ -13,3 +13,10 @@
 ## Önceki sürümler
 
 Önceki sürüm değişiklikleri için Git geçmişine bakın.
+
+
+## v0.10.0 — Robot yerleşim yönü
+- Oyuncu ve rakip robot için bağımsız başlangıç yönü kontrolü eklendi.
+- 0–359 derece yön kaydırıcıları ve dört yön kısayolu eklendi.
+- Başlangıç yönleri proje kaydetme/yükleme verisine eklendi.
+- Simülasyon çalışırken yerleşim yönü kontrolleri devre dışı bırakıldı.

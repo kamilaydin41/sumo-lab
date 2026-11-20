@@ -107,3 +107,9 @@ Simülasyon eğitim amaçlı yaklaşık bir fizik modelidir. Robot ölçüleri v
 - Ring-out kontrolü robot merkezinden değil, gövde/kama dış sınırından yapılır.
 
 **Model notu:** Bu, eğitim amaçlı basitleştirilmiş 2B itiş ve açısal denge modelidir; gerçek motor tork eğrileri, lastik sürtünme haritaları, temas deformasyonu ve tam 3B rijit-cisim dinamiği içermez. Resmî kurallar organizasyona göre değişebilir.
+
+
+## v0.15.0 yenilikleri
+- Kazanan robotun adı maç bittiğinde doğrudan dohyo üzerinde gösterilir.
+- Rakip robotun adı, sınıfı, şasi ağırlığı, rengi, kama tipi ve bileşenleri bağımsız düzenlenebilir.
+- İki robotun sınıf ve kütle değerleri simülasyon fiziğinde ayrı kullanılır.

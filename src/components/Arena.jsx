@@ -72,11 +72,11 @@ function sensorWorld(robot, x, z, playableRadius) {
   return { x: wx, z: wz, edge: Math.hypot(wx,wz) >= playableRadius };
 }
 
-export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
+export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
   const host = useRef(null);
   const api = useRef(null);
-  const props = useRef({running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange});
-  useEffect(()=>{props.current={running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange};},[running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange]);
+  const props = useRef({running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange});
+  useEffect(()=>{props.current={running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange};},[running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange]);
 
   useEffect(()=>{
     const el=host.current; if(!el) return;
@@ -87,6 +87,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     scene.add(new THREE.HemisphereLight(0xddeaff,0x1d293b,2)); const key=new THREE.DirectionalLight(0xffffff,2.8); key.position.set(-4,10,6); key.castShadow=true; key.shadow.mapSize.set(2048,2048); scene.add(key); const rim=new THREE.PointLight(0x3b82f6,24,18); rim.position.set(5,3,-4); scene.add(rim);
     const floor=new THREE.Mesh(new THREE.PlaneGeometry(50,50),new THREE.MeshStandardMaterial({color:'#111c2d',roughness:.96})); floor.rotation.x=-Math.PI/2; floor.position.y=-.22; floor.receiveShadow=true; scene.add(floor); const grid=new THREE.GridHelper(50,50,'#243650','#1a293e'); grid.position.y=-.21; scene.add(grid);
     const preset=CLASS_PRESETS[props.current.robotClass]||CLASS_PRESETS['Mini Sumo (500 g)'];
+    const rivalPreset=CLASS_PRESETS[props.current.rivalRobotClass]||CLASS_PRESETS['Mini Sumo (500 g)'];
     // 1 Three.js birimi = 20 cm; varsayılan Mini Sumo dohyo çapı 80 cm'dir.
     const maxRadius=Math.max(.75, (props.current.arenaDiameterCm || 80) / 40);
     camera.position.set(maxRadius * 3.0, maxRadius * 3.25, maxRadius * 3.7);
@@ -104,14 +105,14 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     const blackSurface=new THREE.Mesh(new THREE.CylinderGeometry(playableRadius,playableRadius,.078,128),new THREE.MeshStandardMaterial({color:'#090b0e',roughness:.96,metalness:0}));
     blackSurface.position.y=.0565; blackSurface.receiveShadow=true; blackSurface.castShadow=false; scene.add(blackSurface);
     // Başlangıç çizgileri de dohyo ve robot boyutuna göre ölçeklenir; robotlar merkeze bakacak şekilde yerleşir.
-    const startLineLength=Math.max(preset.width*1.35,maxRadius*.20);
+    const startLineLength=Math.max(preset.width,rivalPreset.width)*1.35>maxRadius*.2?Math.max(preset.width,rivalPreset.width)*1.35:maxRadius*.20;
     const startLineOffset=maxRadius*.28;
     const startMat=new THREE.MeshStandardMaterial({color:'#f7f7f4',roughness:.88});
     [-startLineOffset,startLineOffset].forEach(x=>{const line=new THREE.Mesh(new THREE.BoxGeometry(.018,.006,startLineLength),startMat);line.position.set(x,.097,0);scene.add(line);});
 
     const player=makeRobot(props.current.robotColor,'#8fc2ff',props.current.bladeType,preset.robotScale,false,preset);
-    const rival=makeRobot('#d84b4b','#ffb36b','Geniş kama',preset.robotScale,true,preset); scene.add(player,rival);
-    const shadows=[]; for(const [color,op] of [['#3b82f6',.14],['#ef4444',.12]]){const m=new THREE.Mesh(new THREE.CircleGeometry(Math.max(preset.width,preset.length)*.72,32),new THREE.MeshBasicMaterial({color,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.y=.105;scene.add(m);shadows.push(m);}
+    const rival=makeRobot(props.current.rivalColor,'#ffb36b',props.current.rivalBladeType,rivalPreset.robotScale,true,rivalPreset); scene.add(player,rival);
+    const shadows=[]; for(const [color,op,profile] of [['#3b82f6',.14,preset],['#ef4444',.12,rivalPreset]]){const m=new THREE.Mesh(new THREE.CircleGeometry(Math.max(profile.width,profile.length)*.72,32),new THREE.MeshBasicMaterial({color,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.y=.105;scene.add(m);shadows.push(m);}
     const startState=()=>({x:(props.current.playerPosition?.x??-.52)*maxRadius,z:(props.current.playerPosition?.z??0)*maxRadius,a:(props.current.playerHeading??90)*Math.PI/180,vx:0,vz:0,turn:0,rx:(props.current.rivalPosition?.x??.52)*maxRadius,rz:(props.current.rivalPosition?.z??0)*maxRadius,ra:(props.current.rivalHeading??270)*Math.PI/180,rvx:0,rvz:0,rturn:0,collisions:0,pushes:0,playerRoll:0,playerPitch:0,rivalRoll:0,rivalPitch:0,playerRollRate:0,playerPitchRate:0,rivalRollRate:0,rivalPitchRate:0,lastPush:0,playerTipped:false,rivalTipped:false,playerEdge:false,rivalEdge:false,winner:null,finishReason:'',lastHit:0,elapsed:0});
     const state=startState(); const keys={forward:false,back:false,left:false,right:false};
     const keyMap={KeyW:'forward',ArrowUp:'forward',KeyS:'back',ArrowDown:'back',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
@@ -124,8 +125,8 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     const publishPlacement=()=>props.current.onPlacementChange?.({player:{x:state.x/maxRadius,z:state.z/maxRadius},rival:{x:state.rx/maxRadius,z:state.rz/maxRadius},playerHeading:((state.a*180/Math.PI)%360+360)%360,rivalHeading:((state.ra*180/Math.PI)%360+360)%360});
     const rotateDragged=(direction)=>{if(!dragging||props.current.running)return;const key=dragging==='player'?'a':'ra';state[key]=wrapAngle(state[key]+direction*rotationStep);publishPlacement();};
     const worldPoint=(event)=>{const rect=renderer.domElement.getBoundingClientRect();pointer.x=((event.clientX-rect.left)/rect.width)*2-1;pointer.y=-((event.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);return raycaster.ray.intersectPlane(dragPlane,hit)?hit.clone():null;};
-    const pointerDown=(event)=>{if(props.current.running)return;const point=worldPoint(event);if(!point)return;const dp=Math.hypot(point.x-state.x,point.z-state.z),dr=Math.hypot(point.x-state.rx,point.z-state.rz);const selectRadius=Math.max(.42,Math.hypot(preset.width,preset.length)*.72);if(Math.min(dp,dr)>selectRadius)return;dragging=dp<=dr?'player':'rival';controls.enabled=false;renderer.domElement.style.cursor='grabbing';renderer.domElement.setPointerCapture?.(event.pointerId);event.preventDefault();};
-    const pointerMove=(event)=>{if(!dragging||props.current.running)return;const point=worldPoint(event);if(!point)return;const limit=Math.max(.12,maxRadius-Math.hypot(preset.width,preset.length)*.5-.09);const len=Math.hypot(point.x,point.z);if(len>limit){point.x*=limit/len;point.z*=limit/len;}if(dragging==='player'){state.x=point.x;state.z=point.z;state.vx=0;state.vz=0;}else{state.rx=point.x;state.rz=point.z;state.rvx=0;state.rvz=0;}publishPlacement();};
+    const pointerDown=(event)=>{if(props.current.running)return;const point=worldPoint(event);if(!point)return;const dp=Math.hypot(point.x-state.x,point.z-state.z),dr=Math.hypot(point.x-state.rx,point.z-state.rz);const selectRadius=Math.max(.42,Math.hypot(Math.max(preset.width,rivalPreset.width),Math.max(preset.length,rivalPreset.length))*.72);if(Math.min(dp,dr)>selectRadius)return;dragging=dp<=dr?'player':'rival';controls.enabled=false;renderer.domElement.style.cursor='grabbing';renderer.domElement.setPointerCapture?.(event.pointerId);event.preventDefault();};
+    const pointerMove=(event)=>{if(!dragging||props.current.running)return;const point=worldPoint(event);if(!point)return;const limit=Math.max(.12,maxRadius-Math.hypot(Math.max(preset.width,rivalPreset.width),Math.max(preset.length,rivalPreset.length))*.5-.09);const len=Math.hypot(point.x,point.z);if(len>limit){point.x*=limit/len;point.z*=limit/len;}if(dragging==='player'){state.x=point.x;state.z=point.z;state.vx=0;state.vz=0;}else{state.rx=point.x;state.rz=point.z;state.rvx=0;state.rvz=0;}publishPlacement();};
     const wheelRotate=(event)=>{if(!dragging||props.current.running)return;event.preventDefault();event.stopPropagation();rotateDragged(event.deltaY>0?1:-1);};
     const rotateKey=(event)=>{if(!dragging||props.current.running)return;if(event.code==='KeyQ'||event.code==='KeyE'){event.preventDefault();rotateDragged(event.code==='KeyQ'?-1:1);}};
     const pointerUp=(event)=>{if(!dragging)return;dragging=null;controls.enabled=true;renderer.domElement.style.cursor='grab';try{renderer.domElement.releasePointerCapture?.(event.pointerId);}catch{}};
@@ -137,6 +138,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
       frame=requestAnimationFrame(tick);const dt=Math.min((now-last)/1000,.035);last=now;const p=props.current;
       if(player.children[0]?.material?.color)player.children[0].material.color.set(p.robotColor);
       const cls=CLASS_PRESETS[p.robotClass]||CLASS_PRESETS['Mini Sumo (500 g)'];
+      const rivalCls=CLASS_PRESETS[p.rivalRobotClass]||CLASS_PRESETS['Mini Sumo (500 g)'];
       if(p.running&&!state.winner){
         state.elapsed+=dt;const configuredMass=Math.max(.03,(p.totalWeight||cls.mass*1000)/1000);const maxSpeed=cls.maxSpeed*(p.speed/100)*clamp(Math.sqrt(cls.mass/configuredMass),.72,1.12);
         // Edge sensors read the actual white dohyo boundary at five physical sensor positions.
@@ -177,7 +179,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         if(state.rivalTipped){rF=0;rT=0;}else if(rFront){rF=-.92;rT=err>=0?-.9:.9;}else if(rRear){rF=.5;rT=err>=0?.7:-.7;}else if(dist>1.25){rF=.9;rT=clamp(err*1.65,-1,1);}else{rF=1;rT=clamp(err*1.2,-.55,.55);}
         const autoTactic=(p.dipSwitches||[]).reduce((n,on,i)=>n+(on?(1<<i):0),0);
         const playerSpeedScale=(p.mode==='AUTO'||p.mode==='OTONOM')?([1,3,5,7].includes(autoTactic)?1.08:([4,6].includes(autoTactic)?.88:1)):1;
-        drive(state,pF,pT,dt,maxSpeed*playerSpeedScale);drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,cls.maxSpeed*.88);
+        drive(state,pF,pT,dt,maxSpeed*playerSpeedScale);drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,rivalCls.maxSpeed*.88*clamp(Math.sqrt(rivalCls.mass/Math.max(.03,(p.rivalTotalWeight||rivalCls.mass*1000)/1000)),.72,1.12));
 
         // Yönelimli dikdörtgen gövde çarpışması (OBB/SAT): robotlar birbirinin içinden geçemez.
         const axes = (angle) => [{x:Math.cos(angle),z:-Math.sin(angle)},{x:Math.sin(angle),z:Math.cos(angle)}];
@@ -187,16 +189,16 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         };
         // Çarpışma hacmi şasi + öne uzanan kama alanını kapsar; kama rakibin gövdesinin içinden görsel olarak geçmez.
         const playerBladeLength=p.bladeType==='Uzun alçak kama'?.98:.76;
-        const rivalBladeLength=.76;
+        const rivalBladeLength=p.rivalBladeType==='Uzun alçak kama'?.98:p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.72:.76;
         const pBladeExt=Math.max(0,playerBladeLength-.32)*preset.length*preset.robotScale;
-        const rBladeExt=Math.max(0,rivalBladeLength-.32)*preset.length*preset.robotScale;
+        const rBladeExt=Math.max(0,rivalBladeLength-.32)*rivalPreset.length*rivalPreset.robotScale;
         const pForwardX=Math.sin(state.a),pForwardZ=Math.cos(state.a);
         const rForwardX=Math.sin(state.ra),rForwardZ=Math.cos(state.ra);
         const pCenterX=state.x+pForwardX*pBladeExt*.5,pCenterZ=state.z+pForwardZ*pBladeExt*.5;
         const rCenterX=state.rx+rForwardX*rBladeExt*.5,rCenterZ=state.rz+rForwardZ*rBladeExt*.5;
         const dxBody=rCenterX-pCenterX,dzBody=rCenterZ-pCenterZ;
         const pHalfW=preset.width*preset.robotScale*.53, pHalfL=(preset.length*preset.robotScale+pBladeExt)*.5;
-        const rHalfW=pHalfW, rHalfL=(preset.length*preset.robotScale+rBladeExt)*.5;
+        const rHalfW=rivalPreset.width*rivalPreset.robotScale*.53, rHalfL=(rivalPreset.length*rivalPreset.robotScale+rBladeExt)*.5;
         const candidates=[...axes(state.a),...axes(state.ra)];
         let minOverlap=Infinity, collisionNormal=null;
         for(const axis of candidates){
@@ -216,7 +218,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           const pNose=Math.sin(state.a)*nx+Math.cos(state.a)*nz;
           const rNose=-(Math.sin(state.ra)*nx+Math.cos(state.ra)*nz);
           const pMass=Math.max(.05,(p.totalWeight||preset.mass*1000)/1000);
-          const rMass=preset.mass;
+          const rMass=Math.max(.03,(p.rivalTotalWeight||rivalPreset.mass*1000)/1000);
           const relative=(state.vx-state.rvx)*nx+(state.vz-state.rvz)*nz;
           const closingSpeed=Math.max(0,relative);
           // Sumo dohyo'sunda darbeler çoğunlukla elastik sekme değil, lastik tutuşuyla itiş üretir.
@@ -229,9 +231,9 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           // Kama ancak robot gerçekten öne bakıyor ve rakibe doğru ilerliyorsa altına girmiş sayılır.
           // Yalnızca kafa kafaya temas etmek takla oluşturmaz.
           const pBladeFactor=p.bladeType==='Uzun alçak kama'?1.18:p.bladeType==='Geniş kama'?1.08:p.bladeType==='Çift kademeli'?1.0:p.bladeType==='Dar hassas kama'?.62:.88;
-          const rBladeFactor=1.05;
+          const rBladeFactor=p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.62:p.rivalBladeType==='Çift kademeli'?1.0:.88;
           const pWedge=pNose>.82&&pForward>.42&&p.bladeType!=='Dar hassas kama';
-          const rWedge=rNose>.82&&rForward>.42;
+          const rWedge=rNose>.82&&rForward>.42&&p.rivalBladeType!=='Dar hassas kama';
           // Devrilme eşiği: düşük ağırlık merkezi ve geniş tekerlek izi dengeyi artırır.
           // 1 simülasyon birimi = 20 cm; CoM gövde yüksekliğinin yaklaşık %38'i kabul edilir.
           const comHeightM=preset.height*.20*.38;
@@ -283,9 +285,11 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         const friction=Math.max(0,1-dt*.55);state.vx*=friction;state.vz*=friction;state.rvx*=friction;state.rvz*=friction;
         // Resmi sumo yaklaşımı: gövdenin herhangi bir bölümü dohyo dışına temas ederse ring-out.
         const activeBladeLength=p.bladeType==='Uzun alçak kama'?.98:.76;
-        const footprintRadius=Math.hypot(preset.width*.53,(preset.length*(activeBladeLength+.18)));
-        const outP=Math.hypot(state.x,state.z)+footprintRadius>maxRadius+.015;
-        const outR=Math.hypot(state.rx,state.rz)+footprintRadius>maxRadius+.015;
+        const playerFootprint=Math.hypot(preset.width*.53,(preset.length*(activeBladeLength+.18)));
+        const rivalActiveBlade=p.rivalBladeType==='Uzun alçak kama'?.98:p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.72:.76;
+        const rivalFootprint=Math.hypot(rivalPreset.width*.53,(rivalPreset.length*(rivalActiveBlade+.18)));
+        const outP=Math.hypot(state.x,state.z)+playerFootprint>maxRadius+.015;
+        const outR=Math.hypot(state.rx,state.rz)+rivalFootprint>maxRadius+.015;
         if(outP||outR){state.winner=outP?'RAKİP KAZANDI':'SEN KAZANDIN';state.finishReason=outP?'Oyuncu robot dohyo dışına çıktı':'Rakip robot dohyo dışına çıktı';}
         // Update sensor lamps with the live readings.
         player.userData.sensors.forEach((s,i)=>s.mesh.material.color.set(playerSensors[i].edge?'#ff4d4d':'#35d7f4'));
@@ -299,9 +303,9 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     };
     api.current={state,startState};frame=requestAnimationFrame(tick);
     return()=>{cancelAnimationFrame(frame);ro.disconnect();window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointermove',pointerMove);renderer.domElement.removeEventListener('pointerup',pointerUp);renderer.domElement.removeEventListener('pointercancel',pointerUp);renderer.domElement.removeEventListener('wheel',wheelRotate,true);window.removeEventListener('keydown',rotateKey);controls.dispose();renderer.dispose();scene.traverse(o=>{o.geometry?.dispose?.();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose?.();});if(renderer.domElement.parentNode===el)el.removeChild(renderer.domElement);};
-  },[robotClass,arenaDiameterCm,bladeType]);
+  },[robotClass,rivalRobotClass,arenaDiameterCm,bladeType,rivalBladeType,rivalColor]);
 
-  useEffect(()=>{if(api.current){Object.assign(api.current.state,api.current.startState());}},[resetKey,robotClass]);
+  useEffect(()=>{if(api.current){Object.assign(api.current.state,api.current.startState());}},[resetKey,robotClass,rivalRobotClass]);
   useEffect(()=>{if(api.current&&!running){const s=api.current.state;const radius=Math.max(.75,(arenaDiameterCm||80)/40);s.a=(playerHeading*Math.PI)/180;s.ra=(rivalHeading*Math.PI)/180;s.x=(playerPosition?.x??-.52)*radius;s.z=(playerPosition?.z??0)*radius;s.rx=(rivalPosition?.x??.52)*radius;s.rz=(rivalPosition?.z??0)*radius;s.vx=0;s.vz=0;s.rvx=0;s.rvz=0;}},[playerHeading,rivalHeading,playerPosition,rivalPosition,running,arenaDiameterCm]);
   return <div className="arena-canvas" ref={host}>
     <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> PARS SUMOLAB · RC / OTONOM / ARDUINO C++</div>

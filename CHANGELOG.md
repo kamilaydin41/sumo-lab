@@ -1,3 +1,11 @@
+# Değişiklik günlüğü
+
+## v0.15.0 — 20 Kasım 2026
+- Maç sonucu ve kazanan robotun adı dohyo üzerinde görünür bir etiket olarak gösterilir.
+- Rakip robot için bağımsız ad, sınıf, gövde ağırlığı, renk, kama tipi ve donanım bileşeni ayarları eklendi.
+- Rakip robotun sınıfına ve tahmini ağırlığına göre 3B gövde ölçüsü, kütle ve hareket hızı ayrı hesaplanır.
+- Rakip ayarları yerel proje kaydına dahil edildi.
+
 # Sürüm notları
 
 ## v0.11.0 — Sürükle-bırak robot yerleşimi

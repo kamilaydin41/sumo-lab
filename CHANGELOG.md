@@ -1,3 +1,12 @@
+# Changelog
+
+## v0.21.6
+- Simülasyonun varsayılan kontrol modu Arduino C++ olarak değiştirildi.
+- Varsayılan kod dili Arduino C++ yapıldı; başlangıçta Arduino örnek programı yüklenir.
+- Ana simülasyon başlatma düğmeleri artık Arduino sketch'inin `setup()` ve `loop()` fonksiyonlarını çalıştırır.
+- Simülasyon duraklatıldığında veya sıfırlandığında Arduino sketch motor komutları durdurulur.
+- Sayfa alt bilgisi, paket sürümü ve dağıtım belgeleri güncellendi.
+
 # PARS SUMOLAB v0.21.5
 
 ## v0.21.5

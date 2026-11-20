@@ -147,5 +147,5 @@ Simülasyon eğitim amaçlı yaklaşık bir fizik modelidir. Robot ölçüleri v
 - Robotların arka çizgi sensörleri kaldırıldı; her robotta yalnızca ön-sol, ön-orta ve ön-sağ çizgi sensörü bulunur.
 - Otonom kenar kaçış algoritması ve Arduino örnek kodu üç ön sensöre göre güncellendi.
 
-### Rakip sensörü görüş mesafesi (v0.20.4)
+### Rakip sensörü görüş mesafesi (v0.20.5)
 Oyuncu ve rakip robotun rakip algılama mesafeleri birbirinden bağımsız ayarlanabilir. Tasarım panelindeki **Rakip sensörü görüş mesafesi** kaydırıcısı 10–100 cm aralığında, 5 cm adımlarla çalışır (varsayılan 40 cm). Bu değer sensör algılamasını ve otonom hedef aramayı etkiler; fiziksel temas, çarpışma veya itme kuvveti oluşturmaz. Ayarlar proje kaydına dahil edilir.

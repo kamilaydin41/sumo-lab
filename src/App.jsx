@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import Arena from './components/Arena.jsx';
 
-const jsStarter = `// PARS SUMOLAB v0.22.2 | JavaScript sumo kontrol algoritması
+const jsStarter = `// PARS SUMOLAB v0.22.3 | JavaScript sumo kontrol algoritması
 // Simülatörün üç ön çizgi sensörü ve 2–7 fiziksel rakip sensörüne göre örnek davranış.
 
 function decide(sensor) {
@@ -27,7 +27,7 @@ function decide(sensor) {
 
 // Örnek: const motorCommand = decide(sensorData);`;
 
-const cppStarter = `// PARS SUMOLAB v0.22.2 | Arduino C++ örnek sumo algoritması
+const cppStarter = `// PARS SUMOLAB v0.22.3 | Arduino C++ örnek sumo algoritması
 // Örnek kart: Arduino UNO + TB6612FNG
 // QTR/çizgi sensörleri: yalnızca ön-sol A0, ön-orta A1, ön-sağ A2
 // Rakip IR algı bölgeleri: sol D2, ön D3, sağ D11 (2–7 sensörün bölgesel özeti)
@@ -201,7 +201,7 @@ export default function App() {
   const [rivalName, setRivalName] = useState('RAKİP-01');
   const [rivalClass, setRivalClass] = useState('Mini Sumo (500 g)');
   const [rivalColor, setRivalColor] = useState('#d84b4b');
-  const [rivalBladeType, setRivalBladeType] = useState('Geniş kama');
+  const [rivalBladeType, setRivalBladeType] = useState('Standart kama');
   const [rivalOpponentSensorCount, setRivalOpponentSensorCount] = useState(3);
   const [rivalOpponentSensorRangeCm, setRivalOpponentSensorRangeCm] = useState(40);
   const [rivalSelectedParts, setRivalSelectedParts] = useState(defaultParts);
@@ -221,25 +221,27 @@ export default function App() {
     try {
       const savedConfig = JSON.parse((localStorage.getItem('pars-sumo-lab-project') || localStorage.getItem('sumo-lab-project')) || 'null');
       if (savedConfig) {
+        const savedPlayerClass = savedConfig.robotClass === 'Mini Sumo' ? 'Mini Sumo (500 g)' : (savedConfig.robotClass || 'Mini Sumo (500 g)');
+        const mirrorRivalDefaults = savedConfig.rivalDefaultsSynced !== true;
         setRobotName(savedConfig.robotName || 'PARS-01');
-        setRobotClass(savedConfig.robotClass === 'Mini Sumo' ? 'Mini Sumo (500 g)' : (savedConfig.robotClass || 'Mini Sumo (500 g)'));
+        setRobotClass(savedPlayerClass);
         setRobotColor(savedConfig.robotColor || '#3978ed');
         setRivalName(savedConfig.rivalName || 'RAKİP-01');
-        setRivalClass(savedConfig.rivalClass || 'Mini Sumo (500 g)');
+        setRivalClass(mirrorRivalDefaults ? savedPlayerClass : (savedConfig.rivalClass || savedPlayerClass));
         setRivalColor(savedConfig.rivalColor || '#d84b4b');
-        setRivalBladeType(savedConfig.rivalBladeType || 'Geniş kama');
+        setRivalBladeType(mirrorRivalDefaults ? (savedConfig.bladeType || 'Standart kama') : (savedConfig.rivalBladeType || 'Standart kama'));
         setPlayerOpponentSensorCount(Math.max(2,Math.min(7,Number(savedConfig.playerOpponentSensorCount)||3)));
         setPlayerOpponentSensorRangeCm(Math.max(10,Math.min(100,Number(savedConfig.playerOpponentSensorRangeCm)||40)));
-        setRivalOpponentSensorCount(Math.max(2,Math.min(7,Number(savedConfig.rivalOpponentSensorCount)||3)));
-        setRivalOpponentSensorRangeCm(Math.max(10,Math.min(100,Number(savedConfig.rivalOpponentSensorRangeCm)||40)));
-        setRivalSelectedParts(savedConfig.rivalSelectedParts || defaultParts);
-        setRivalBodyWeight(Number.isFinite(savedConfig.rivalBodyWeight) ? savedConfig.rivalBodyWeight : ROBOT_PROFILES['Mini Sumo (500 g)'].body);
+        setRivalOpponentSensorCount(mirrorRivalDefaults ? Math.max(2,Math.min(7,Number(savedConfig.playerOpponentSensorCount)||3)) : Math.max(2,Math.min(7,Number(savedConfig.rivalOpponentSensorCount)||3)));
+        setRivalOpponentSensorRangeCm(mirrorRivalDefaults ? Math.max(10,Math.min(100,Number(savedConfig.playerOpponentSensorRangeCm)||40)) : Math.max(10,Math.min(100,Number(savedConfig.rivalOpponentSensorRangeCm)||40)));
+        setRivalSelectedParts(mirrorRivalDefaults ? (savedConfig.selectedParts || defaultParts) : (savedConfig.rivalSelectedParts || defaultParts));
+        setRivalBodyWeight(mirrorRivalDefaults ? (Number.isFinite(savedConfig.bodyWeight) ? savedConfig.bodyWeight : ROBOT_PROFILES[savedPlayerClass]?.body || 95) : (Number.isFinite(savedConfig.rivalBodyWeight) ? savedConfig.rivalBodyWeight : ROBOT_PROFILES[savedPlayerClass]?.body || 95));
         setBladeType(savedConfig.bladeType || 'Standart kama');
         setSelectedParts(savedConfig.selectedParts || defaultParts);
         setBodyWeight(Number.isFinite(savedConfig.bodyWeight) ? savedConfig.bodyWeight : 95);
         setDriveSpec({ motorTorque:12, gearRatio:50, motorRpm:600, wheelDiameter:30, tireMu:.9, ...(savedConfig.driveSpec||{}), motorRpm: Math.min(1000, Math.max(200, Number(savedConfig.driveSpec?.motorRpm) || 600)) });
-        setRivalDriveSpec({ motorTorque:12, gearRatio:50, motorRpm:600, wheelDiameter:30, tireMu:.9, ...(savedConfig.rivalDriveSpec||{}), motorRpm: Math.min(1000, Math.max(200, Number(savedConfig.rivalDriveSpec?.motorRpm) || 600)) });
-        setRivalMotorPower(Math.max(10,Math.min(100,Number(savedConfig.rivalMotorPower)||75)));
+        setRivalDriveSpec(mirrorRivalDefaults ? ({ motorTorque:12, gearRatio:50, motorRpm:600, wheelDiameter:30, tireMu:.9, ...(savedConfig.driveSpec||{}), motorRpm: Math.min(1000, Math.max(200, Number(savedConfig.driveSpec?.motorRpm) || 600)) }) : ({ motorTorque:12, gearRatio:50, motorRpm:600, wheelDiameter:30, tireMu:.9, ...(savedConfig.rivalDriveSpec||{}), motorRpm: Math.min(1000, Math.max(200, Number(savedConfig.rivalDriveSpec?.motorRpm) || 600)) }));
+        setRivalMotorPower(mirrorRivalDefaults ? Math.max(10,Math.min(100,Number(savedConfig.playerMotorPower)||75)) : Math.max(10,Math.min(100,Number(savedConfig.rivalMotorPower)||75)));
         setPlayerMotorPower(Math.max(10,Math.min(100,Number(savedConfig.playerMotorPower)||75)));
         setArenaSize(['micro', 'mini', 'mega'].includes(savedConfig.arenaSize) ? savedConfig.arenaSize : 'mini');
         setArenaDiameterCm(Number.isFinite(savedConfig.arenaDiameterCm) ? savedConfig.arenaDiameterCm : 80);
@@ -327,7 +329,7 @@ export default function App() {
   const applyRivalProfile = (nextClass) => { const profile=ROBOT_PROFILES[nextClass] || ROBOT_PROFILES['Mini Sumo (500 g)']; setRivalClass(nextClass); setRivalBodyWeight(profile.body); setRivalSelectedParts(profile.parts); setRivalBladeType(profile.blade || 'Standart kama'); setResetKey(v=>v+1); setRunning(false); };
 
   const saveProject = () => {
-    localStorage.setItem('pars-sumo-lab-project', JSON.stringify({ robotName, robotClass, robotColor, bladeType, selectedParts, bodyWeight, arenaSize, arenaDiameterCm, dipSwitches, playerHeading, rivalHeading, playerPosition, rivalPosition, playerMotorPower, rivalName, rivalClass, rivalColor, rivalBladeType, rivalSelectedParts, rivalBodyWeight, playerOpponentSensorCount, rivalOpponentSensorCount, playerOpponentSensorRangeCm, rivalOpponentSensorRangeCm, driveSpec, rivalDriveSpec, rivalMotorPower }));
+    localStorage.setItem('pars-sumo-lab-project', JSON.stringify({ robotName, robotClass, robotColor, bladeType, selectedParts, bodyWeight, arenaSize, arenaDiameterCm, dipSwitches, playerHeading, rivalHeading, playerPosition, rivalPosition, playerMotorPower, rivalName, rivalClass, rivalColor, rivalBladeType, rivalSelectedParts, rivalBodyWeight, playerOpponentSensorCount, rivalOpponentSensorCount, playerOpponentSensorRangeCm, rivalOpponentSensorRangeCm, driveSpec, rivalDriveSpec, rivalMotorPower, rivalDefaultsSynced: true }));
     setSaved(true); window.setTimeout(() => setSaved(false), 1800);
   };
   const copyCode = async () => {
@@ -371,7 +373,7 @@ export default function App() {
         <div className="side-label">SENSÖR DURUMU</div>
         <div className="sensor-chip"><span className="sensor-dot blue"/> Rakip algılama <b>Simüle</b></div>
         <div className="sensor-chip"><span className="sensor-dot orange"/> Çizgi algılama <b>Simüle</b></div>
-        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>PARS SUMOLAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">PARS SUMOLAB <span>v0.22.2 · SUMO FİZİĞİ</span></div></div>
+        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>PARS SUMOLAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">PARS SUMOLAB <span>v0.22.3 · SUMO FİZİĞİ</span></div></div>
       </aside>
 
       <section className="main-content">
@@ -437,7 +439,7 @@ export default function App() {
 
         {tab === 'parts' && <div className="panel parts-workspace"><div className="panel-title"><div><Package size={18}/><strong>Donanım bileşenleri</strong></div><span className="muted-tag">{selectedParts.length} PARÇA SEÇİLİ</span></div><p className="parts-intro">Robotunda kullanacağın parçaları seç. Seçimler ağırlık hesabına ve robot profiline yansır.</p><div className="parts-grid">{partCatalog.map(part => { const Icon = part.icon; const active = selectedParts.includes(part.name); return <button key={part.name} className={`part-card ${active ? 'part-selected' : ''}`} onClick={() => togglePart(part.name)}><div className="part-icon"><Icon size={20}/></div><div className="part-copy"><strong>{part.name}</strong><span>{part.category} · {part.detail}</span></div><div className="part-weight">{part.weight} g</div><div className={`part-check ${active ? 'checked' : ''}`}>{active ? <Check size={13}/> : '+'}</div></button>; })}</div><div className="parts-summary"><div><span>Toplam robot ağırlığı</span><strong>{totalWeight} g</strong></div><div><span>İzin verilen ağırlık</span><strong>{weightLimit} g</strong></div><span className="muted-copy">Tüm değişiklikleri üstteki “Tüm robot ayarlarını kaydet” düğmesiyle kaydet.</span></div></div>}
 
-        <footer className="main-footer"><span>PARS SUMOLAB · Robot sumo eğitim ve simülasyon platformu</span><span>v0.22.2 · v0.21.5 tabanı + çıkış devri düzeltmesi</span></footer>
+        <footer className="main-footer"><span>PARS SUMOLAB · Robot sumo eğitim ve simülasyon platformu</span><span>v0.22.3 · v0.21.5 tabanı + çıkış devri düzeltmesi</span></footer>
       </section>
     </main>
     <iframe ref={runtimeFrame} title="Arduino kod çalışma alanı" sandbox="allow-scripts" srcDoc={runtimeDoc} className="arduino-runtime-frame"/>

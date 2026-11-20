@@ -1,3 +1,11 @@
+# PARS SUMOLAB v0.22.3
+
+## Temas boşluğu ve başlangıç ayarları
+- SAT çarpışma çözümündeki işaret hatası düzeltildi: küçük negatif örtüşme (gerçek geometrik boşluk) artık robotları ayırmak yerine birbirine yaklaştırıyor.
+- Temas toleransı 1,5 cm'ye çıkarıldı; burun buruna itişte görsel boşluk oluşmaması için temas düzeltmesi kararlı hale getirildi.
+- İlk açılışta ve eski proje ayarları ilk kez taşınırken rakip robotun sınıfı, gövde/bileşen ağırlığı, kama, sensör sayısı/menzili, motor gücü ve tahrik parametreleri oyuncu robotuyla eşitleniyor.
+- Bu ilk eşitleme bir kez yapılıyor; daha sonra kullanıcının rakip robot için yaptığı ayrı ayarlar kaydedilip korunuyor.
+
 # PARS SUMOLAB v0.22.2
 
 ## Fizik ve temas sistemi revizyonu

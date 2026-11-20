@@ -336,7 +336,7 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
             const overlap=Math.min(maxA,maxB)-Math.max(minA,minB);
             // Küçük sayısal boşluklar da temas kabul edilir; kareler arası adım
             // robotların birbirini delip geçmesine veya gözle görülür aralık oluşmasına yol açmasın.
-            if(overlap < -0.012)return null;
+            if(overlap < -0.075)return null; // 1.5 cm'ye kadar küçük adım boşluğunu fiziksel temas kabul et
             if(overlap<minOverlap){minOverlap=overlap;normal={...axis};}
           }
           const ac=A.reduce((v,q)=>({x:v.x+q.x/A.length,z:v.z+q.z/A.length}),{x:0,z:0});
@@ -347,10 +347,10 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
         const contact=satContact(pFoot,rFoot);
         if(contact&&contact.normal){
           const nx=contact.normal.x,nz=contact.normal.z,pMass=playerMassKg,rMass=rivalMassKg;
-          // Örtüşmeyi gider; çok küçük SAT boşluğunu da temas toleransı içinde kapat.
+          // Örtüşmeyi gider; SAT küçük bir boşluk bulduysa iki gövdeyi gerçek temas noktasına yaklaştır.
           // Kütlesi düşük robot daha fazla konum düzeltmesi alır.
           const invP=1/pMass,invR=1/rMass,totalInv=invP+invR;
-          const correction=contact.overlap>=0?Math.max(0,contact.overlap-0.00015):-contact.overlap*.85;
+          const correction=contact.overlap>=0?Math.max(0,contact.overlap-0.00015):contact.overlap*.96; // Negatif örtüşme boşluktur: robotları ayırma, birbirine yaklaştır.
           if(correction>0){
             state.x-=nx*correction*(invP/totalInv);state.z-=nz*correction*(invP/totalInv);
             state.rx+=nx*correction*(invR/totalInv);state.rz+=nz*correction*(invR/totalInv);
@@ -377,6 +377,8 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
           state.vx-=rImpulse*nx/pMass;state.vz-=rImpulse*nz/pMass;
           // Burun buruna itişte motorların birbirinden ayıran hız bileşeni sıfırlanır.
           if(pNose>.45&&rNose>.45){
+            // Burun buruna temas bir kısıt gibi davranır: normal eksende açılmayı
+            // engelle, fakat yanal kaymayı ve dönüş hareketini koru.
             const separating=(state.rvx-state.vx)*nx+(state.rvz-state.vz)*nz;
             if(separating>0){const j=separating/(1/pMass+1/rMass);state.vx+=j*nx/pMass;state.vz+=j*nz/pMass;state.rvx-=j*nx/rMass;state.rvz-=j*nz/rMass;}
           }

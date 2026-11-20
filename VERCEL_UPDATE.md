@@ -1,17 +1,15 @@
-# SUMO LAB v0.2.1 — Vercel güncelleme
+# Deploy SUMO LAB v0.3.0 to Vercel
 
-1. Bu ZIP arşivinin içindeki `sumo-lab` klasörünün **içeriğini** mevcut GitHub `sumo-lab` deposunun kök dizinine yükleyin.
-2. Var olan dosyaları yeni sürümle değiştirin; `package.json` ve `index.html` depo kökünde olmalı.
-3. Commit mesajı: `SUMO LAB v0.2.1 - front wedge blade`
-4. GitHub'a commit gönderildiğinde Vercel otomatik deploy başlatır.
-5. Vercel proje ayarları: Framework `Vite`, Build Command `npm run build`, Output Directory `dist`.
+1. Extract this ZIP archive.
+2. Open the existing GitHub repository `sumo-lab`.
+3. Replace the repository files with the contents of this folder. Keep `package.json`, `index.html`, `.gitignore`, and the complete `src` folder at repository root.
+4. Commit with message: `SUMO LAB v0.3.0 - sumo pushing and line sensors`.
+5. Push to the branch connected to Vercel. Vercel should start a new deployment automatically.
 
-Yerel doğrulama için Node.js 20.19+ veya 22.12+ önerilir:
+Vercel settings:
+- Framework: Vite
+- Install: `npm install`
+- Build: `npm run build`
+- Output: `dist`
 
-```bash
-npm install
-npm run build
-npm run dev
-```
-
-Not: Bu çalışma ortamında npm paket indirme işlemi zaman aşımına uğradığı için production build burada doğrulanamadı.
+After deployment, test both robots, line sensors, manual drive, autonomous mode, contact pushing and winner detection. This release has passed source syntax transpilation checks; package installation/build could not be completed in the authoring environment because npm registry access timed out.

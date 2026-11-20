@@ -1,46 +1,40 @@
-# SUMO LAB — v0.2.1
+# SUMO LAB v0.3.0
 
-Turkish-language mini-sumo robot design and 3D simulation workspace. Built with React, Vite and Three.js.
+A browser-based 3D sumo robot design and simulation learning environment.
 
-## Requirements
-- Node.js 20.19+ or 22.12+
-- npm
+## Features
+- Three.js 3D dohyo and two competing robots
+- Front wedge geometry and configurable wedge styles
+- WASD / arrow-key manual driving and USB/Bluetooth gamepad support
+- Autonomous player mode and autonomous opponent behavior
+- Five simulated line sensors per robot (three front, two rear)
+- Dohyo edge detection; robots can leave the ring and lose instead of being teleported back
+- Robot-to-robot body collision, contact separation, traction-based pushing and blade-facing advantage
+- Match result, collision count, push-contact count and telemetry
+- Robot classes: Pico 50 g, Micro 100 g, Mini 500 g, 1 kg, Mega 3 kg, Open 5 kg, LEGO and RC profiles
+- JavaScript and Arduino C++ starter code, parts catalog, estimated weight and local project save
 
 ## Run locally
+
 ```bash
 npm install
 npm run dev
 ```
 
 ## Production build
+
 ```bash
 npm run build
 npm run preview
 ```
 
-## Deploy / update on Vercel
-1. Push the contents of this project to the connected GitHub repository (replace the previous project files).
-2. Vercel automatically starts a new deployment when the connected branch receives a commit.
-3. Build command: `npm run build`; output directory: `dist`.
+## Vercel
+- Framework preset: Vite
+- Build command: `npm run build`
+- Output directory: `dist`
+- Install command: `npm install`
 
-No environment variables are required.
+## Simulation notes
+This is an educational, simplified 2D rigid-body approximation rendered in 3D. It includes edge sensors, collision response, traction-based pushing and match outcomes, but it is not a validated engineering-grade physics engine. Preset names and weight limits are common class profiles, not a universal ruleset. Always use the specific event's current technical regulations for official dimensions, weight, dohyo size and start procedure.
 
-## v0.2.1 features
-- Responsive Turkish interface
-- Three.js 3D mini-sumo dohyo and two robot models
-- Manual WASD / arrow-key control
-- Autonomous chase mode and rival pursuit behavior
-- Speed control, reset, distance and collision telemetry
-- Robot identity, class and body color settings
-- Front-mounted low-profile metallic wedge blade with selectable standard, wide, narrow and stepped profiles
-- Front sensor positions aligned behind the wedge; corrected robot ground contact and forward (+Z) orientation
-- Component selection with estimated weight budget
-- Local project persistence in browser localStorage
-- Editable JavaScript and Arduino C++ code templates
-- Copy code and download `.js` / `.ino` source files
-
-## Current limitations
-- Physics and collision handling are educational approximations, not competition-grade dynamics.
-- Component placement is a selection/weight estimator; a full drag-and-drop CAD editor is not included yet.
-- The code panel edits and exports code but does not execute user code in the simulator.
-- ESP32 / physical robot connectivity, persistent cloud projects, accounts and multiplayer are not included.
+The code editor currently provides editable/downloadable JavaScript and Arduino C++ templates; it does not execute arbitrary user code inside the simulation yet.

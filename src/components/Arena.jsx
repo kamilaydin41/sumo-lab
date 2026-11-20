@@ -76,10 +76,10 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   const bladeGeo = new THREE.BufferGeometry();
   bladeGeo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
   bladeGeo.setIndex(indices); bladeGeo.computeVertexNormals();
-  const bladeMetal = new THREE.MeshStandardMaterial({color:'#aebbc9',metalness:.98,roughness:.16,side:THREE.DoubleSide});
+  const bladeMetal = new THREE.MeshStandardMaterial({color:'#d5dbe2',metalness:1,roughness:.22,side:THREE.DoubleSide});
   const wedge = new THREE.Mesh(bladeGeo,bladeMetal); wedge.castShadow=true; wedge.receiveShadow=true; blade.add(wedge);
   // Ön kesici ağız tek bir düz çizgidir ve robotun tüm bıçak genişliği boyunca uzanır.
-  const cuttingEdge = new THREE.Mesh(new THREE.BoxGeometry(bladeWidth,bladeThickness,dimensions.width*.008),new THREE.MeshStandardMaterial({color:'#e0e6ed',metalness:1,roughness:.12}));
+  const cuttingEdge = new THREE.Mesh(new THREE.BoxGeometry(bladeWidth,bladeThickness,dimensions.width*.008),new THREE.MeshStandardMaterial({color:'#f1f4f7',metalness:1,roughness:.18}));
   cuttingEdge.position.set(0,floorY+bladeThickness*.5,tipZ); blade.add(cuttingEdge);
   // Düşük montaj kulakları ve bağlantı vidaları.
   for (const x of [-half*.72,half*.72]) {
@@ -149,7 +149,7 @@ function readOpponentSensors(robot, self, target, range=1.75) {
   return { any:active.length>0, left, right, front:active.length>0 && (Math.abs(bearing)<=.25 || (left&&right)), readings, distance, bearing };
 }
 
-export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', playerOpponentSensorCount=3, rivalOpponentSensorCount=3, driveSpec={motorTorque:12,gearRatio:50,motorRpm:10000,wheelDiameter:30,tireMu:.9}, rivalDriveSpec={motorTorque:12,gearRatio:50,motorRpm:10000,wheelDiameter:30,tireMu:.9}, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
+export default function Arena({ running, speed, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', playerOpponentSensorCount=3, rivalOpponentSensorCount=3, driveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, rivalDriveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
   const host = useRef(null);
   const api = useRef(null);
   const props = useRef({running,speed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,driveSpec,rivalDriveSpec,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange});
@@ -216,7 +216,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
       const mass=Math.max(.03,massKg||.5);
       const motorTorqueNm=Math.max(1,Number(spec.motorTorque)||12)/1000;
       const gearRatio=clamp(Number(spec.gearRatio)||50,1,150);
-      const motorRpm=clamp(Number(spec.motorRpm)||10000,500,30000);
+      const motorRpm=clamp(Number(spec.motorRpm)||600,200,1000);
       const wheelDiameterM=clamp(Number(spec.wheelDiameter)||30,10,100)/1000;
       const wheelRadiusM=wheelDiameterM/2;
       const mu=clamp(Number(spec.tireMu)||.9,.2,2);

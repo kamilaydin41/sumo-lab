@@ -1,3 +1,10 @@
+## v0.20.3 – Motor devri aralığı ve parlak çelik bıçak
+
+- Oyuncu ve rakip robot motor devri ayarları 200–1000 RPM aralığına alındı; varsayılan değer 600 RPM.
+- Önceden kaydedilmiş proje ayarlarında eski motor devri değerleri güvenli aralığa sınırlandırılır.
+- Rakip robot için bağımsız motor devri kaydırıcısı eklendi.
+- Ön bıçak parlak gri çelik görünümü için daha açık metalik malzeme ve parlak kesici ağız ile güncellendi.
+
 # Changelog
 
 ## v0.20.1 – Düz ön ağızlı, zemine sıfır bıçak

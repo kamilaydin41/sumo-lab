@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import Arena from './components/Arena.jsx';
 
-const jsStarter = `// PARS SUMOLAB v0.20.0 | JavaScript sumo kontrol algoritması
+const jsStarter = `// PARS SUMOLAB v0.20.3 | JavaScript sumo kontrol algoritması
 // Simülatörün üç ön çizgi sensörü ve 2–7 fiziksel rakip sensörüne göre örnek davranış.
 
 function decide(sensor) {
@@ -27,7 +27,7 @@ function decide(sensor) {
 
 // Örnek: const motorCommand = decide(sensorData);`;
 
-const cppStarter = `// PARS SUMOLAB v0.20.0 | Arduino C++ örnek sumo algoritması
+const cppStarter = `// PARS SUMOLAB v0.20.3 | Arduino C++ örnek sumo algoritması
 // Örnek kart: Arduino UNO + TB6612FNG
 // QTR/çizgi sensörleri: yalnızca ön-sol A0, ön-orta A1, ön-sağ A2
 // Rakip IR algı bölgeleri: sol D2, ön D3, sağ D11 (2–7 sensörün bölgesel özeti)
@@ -193,7 +193,7 @@ export default function App() {
   const [playerOpponentSensorCount, setPlayerOpponentSensorCount] = useState(3);
   const [selectedParts, setSelectedParts] = useState(defaultParts);
   const [bodyWeight, setBodyWeight] = useState(ROBOT_PROFILES['Mini Sumo (500 g)'].body);
-  const [driveSpec, setDriveSpec] = useState({ motorTorque: 12, gearRatio: 50, motorRpm: 10000, wheelDiameter: 30, tireMu: 0.9 });
+  const [driveSpec, setDriveSpec] = useState({ motorTorque: 12, gearRatio: 50, motorRpm: 600, wheelDiameter: 30, tireMu: 0.9 });
   const [rivalName, setRivalName] = useState('RAKİP-01');
   const [rivalClass, setRivalClass] = useState('Mini Sumo (500 g)');
   const [rivalColor, setRivalColor] = useState('#d84b4b');
@@ -201,7 +201,7 @@ export default function App() {
   const [rivalOpponentSensorCount, setRivalOpponentSensorCount] = useState(3);
   const [rivalSelectedParts, setRivalSelectedParts] = useState(defaultParts);
   const [rivalBodyWeight, setRivalBodyWeight] = useState(ROBOT_PROFILES['Mini Sumo (500 g)'].body);
-  const [rivalDriveSpec, setRivalDriveSpec] = useState({ motorTorque: 12, gearRatio: 50, motorRpm: 10000, wheelDiameter: 30, tireMu: 0.9 });
+  const [rivalDriveSpec, setRivalDriveSpec] = useState({ motorTorque: 12, gearRatio: 50, motorRpm: 600, wheelDiameter: 30, tireMu: 0.9 });
   const [telemetry, setTelemetry] = useState({ distance: '—', speed: 0, mode: 'RC', collisions: 0, edge: 'GÜVENLİ' });
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -230,8 +230,8 @@ export default function App() {
         setBladeType(savedConfig.bladeType || 'Standart kama');
         setSelectedParts(savedConfig.selectedParts || defaultParts);
         setBodyWeight(Number.isFinite(savedConfig.bodyWeight) ? savedConfig.bodyWeight : 95);
-        setDriveSpec({ motorTorque:12, gearRatio:50, motorRpm:10000, wheelDiameter:30, tireMu:.9, ...(savedConfig.driveSpec||{}) });
-        setRivalDriveSpec({ motorTorque:12, gearRatio:50, motorRpm:10000, wheelDiameter:30, tireMu:.9, ...(savedConfig.rivalDriveSpec||{}) });
+        setDriveSpec({ motorTorque:12, gearRatio:50, motorRpm:600, wheelDiameter:30, tireMu:.9, ...(savedConfig.driveSpec||{}), motorRpm: Math.min(1000, Math.max(200, Number(savedConfig.driveSpec?.motorRpm) || 600)) });
+        setRivalDriveSpec({ motorTorque:12, gearRatio:50, motorRpm:600, wheelDiameter:30, tireMu:.9, ...(savedConfig.rivalDriveSpec||{}), motorRpm: Math.min(1000, Math.max(200, Number(savedConfig.rivalDriveSpec?.motorRpm) || 600)) });
         setArenaSize(['micro', 'mini', 'mega'].includes(savedConfig.arenaSize) ? savedConfig.arenaSize : 'mini');
         setArenaDiameterCm(Number.isFinite(savedConfig.arenaDiameterCm) ? savedConfig.arenaDiameterCm : 80);
         setDipSwitches(Array.isArray(savedConfig.dipSwitches) && savedConfig.dipSwitches.length === 3 ? savedConfig.dipSwitches.map(Boolean) : [false,false,false]);
@@ -364,7 +364,7 @@ export default function App() {
         <div className="side-label">SENSÖR DURUMU</div>
         <div className="sensor-chip"><span className="sensor-dot blue"/> Rakip algılama <b>Simüle</b></div>
         <div className="sensor-chip"><span className="sensor-dot orange"/> Çizgi algılama <b>Simüle</b></div>
-        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>PARS SUMOLAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">PARS SUMOLAB <span>v0.20.0 · MOTOR + LASTİK FİZİĞİ</span></div></div>
+        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>PARS SUMOLAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">PARS SUMOLAB <span>v0.20.3 · MOTOR + LASTİK FİZİĞİ</span></div></div>
       </aside>
 
       <section className="main-content">
@@ -393,7 +393,7 @@ export default function App() {
             <div className="panel-title"><div><Gauge size={17}/><strong>Motor ve yürüyüş sistemi</strong></div><span className="muted-tag">FİZİK PARAMETRELERİ</span></div>
             <label className="field-label">Motor torku <strong>{driveSpec.motorTorque} mNm / motor</strong></label><input className="range" type="range" min="2" max="40" step="1" value={driveSpec.motorTorque} onChange={e=>setDriveSpec(v=>({...v,motorTorque:Number(e.target.value)}))}/>
             <label className="field-label">Redüksiyon oranı <strong>{driveSpec.gearRatio}:1</strong></label><input className="range" type="range" min="10" max="100" step="5" value={driveSpec.gearRatio} onChange={e=>setDriveSpec(v=>({...v,gearRatio:Number(e.target.value)}))}/>
-            <label className="field-label">Motor devri <strong>{driveSpec.motorRpm} RPM</strong></label><input className="range" type="range" min="3000" max="20000" step="500" value={driveSpec.motorRpm} onChange={e=>setDriveSpec(v=>({...v,motorRpm:Number(e.target.value)}))}/>
+            <label className="field-label">Motor devri <strong>{driveSpec.motorRpm} RPM</strong></label><input className="range" type="range" min="200" max="1000" step="50" value={driveSpec.motorRpm} onChange={e=>setDriveSpec(v=>({...v,motorRpm:Number(e.target.value)}))}/><div className="range-labels"><span>200 RPM</span><span>1000 RPM</span></div>
             <label className="field-label">Tahrik tekerleği çapı <strong>{driveSpec.wheelDiameter} mm</strong></label><input className="range" type="range" min="15" max="60" step="1" value={driveSpec.wheelDiameter} onChange={e=>setDriveSpec(v=>({...v,wheelDiameter:Number(e.target.value)}))}/>
             <label className="field-label">Lastik-dohyo sürtünme katsayısı <strong>{driveSpec.tireMu.toFixed(2)}</strong></label><input className="range" type="range" min="0.3" max="1.5" step="0.05" value={driveSpec.tireMu} onChange={e=>setDriveSpec(v=>({...v,tireMu:Number(e.target.value)}))}/>
             <p className="muted-copy">İki tahrik motorunun toplam çekişi; motor torku, redüksiyon, tekerlek yarıçapı ve lastik tutuşuna göre hesaplanır.</p>
@@ -407,6 +407,7 @@ export default function App() {
             <div className="rival-weight-summary">Toplam tahmini ağırlık: <b>{rivalTotalWeight} / {rivalWeightLimit} g</b> {rivalTotalWeight>rivalWeightLimit?'· Limit aşıldı':'· Limit içinde'}</div>
             <label className="field-label">Gövde rengi</label><div className="color-options">{['#d84b4b','#3978ed','#16a085','#8b5cf6','#e59b27','#e5e7eb'].map(c=><button key={c} aria-label={`Rakip rengi ${c}`} className={`color-swatch ${rivalColor===c?'chosen':''}`} style={{background:c}} onClick={()=>setRivalColor(c)}/>)}</div>
             <label className="field-label">Ön bıçak / kama tipi</label><select className="select-input" value={rivalBladeType} onChange={e=>setRivalBladeType(e.target.value)}><option>Standart kama</option><option>Geniş kama</option><option>Dar hassas kama</option><option>Çift kademeli</option><option>Uzun alçak kama</option></select>
+            <div className="panel-title"><div><Gauge size={17}/><strong>Rakip motor devri</strong></div><span className="muted-tag">FİZİK PARAMETRESİ</span></div><label className="field-label">Motor devri <strong>{rivalDriveSpec.motorRpm} RPM</strong></label><input className="range" type="range" min="200" max="1000" step="50" value={rivalDriveSpec.motorRpm} onChange={e=>setRivalDriveSpec(v=>({...v,motorRpm:Number(e.target.value)}))}/><div className="range-labels"><span>200 RPM</span><span>1000 RPM</span></div>
             <label className="field-label">Rakip sensörü sayısı <strong>{rivalOpponentSensorCount} adet</strong></label><select className="select-input" value={rivalOpponentSensorCount} onChange={e=>setRivalOpponentSensorCount(Number(e.target.value))}>{[2,3,4,5,6,7].map(n=><option key={n} value={n}>{n} adet IR rakip sensörü</option>)}</select><p className="muted-copy">Sensörler rakip robotun ön ve yan görüş alanını belirler.</p><label className="field-label">Donanım bileşenleri</label><div className="rival-parts-list">{partCatalog.map(part=><label key={part.name}><input type="checkbox" checked={rivalSelectedParts.includes(part.name)} onChange={()=>setRivalSelectedParts(prev=>prev.includes(part.name)?prev.filter(x=>x!==part.name):[...prev,part.name])}/><span>{part.name}</span><b>{part.weight} g</b></label>)}</div>
             <button className="primary-btn full-btn" onClick={()=>{setResetKey(v=>v+1);setRunning(false);saveProject();}}>Rakip ayarlarını uygula</button>
           </div>
@@ -417,7 +418,7 @@ export default function App() {
 
         {tab === 'parts' && <div className="panel parts-workspace"><div className="panel-title"><div><Package size={18}/><strong>Donanım bileşenleri</strong></div><span className="muted-tag">{selectedParts.length} PARÇA SEÇİLİ</span></div><p className="parts-intro">Robotunda kullanacağın parçaları seç. Seçimler ağırlık hesabına ve robot profiline yansır.</p><div className="parts-grid">{partCatalog.map(part => { const Icon = part.icon; const active = selectedParts.includes(part.name); return <button key={part.name} className={`part-card ${active ? 'part-selected' : ''}`} onClick={() => togglePart(part.name)}><div className="part-icon"><Icon size={20}/></div><div className="part-copy"><strong>{part.name}</strong><span>{part.category} · {part.detail}</span></div><div className="part-weight">{part.weight} g</div><div className={`part-check ${active ? 'checked' : ''}`}>{active ? <Check size={13}/> : '+'}</div></button>; })}</div><div className="parts-summary"><div><span>Toplam robot ağırlığı</span><strong>{totalWeight} g</strong></div><div><span>İzin verilen ağırlık</span><strong>{weightLimit} g</strong></div><button className="primary-btn" onClick={() => { saveProject(); setTab('design'); }}><Save size={15}/> Seçimleri kaydet</button></div></div>}
 
-        <footer className="main-footer"><span>PARS SUMOLAB · Robot sumo eğitim ve simülasyon platformu</span><span>v0.20.0 · Motor, redüksiyon ve lastik fiziği</span></footer>
+        <footer className="main-footer"><span>PARS SUMOLAB · Robot sumo eğitim ve simülasyon platformu</span><span>v0.20.3 · Motor, redüksiyon ve lastik fiziği</span></footer>
       </section>
     </main>
     <iframe ref={runtimeFrame} title="Arduino kod çalışma alanı" sandbox="allow-scripts" srcDoc={runtimeDoc} className="arduino-runtime-frame"/>

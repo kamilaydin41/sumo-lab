@@ -1,8 +1,11 @@
-## v0.21.2
+# PARS SUMOLAB v0.21.3
+- Büyük ağırlık kontrol kartları kaldırıldı. Oyuncu ve rakip robotun toplam ağırlığı, sınıf limiti ve gövde/bileşen dağılımı ayarlar panelinde gövde ağırlığı kaydırıcısının hemen üstüne taşındı.
+
+## v0.21.3
 - Oyuncu robotunun ayrı alt bölümdeki ağırlık kontrol kartı kaldırıldı.
 - Toplam ağırlık, sınıf limiti, gövde ve bileşen ağırlıkları oyuncu robotu ayar paneline taşındı.
 - Oyuncu ve rakip robot için aynı tasarım ve aynı sırada ağırlık özeti gösteriliyor.
-- Sayfa içindeki sürüm etiketleri, paket sürümü ve dağıtım notları v0.21.2 olarak güncellendi.
+- Sayfa içindeki sürüm etiketleri, paket sürümü ve dağıtım notları v0.21.3 olarak güncellendi.
 
 ## v0.21.1
 - Rakip robot ayar paneli, oyuncu robotu paneliyle aynı alanları ve aynı sıralamayı kullanacak şekilde düzenlendi.

@@ -1,11 +1,11 @@
-# Vercel güncelleme rehberi – PARS SUMOLAB v0.21.2
+# Vercel güncelleme rehberi – PARS SUMOLAB v0.21.3
 
 1. ZIP arşivini bilgisayarına indirip çıkar.
 2. Proje dosyalarını GitHub deposundaki mevcut dosyalarla değiştir.
 3. Aşağıdaki Türkçe commit mesajını kullan:
 
 ```text
-PARS SUMOLAB v0.21.2: Oyuncu ve rakip ağırlık özetlerini eşitle
+PARS SUMOLAB v0.21.3: Oyuncu ve rakip ağırlık özetlerini eşitle
 ```
 
 4. Değişiklikleri bağlı dala gönder. Vercel otomatik dağıtımı başlatır.

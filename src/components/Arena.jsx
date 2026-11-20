@@ -5,7 +5,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 const angleDelta = (a, b) => Math.atan2(Math.sin(b - a), Math.cos(b - a));
 
-function makeRobot(color, accent, label) {
+function makeRobot(color, accent, label, bladeType = 'Standart kama') {
   const root = new THREE.Group();
   const bodyMat = new THREE.MeshStandardMaterial({ color, metalness: .42, roughness: .38 });
   const darkMat = new THREE.MeshStandardMaterial({ color: '#111827', metalness: .25, roughness: .65 });
@@ -13,32 +13,79 @@ function makeRobot(color, accent, label) {
   const body = new THREE.Mesh(new THREE.BoxGeometry(.92, .25, 1.02), bodyMat);
   body.position.y = .34; body.castShadow = true; root.add(body);
   const top = new THREE.Mesh(new THREE.BoxGeometry(.58, .07, .56), darkMat);
-  top.position.set(0, .5, .02); top.castShadow = true; root.add(top);
-  const wedge = new THREE.Mesh(new THREE.BoxGeometry(.88, .09, .42), new THREE.MeshStandardMaterial({ color: accent, metalness: .2, roughness: .45 }));
-  wedge.position.set(0, .23, -.67); wedge.rotation.x = -.12; wedge.castShadow = true; root.add(wedge);
-  const nose = new THREE.Mesh(new THREE.BoxGeometry(.8, .025, .28), accentMat);
-  nose.position.set(0, .18, -.78); root.add(nose);
+  top.position.set(0, .5, -.02); top.castShadow = true; root.add(top);
+
+  // The robot's forward direction is +Z. The low wedge is deliberately mounted
+  // at the front (not behind the chassis), with a sloped upper face and a thin lip.
+  const bladeWidth = bladeType === 'Geniş kama' ? 1.04 : bladeType === 'Dar hassas kama' ? .78 : .96;
+  const half = bladeWidth / 2;
+  const rearZ = .18;
+  const tipZ = bladeType === 'Çift kademeli' ? 1.02 : .96;
+  const rearBottomY = .12;
+  const rearTopY = .31;
+  const tipBottomY = .092;
+  const tipTopY = bladeType === 'Çift kademeli' ? .17 : .145;
+  const bladeAssembly = new THREE.Group();
+  const verts = [
+    -half, rearBottomY, rearZ,   half, rearBottomY, rearZ,
+    -half, rearTopY, rearZ,      half, rearTopY, rearZ,
+    -half, tipBottomY, tipZ,     half, tipBottomY, tipZ,
+    -half, tipTopY, tipZ,        half, tipTopY, tipZ,
+  ];
+  const indices = [];
+  const quad = (a,b,c,d) => indices.push(a,b,c, a,c,d);
+  // bottom, sloped top, left side, right side, rear wall, sharpened front lip
+  quad(0,1,5,4); quad(2,3,7,6); quad(0,2,6,4);
+  quad(1,5,7,3); quad(0,1,3,2); quad(4,6,7,5);
+  const bladeGeometry = new THREE.BufferGeometry();
+  bladeGeometry.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+  bladeGeometry.setIndex(indices);
+  bladeGeometry.computeVertexNormals();
+  const bladeMat = new THREE.MeshStandardMaterial({ color: '#9aa7b5', metalness: .88, roughness: .24, side: THREE.DoubleSide });
+  const blade = new THREE.Mesh(bladeGeometry, bladeMat);
+  blade.castShadow = true; blade.receiveShadow = true; bladeAssembly.add(blade);
+
+  const lip = new THREE.Mesh(
+    new THREE.BoxGeometry(bladeWidth, .025, .035),
+    new THREE.MeshStandardMaterial({ color: '#dce5ee', metalness: .95, roughness: .18 })
+  );
+  lip.position.set(0, tipTopY - .005, tipZ - .012); lip.castShadow = true; bladeAssembly.add(lip);
+
+  // Colored mounting brackets and visible fasteners make the blade assembly legible.
+  for (const x of [-half * .68, half * .68]) {
+    const bracket = new THREE.Mesh(new THREE.BoxGeometry(.095, .055, .22), accentMat);
+    bracket.position.set(x, .235, .27); bracket.castShadow = true; bladeAssembly.add(bracket);
+    const bolt = new THREE.Mesh(new THREE.CylinderGeometry(.025, .025, .012, 12), darkMat);
+    bolt.rotation.x = Math.PI / 2; bolt.position.set(x, .27, .31); bladeAssembly.add(bolt);
+  }
+
+  root.add(bladeAssembly);
+  root.userData.bladeAssembly = bladeAssembly;
+  root.userData.lastBladeType = bladeType;
+
   for (const x of [-.49, .49]) {
     const wheel = new THREE.Mesh(new THREE.CylinderGeometry(.16, .16, .12, 24), darkMat);
-    wheel.rotation.z = Math.PI / 2; wheel.position.set(x, .25, .16); wheel.castShadow = true; root.add(wheel);
+    wheel.rotation.z = Math.PI / 2; wheel.position.set(x, .25, -.12); wheel.castShadow = true; root.add(wheel);
     const hub = new THREE.Mesh(new THREE.CylinderGeometry(.065, .065, .125, 16), accentMat);
     hub.rotation.z = Math.PI / 2; hub.position.copy(wheel.position); root.add(hub);
   }
+  // Front opponent/edge sensors sit immediately behind the blade line.
   for (const x of [-.28, 0, .28]) {
     const sensor = new THREE.Mesh(new THREE.SphereGeometry(.045, 12, 10), new THREE.MeshBasicMaterial({ color: '#62e6ff' }));
-    sensor.position.set(x, .35, -.51); root.add(sensor);
+    sensor.position.set(x, .19, .56); root.add(sensor);
   }
   const beacon = new THREE.Mesh(new THREE.CylinderGeometry(.11, .11, .035, 24), accentMat);
-  beacon.position.set(0, .55, .02); root.add(beacon);
+  beacon.position.set(0, .55, -.02); root.add(beacon);
   root.userData.label = label;
+  root.userData.bladeType = bladeType;
   return root;
 }
 
-export default function Arena({ running, speed, mode, resetKey, onTelemetry, robotColor = '#3978ed', arenaSize = 'standard' }) {
+export default function Arena({ running, speed, mode, resetKey, onTelemetry, robotColor = '#3978ed', arenaSize = 'standard', bladeType = 'Standart kama' }) {
   const host = useRef(null);
   const api = useRef(null);
-  const propsRef = useRef({ running, speed, mode, onTelemetry, robotColor, arenaSize });
-  useEffect(() => { propsRef.current = { running, speed, mode, onTelemetry, robotColor, arenaSize }; }, [running, speed, mode, onTelemetry, robotColor, arenaSize]);
+  const propsRef = useRef({ running, speed, mode, onTelemetry, robotColor, arenaSize, bladeType });
+  useEffect(() => { propsRef.current = { running, speed, mode, onTelemetry, robotColor, arenaSize, bladeType }; }, [running, speed, mode, onTelemetry, robotColor, arenaSize, bladeType]);
 
   useEffect(() => {
     const el = host.current;
@@ -77,15 +124,15 @@ export default function Arena({ running, speed, mode, resetKey, onTelemetry, rob
     const ringLights = new THREE.Mesh(new THREE.TorusGeometry(2.92, .018, 8, 100), new THREE.MeshBasicMaterial({ color: '#3b82f6', transparent: true, opacity: .55 }));
     ringLights.rotation.x = Math.PI / 2; ringLights.position.y = -.02; scene.add(ringLights);
 
-    const player = makeRobot('#3978ed', propsRef.current.robotColor, 'PLAYER');
-    const rival = makeRobot('#d84b4b', '#ffb36b', 'RIVAL');
+    const player = makeRobot('#3978ed', propsRef.current.robotColor, 'PLAYER', propsRef.current.bladeType);
+    const rival = makeRobot('#d84b4b', '#ffb36b', 'RIVAL', 'Geniş kama');
     scene.add(player, rival);
     const shadowCircle = new THREE.Mesh(new THREE.CircleGeometry(.64, 32), new THREE.MeshBasicMaterial({ color: '#3b82f6', transparent: true, opacity: .13, depthWrite: false }));
     shadowCircle.rotation.x = -Math.PI / 2; shadowCircle.position.y = .105; scene.add(shadowCircle);
     const rivalShadow = new THREE.Mesh(new THREE.CircleGeometry(.64, 32), new THREE.MeshBasicMaterial({ color: '#ef4444', transparent: true, opacity: .11, depthWrite: false }));
     rivalShadow.rotation.x = -Math.PI / 2; rivalShadow.position.y = .105; scene.add(rivalShadow);
 
-    const state = { x: -1.05, z: .8, angle: 0, rx: 1.05, rz: -.8, ra: Math.PI, last: performance.now(), collisions: 0, edgeWarnings: 0 };
+    const state = { x: -1.05, z: -.8, angle: 0.92, rx: 1.05, rz: .8, ra: -2.22, last: performance.now(), collisions: 0, edgeWarnings: 0 };
     const keys = { forward: false, back: false, left: false, right: false };
     const keyMap = { KeyW: 'forward', ArrowUp: 'forward', KeyS: 'back', ArrowDown: 'back', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right' };
     const down = e => { if (keyMap[e.code] && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) { keys[keyMap[e.code]] = true; e.preventDefault(); } };
@@ -101,6 +148,11 @@ export default function Arena({ running, speed, mode, resetKey, onTelemetry, rob
       const dt = Math.min((now - state.last) / 1000, .04); state.last = now;
       const p = propsRef.current;
       if (p.robotColor) player.children[0].material.color.set(p.robotColor);
+      if (p.bladeType !== player.userData.lastBladeType) {
+        const bladeScale = p.bladeType === 'Geniş kama' ? [1.083, 1, 1] : p.bladeType === 'Dar hassas kama' ? [.8125, 1, 1] : p.bladeType === 'Çift kademeli' ? [1, 1.12, 1.06] : [1, 1, 1];
+        player.userData.bladeAssembly.scale.set(...bladeScale);
+        player.userData.lastBladeType = p.bladeType;
+      }
       if (p.running) {
         const power = p.speed / 100;
         if (p.mode === 'AUTO') {
@@ -132,8 +184,8 @@ export default function Arena({ running, speed, mode, resetKey, onTelemetry, rob
         if (pr > radius - .42) { state.edgeWarnings++; state.x = Math.cos(Math.atan2(state.z, state.x)) * (radius - .42); state.z = Math.sin(Math.atan2(state.z, state.x)) * (radius - .42); }
         if (rr > radius - .42) { state.rx = Math.cos(Math.atan2(state.rz, state.rx)) * (radius - .42); state.rz = Math.sin(Math.atan2(state.rz, state.rx)) * (radius - .42); }
       }
-      player.position.set(state.x, .1, state.z); player.rotation.y = state.angle;
-      rival.position.set(state.rx, .1, state.rz); rival.rotation.y = state.ra;
+      player.position.set(state.x, 0, state.z); player.rotation.y = state.angle;
+      rival.position.set(state.rx, 0, state.rz); rival.rotation.y = state.ra;
       shadowCircle.position.set(state.x, .105, state.z); rivalShadow.position.set(state.rx, .105, state.rz);
       const distance = Math.hypot(state.rx - state.x, state.rz - state.z);
       if (now - lastTelemetry > 160) {
@@ -152,11 +204,11 @@ export default function Arena({ running, speed, mode, resetKey, onTelemetry, rob
   }, []);
 
   useEffect(() => {
-    if (api.current) Object.assign(api.current.state, { x: -1.05, z: .8, angle: 0, rx: 1.05, rz: -.8, ra: Math.PI, collisions: 0, edgeWarnings: 0 });
+    if (api.current) Object.assign(api.current.state, { x: -1.05, z: -.8, angle: 0.92, rx: 1.05, rz: .8, ra: -2.22, collisions: 0, edgeWarnings: 0 });
   }, [resetKey]);
 
   return <div className="arena-canvas" ref={host}>
-    <div className="arena-hud"><span className={`live-dot ${running ? 'active' : ''}`} />{running ? 'SİMÜLASYON ÇALIŞIYOR' : 'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span>3B DOHYO / MINI SUMO</div>
+    <div className="arena-hud"><span className={`live-dot ${running ? 'active' : ''}`} />{running ? 'SİMÜLASYON ÇALIŞIYOR' : 'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span>3B DOHYO / ÖN KAMA MONTAJI</div>
     <div className="arena-help"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> veya ok tuşlarıyla sür <span>·</span> Fareyle kamerayı döndür / yakınlaştır</div>
   </div>;
 }

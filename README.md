@@ -1,4 +1,4 @@
-# SUMO LAB — v0.2.0
+# SUMO LAB — v0.2.1
 
 Turkish-language mini-sumo robot design and 3D simulation workspace. Built with React, Vite and Three.js.
 
@@ -25,13 +25,15 @@ npm run preview
 
 No environment variables are required.
 
-## v0.2.0 features
+## v0.2.1 features
 - Responsive Turkish interface
 - Three.js 3D mini-sumo dohyo and two robot models
 - Manual WASD / arrow-key control
 - Autonomous chase mode and rival pursuit behavior
 - Speed control, reset, distance and collision telemetry
 - Robot identity, class and body color settings
+- Front-mounted low-profile metallic wedge blade with selectable standard, wide, narrow and stepped profiles
+- Front sensor positions aligned behind the wedge; corrected robot ground contact and forward (+Z) orientation
 - Component selection with estimated weight budget
 - Local project persistence in browser localStorage
 - Editable JavaScript and Arduino C++ code templates

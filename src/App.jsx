@@ -36,6 +36,7 @@ export default function App() {
   const [robotClass, setRobotClass] = useState('Mini Sumo');
   const [robotColor, setRobotColor] = useState('#3978ed');
   const [arenaSize, setArenaSize] = useState('standard');
+  const [bladeType, setBladeType] = useState('Standart kama');
   const [selectedParts, setSelectedParts] = useState(defaultParts);
   const [telemetry, setTelemetry] = useState({ distance: '—', speed: 0, mode: 'MANUEL', collisions: 0, edge: 'GÜVENLİ' });
   const [copied, setCopied] = useState(false);
@@ -48,6 +49,7 @@ export default function App() {
         setRobotName(savedConfig.robotName || 'PARS-01');
         setRobotClass(savedConfig.robotClass || 'Mini Sumo');
         setRobotColor(savedConfig.robotColor || '#3978ed');
+        setBladeType(savedConfig.bladeType || 'Standart kama');
         setSelectedParts(savedConfig.selectedParts || defaultParts);
       }
     } catch { /* ignore invalid local project data */ }
@@ -60,7 +62,7 @@ export default function App() {
   const weightOk = totalWeight <= weightLimit;
 
   const saveProject = () => {
-    localStorage.setItem('sumo-lab-project', JSON.stringify({ robotName, robotClass, robotColor, selectedParts }));
+    localStorage.setItem('sumo-lab-project', JSON.stringify({ robotName, robotClass, robotColor, bladeType, selectedParts }));
     setSaved(true); window.setTimeout(() => setSaved(false), 1800);
   };
   const copyCode = async () => {
@@ -104,7 +106,7 @@ export default function App() {
         <div className="side-label">SENSÖR DURUMU</div>
         <div className="sensor-chip"><span className="sensor-dot blue"/> Rakip algılama <b>Simüle</b></div>
         <div className="sensor-chip"><span className="sensor-dot orange"/> Çizgi algılama <b>Simüle</b></div>
-        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>SUMO LAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">SUMO LAB <span>v0.2.0 · BETA</span></div></div>
+        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>SUMO LAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">SUMO LAB <span>v0.2.1 · BETA</span></div></div>
       </aside>
 
       <section className="main-content">
@@ -114,7 +116,7 @@ export default function App() {
 
         {tab === 'sim' && <>
           <div className="sim-toolbar"><div className="toolbar-left"><div className="section-icon"><Swords size={17}/></div><div><strong>Mini Sumo Dohyo</strong><span>Ölçekli dohyo · eğitim simülasyonu</span></div><span className={`status-pill ${running ? 'status-running' : ''}`}><i/> {running ? 'CANLI' : 'HAZIR'}</span></div><div className="toolbar-right"><button className="tool-btn" onClick={() => { setResetKey(v => v + 1); setRunning(false); }}><RotateCcw size={15}/> Sıfırla</button><button className="tool-btn" onClick={() => setRunning(false)}><Pause size={15}/> Durdur</button><button className="tool-btn active-tool" onClick={() => setRunning(true)}><Play size={14}/> Başlat</button></div></div>
-          <div className="arena-wrap"><Arena running={running} speed={speed} mode={mode} resetKey={resetKey} onTelemetry={setTelemetry} robotColor={robotColor} arenaSize={arenaSize}/></div>
+          <div className="arena-wrap"><Arena running={running} speed={speed} mode={mode} resetKey={resetKey} onTelemetry={setTelemetry} robotColor={robotColor} arenaSize={arenaSize} bladeType={bladeType}/></div>
           <div className="bottom-panels">
             <div className="panel control-panel"><div className="panel-title"><div><Gauge size={17}/><strong>Robot kontrolü</strong></div><span className="muted-tag">OYUNCU 1</span></div><div className="mode-switch"><button className={mode === 'MANUEL' ? 'mode-active' : ''} onClick={() => setMode('MANUEL')}>Manuel sürüş</button><button className={mode === 'AUTO' ? 'mode-active' : ''} onClick={() => setMode('AUTO')}>Otonom takip</button></div><div className="speed-row"><label>Motor gücü</label><strong>{speed}%</strong></div><input className="range" type="range" min="10" max="100" step="5" value={speed} onChange={e => setSpeed(+e.target.value)}/><div className="range-labels"><span>Hassas</span><span>Maksimum</span></div><div className="keyboard-hint"><Keyboard size={15}/><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>veya ok tuşları</span></div></div>
             <div className="panel telemetry-panel"><div className="panel-title"><div><Radio size={17}/><strong>Canlı telemetri</strong></div><span className="live-label"><i/> SİMÜLASYON</span></div><div className="metrics"><div className="metric"><span>Rakibe mesafe</span><strong>{telemetry.distance}<small> m</small></strong></div><div className="metric"><span>Motor gücü</span><strong>{telemetry.speed}<small> %</small></strong></div><div className="metric"><span>Temas sayısı</span><strong>{telemetry.collisions || 0}</strong></div></div><div className="telemetry-foot"><span className={`sensor-dot ${telemetry.edge === 'UYARI' ? 'orange' : 'blue'}`}/> Ring sınırı <b>{telemetry.edge || 'GÜVENLİ'}</b><span className="sensor-dot orange"/> Rakip sensörü <b>Aktif</b></div></div>
@@ -127,6 +129,7 @@ export default function App() {
             <label className="field-label">Robot adı</label><input className="text-input" value={robotName} maxLength={24} onChange={e => setRobotName(e.target.value)}/>
             <label className="field-label">Robot sınıfı</label><select className="select-input" value={robotClass} onChange={e => setRobotClass(e.target.value)}><option>Micro Sumo</option><option>Mini Sumo</option><option>1 Kg Sumo</option></select>
             <label className="field-label">Gövde rengi</label><div className="color-options">{['#3978ed', '#16a085', '#e34f4f', '#8b5cf6', '#e59b27', '#e5e7eb'].map(c => <button key={c} aria-label={`Renk ${c}`} className={`color-swatch ${robotColor === c ? 'chosen' : ''}`} style={{ background: c }} onClick={() => setRobotColor(c)}/>)}</div>
+            <label className="field-label">Ön bıçak / kama tipi</label><select className="select-input" value={bladeType} onChange={e => setBladeType(e.target.value)}><option>Standart kama</option><option>Geniş kama</option><option>Dar hassas kama</option><option>Çift kademeli</option></select><p className="muted-copy">Robotun önündeki alçak metal kama rakibin altına girerek itme avantajı sağlar. 3B modelde +Z yönü robotun önüdür.</p>
             <label className="field-label">Arena profili</label><select className="select-input" value={arenaSize} onChange={e => setArenaSize(e.target.value)}><option value="standard">Standart dohyo</option><option value="training">Antrenman modu</option></select>
             <button className="primary-btn full-btn" onClick={saveProject}><Save size={15}/>{saved ? 'Proje kaydedildi' : 'Robot ayarlarını kaydet'}</button>
           </div>
@@ -137,7 +140,7 @@ export default function App() {
 
         {tab === 'parts' && <div className="panel parts-workspace"><div className="panel-title"><div><Package size={18}/><strong>Donanım bileşenleri</strong></div><span className="muted-tag">{selectedParts.length} PARÇA SEÇİLİ</span></div><p className="parts-intro">Robotunda kullanacağın parçaları seç. Seçimler ağırlık hesabına ve robot profiline yansır.</p><div className="parts-grid">{partCatalog.map(part => { const Icon = part.icon; const active = selectedParts.includes(part.name); return <button key={part.name} className={`part-card ${active ? 'part-selected' : ''}`} onClick={() => togglePart(part.name)}><div className="part-icon"><Icon size={20}/></div><div className="part-copy"><strong>{part.name}</strong><span>{part.category} · {part.detail}</span></div><div className="part-weight">{part.weight} g</div><div className={`part-check ${active ? 'checked' : ''}`}>{active ? <Check size={13}/> : '+'}</div></button>; })}</div><div className="parts-summary"><div><span>Seçili bileşen ağırlığı</span><strong>{totalWeight} g</strong></div><div><span>İzin verilen ağırlık</span><strong>{weightLimit} g</strong></div><button className="primary-btn" onClick={() => { saveProject(); setTab('design'); }}><Save size={15}/> Seçimleri kaydet</button></div></div>}
 
-        <footer className="main-footer"><span>SUMO LAB · Eğitim ve prototipleme simülatörü</span><span>v0.2.0 · Aşama 1 / 6</span></footer>
+        <footer className="main-footer"><span>SUMO LAB · Eğitim ve prototipleme simülatörü</span><span>v0.2.1 · Aşama 2 / 6</span></footer>
       </section>
     </main>
   </div>;

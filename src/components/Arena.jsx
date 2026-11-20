@@ -21,10 +21,7 @@ const CLASS_PRESETS = {
 function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensions = { width: .92, length: 1.02, height: .25 }, opponentSensorCount = 3, wheelDiameterMm = 30) {
   const root = new THREE.Group();
   root.scale.setScalar(scale);
-  const bodyMat = new THREE.MeshStandardMaterial({ color: '#171b22', metalness: .72, roughness: .31 });
-  const steelMat = new THREE.MeshStandardMaterial({ color: '#c7cdd3', metalness: .96, roughness: .23 });
-  const redMat = new THREE.MeshStandardMaterial({ color: '#d71920', metalness: .48, roughness: .32 });
-  const rubberMat = new THREE.MeshStandardMaterial({ color: '#080a0d', metalness: .04, roughness: .96 });
+  const bodyMat = new THREE.MeshStandardMaterial({ color, metalness: .42, roughness: .38 });
   const darkMat = new THREE.MeshStandardMaterial({ color: '#111827', metalness: .25, roughness: .65 });
   const accentMat = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: .18, metalness: .3 });
   // Gerçek mini-sumo görünümü: dar ve alçak üst şasi, dışarı taşan tahrik tekerlekleri.
@@ -35,77 +32,55 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   const bodyRadius = Math.min(bodyWidth, dimensions.height, bodyLength) * .055;
   const body = new THREE.Mesh(new RoundedBoxGeometry(bodyWidth, dimensions.height, bodyLength, 5, bodyRadius), bodyMat);
   body.position.y = bodyBottom + dimensions.height / 2; body.castShadow = true; body.receiveShadow = true; root.add(body);
-  // Yan kapaklar: referans PARS robotundaki siyah, köşeli metal yan gövde.
-  for (const side of [-1,1]) {
-    const cheek = new THREE.Mesh(new RoundedBoxGeometry(dimensions.width*.075, dimensions.height*.78, bodyLength*.78, 3, dimensions.width*.012), darkMat);
-    cheek.position.set(side*bodyWidth*.49, bodyBottom+dimensions.height*.43, -dimensions.length*.015); cheek.castShadow=true; root.add(cheek);
-    const trim = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width*.008, dimensions.height*.035, bodyLength*.68), redMat);
-    trim.position.set(side*bodyWidth*.535, bodyBottom+dimensions.height*.79, -dimensions.length*.015); root.add(trim);
-  }
   // Alçak elektronik kapak; robotun üstünü büyük bir kutu gibi kaplamaz.
   const deck = new THREE.Mesh(new RoundedBoxGeometry(bodyWidth*.72, Math.max(.009, dimensions.height*.075), bodyLength*.66, 3, bodyRadius*.35), darkMat);
   deck.position.set(0, bodyTop-dimensions.height*.075, -.015); deck.castShadow=true; root.add(deck);
-  // PARS referansındaki açıkta duran siyah PCB, kırmızı baskı çizgileri ve güç modülleri.
-  const pcbMat = new THREE.MeshStandardMaterial({color:'#090d13',metalness:.58,roughness:.38});
-  const pcb = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.88, Math.max(.009,dimensions.height*.055), bodyLength*.78), pcbMat);
-  pcb.position.set(0,bodyTop+dimensions.height*.012,-dimensions.length*.045); pcb.castShadow=true; root.add(pcb);
-  const pcbY=bodyTop+dimensions.height*.043;
-  for (const side of [-1,1]) {
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.39,dimensions.height*.012,dimensions.length*.012),redMat);
-    rail.position.set(side*bodyWidth*.245,pcbY,-dimensions.length*.055); root.add(rail);
-    const driver = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.19,dimensions.height*.055,bodyLength*.22),new THREE.MeshStandardMaterial({color:'#171d26',metalness:.65,roughness:.35}));
-    driver.position.set(side*bodyWidth*.29,pcbY+dimensions.height*.025,-dimensions.length*.09); root.add(driver);
-    const inductor = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.12,dimensions.height*.075,bodyLength*.13),new THREE.MeshStandardMaterial({color:'#20252b',metalness:.35,roughness:.55}));
-    inductor.position.set(side*bodyWidth*.12,pcbY+dimensions.height*.035,-dimensions.length*.10); root.add(inductor);
-    const terminal = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.13,dimensions.height*.13,dimensions.length*.10),new THREE.MeshStandardMaterial({color:'#218b42',metalness:.18,roughness:.5}));
-    terminal.position.set(side*bodyWidth*.39,pcbY+dimensions.height*.07,dimensions.length*.13); root.add(terminal);
-    for(let pin=0;pin<3;pin++){const screw=new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.009,dimensions.width*.009,dimensions.height*.018,10),steelMat);screw.position.set(side*bodyWidth*.39+(pin-1)*bodyWidth*.035,pcbY+dimensions.height*.145,dimensions.length*.13);root.add(screw);}
+  // Düşük profilli kontrol kartı ve iki küçük sürücü modülü.
+  const controller = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.30, Math.max(.008,dimensions.height*.045), bodyLength*.22), new THREE.MeshStandardMaterial({color:'#263445',metalness:.42,roughness:.5}));
+  controller.position.set(0,bodyTop-dimensions.height*.025,-dimensions.length*.075); root.add(controller);
+  for (const x of [-1,1]) {
+    const module = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.12,Math.max(.008,dimensions.height*.06),bodyLength*.20),new THREE.MeshStandardMaterial({color:'#1c6b58',metalness:.25,roughness:.6}));
+    module.position.set(x*bodyWidth*.30,bodyTop-dimensions.height*.02,-dimensions.length*.08); root.add(module);
   }
-  const mcu = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.22,dimensions.height*.075,bodyLength*.19),new THREE.MeshStandardMaterial({color:'#202832',metalness:.45,roughness:.4}));
-  mcu.position.set(0,pcbY+dimensions.height*.045,-dimensions.length*.02); root.add(mcu);
-  for(let i=0;i<4;i++){const pin=new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.012,dimensions.height*.025,bodyLength*.025),steelMat);pin.position.set(-bodyWidth*.13+i*bodyWidth*.087,pcbY+dimensions.height*.065,-dimensions.length*.02);root.add(pin);}
-  const led = new THREE.Mesh(new THREE.SphereGeometry(dimensions.width*.018,12,10),new THREE.MeshBasicMaterial({color:'#168cff'})); led.position.set(bodyWidth*.20,pcbY+dimensions.height*.075,dimensions.length*.03);root.add(led);
-  // Üst kart üzerinde referans görseldeki PARS marka plakası.
-  const logoCanvas=document.createElement('canvas'); logoCanvas.width=512; logoCanvas.height=160; const logoCtx=logoCanvas.getContext('2d');
-  logoCtx.clearRect(0,0,512,160); logoCtx.fillStyle='#f4f6f8'; logoCtx.font='900 104px Arial'; logoCtx.textAlign='center'; logoCtx.fillText('PARS',256,112); logoCtx.fillStyle='#e21b2b'; logoCtx.fillRect(72,128,368,9);
-  const logoTexture=new THREE.CanvasTexture(logoCanvas); const logo=new THREE.Mesh(new THREE.PlaneGeometry(bodyWidth*.38,bodyLength*.12),new THREE.MeshBasicMaterial({map:logoTexture,transparent:true,side:THREE.DoubleSide}));
-  logo.rotation.x=-Math.PI/2; logo.position.set(0,pcbY+dimensions.height*.078,-dimensions.length*.055); root.add(logo);
-  // XT60 güç konnektörü ve kırmızı/siyah kablo demeti.
-  const plug = new THREE.Mesh(new THREE.BoxGeometry(bodyWidth*.20,dimensions.height*.13,dimensions.length*.13),new THREE.MeshStandardMaterial({color:'#e7a51b',metalness:.18,roughness:.5})); plug.position.set(bodyWidth*.24,pcbY+dimensions.height*.075,-dimensions.length*.29);root.add(plug);
-  for(const [i,c] of [[0,'#d51d25'],[1,'#111111']]){const curve=new THREE.CatmullRomCurve3([new THREE.Vector3((i?-.06:.06)*bodyWidth,bodyTop+dimensions.height*.10,-dimensions.length*.31),new THREE.Vector3((i?-.20:.20)*bodyWidth,bodyTop+dimensions.height*.18,-dimensions.length*.37),new THREE.Vector3((i?-.32:.32)*bodyWidth,bodyTop+dimensions.height*.08,-dimensions.length*.28)]);const cable=new THREE.Mesh(new THREE.TubeGeometry(curve,16,dimensions.width*.012,8,false),new THREE.MeshStandardMaterial({color:c,roughness:.45}));root.add(cable);}
   for (const x of [-1,1]) for (const z of [-1,1]) {
     const bolt = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.012,dimensions.width*.012,dimensions.height*.018,10),new THREE.MeshStandardMaterial({color:'#d5dce5',metalness:.95,roughness:.2}));
     bolt.position.set(x*bodyWidth*.40,bodyTop-dimensions.height*.025,z*bodyLength*.40); root.add(bolt);
   }
 
-  // Tek parça, üçgen planlı sumo bıçağı: geniş kök, tam sivri burun ve zemine sıfır alt yüzey.
+  // Düz ön ağızlı, tam genişlikte metal sumo bıçağı. Plan görünüşü dikdörtgendir;
+  // sivri burun yoktur. Üst yüzey gövdeden ön kesici ağza doğru alçalır.
   const blade = new THREE.Group();
   const bladeWidth = (bladeType === 'Geniş kama' ? 1.08 : bladeType === 'Dar hassas kama' ? .72 : bladeType === 'Çift kademeli' ? .96 : .94) * dimensions.width / .92;
   const bladeLength = (bladeType === 'Uzun alçak kama' ? .98 : .76) * dimensions.length / 1.02;
   const rearZ = dimensions.length * .16, tipZ = rearZ + bladeLength;
   const half = bladeWidth*.5;
-  const floorY = .0955; // Dohyo üst yüzeyi: 0.0565 + 0.039 = 0.0955; bıçak altı tam temas düzleminde.
+  // Siyah dohyo üst yüzeyi: CylinderGeometry merkez .0565, kalınlık .078 => üst kot .0955.
+  const floorY = .0955; // Bıçağın alt yüzeyi dohyo'ya sıfır boşlukla oturur.
+  const bladeThickness = Math.max(.003, dimensions.height*.035);
   const rearTopY = bodyBottom + dimensions.height*.54;
-  const tipTopY = floorY + .0010; // Kesici ağızda yaklaşık 0.2 mm metal kalınlığı; alt yüzey zeminle sıfır boşlukta.
+  const frontTopY = floorY + bladeThickness;
   const verts = [
-    -half,floorY,rearZ,   half,floorY,rearZ,   0,floorY,tipZ,
-    -half,rearTopY,rearZ, half,rearTopY,rearZ, 0,tipTopY,tipZ
+    -half,floorY,rearZ,   half,floorY,rearZ,
+    -half,floorY,tipZ,    half,floorY,tipZ,
+    -half,rearTopY,rearZ, half,rearTopY,rearZ,
+    -half,frontTopY,tipZ, half,frontTopY,tipZ
   ];
   const indices = [
-    3,4,5,                 // üstte sivri üçgen rampa
-    0,2,1,                 // tamamen düz alt yüzey
-    0,3,5, 0,5,2,          // sol yan
-    1,2,5, 1,5,4,          // sağ yan
-    0,1,4, 0,4,3           // gövdeye bağlanan arka yüz
+    4,5,7, 4,7,6,          // eğimli, düz geniş üst rampa
+    0,2,3, 0,3,1,          // düz alt yüzey - dohyo kotu
+    0,4,6, 0,6,2,          // sol yan yüz
+    1,3,7, 1,7,5,          // sağ yan yüz
+    0,1,5, 0,5,4,          // arka bağlantı yüzü
+    2,6,7, 2,7,3           // robotun eni boyunca düz kesici ağız
   ];
   const bladeGeo = new THREE.BufferGeometry();
   bladeGeo.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));
   bladeGeo.setIndex(indices); bladeGeo.computeVertexNormals();
-  const bladeMetal = new THREE.MeshStandardMaterial({color:'#c4cbd1',metalness:.98,roughness:.22,side:THREE.DoubleSide});
+  const bladeMetal = new THREE.MeshStandardMaterial({color:'#aebbc9',metalness:.98,roughness:.16,side:THREE.DoubleSide});
   const wedge = new THREE.Mesh(bladeGeo,bladeMetal); wedge.castShadow=true; wedge.receiveShadow=true; blade.add(wedge);
-  // Üst rampadaki PARS tipi üç siyah sensör penceresi ve ince kesici ağız çizgisi.
-  for(const x of [-half*.48,0,half*.48]){const windowMesh=new THREE.Mesh(new THREE.BoxGeometry(bladeWidth*.19,dimensions.height*.012,dimensions.length*.065),new THREE.MeshStandardMaterial({color:'#080b10',metalness:.18,roughness:.42}));windowMesh.position.set(x,floorY+(rearTopY-floorY)*.38,rearZ+bladeLength*.40);windowMesh.rotation.x=-Math.atan2(rearTopY-tipTopY,bladeLength);blade.add(windowMesh);}
-  // Ön uç tek bir geometrik noktada birleşir; geniş veya düz bir tampon yoktur.
+  // Ön kesici ağız tek bir düz çizgidir ve robotun tüm bıçak genişliği boyunca uzanır.
+  const cuttingEdge = new THREE.Mesh(new THREE.BoxGeometry(bladeWidth,bladeThickness,dimensions.width*.008),new THREE.MeshStandardMaterial({color:'#e0e6ed',metalness:1,roughness:.12}));
+  cuttingEdge.position.set(0,floorY+bladeThickness*.5,tipZ); blade.add(cuttingEdge);
   // Düşük montaj kulakları ve bağlantı vidaları.
   for (const x of [-half*.72,half*.72]) {
     const mount = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width*.055,dimensions.height*.10,dimensions.length*.09),accentMat);
@@ -121,7 +96,7 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
     const x=side*dimensions.width*.455;
     const motorPod = new THREE.Mesh(new RoundedBoxGeometry(dimensions.width*.19,dimensions.height*.40,dimensions.length*.34,4,dimensions.width*.035),darkMat);
     motorPod.position.set(side*dimensions.width*.36,bodyBottom+dimensions.height*.34,-dimensions.length*.105); root.add(motorPod);
-    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius,wheelRadius,wheelWidth,36),rubberMat);
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius,wheelRadius,wheelWidth,36),new THREE.MeshStandardMaterial({color:'#090d13',metalness:.08,roughness:.92}));
     wheel.rotation.z=Math.PI/2; wheel.position.set(x,.0955+wheelRadius,-dimensions.length*.105); wheel.castShadow=true; root.add(wheel);
     // Lastik sırt kanalları ve metal göbek.
     for(let tread=0;tread<12;tread++){
@@ -319,7 +294,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         const playerDrive=drive(state,pF,pT,dt,maxSpeed*playerSpeedScale,playerMassKg,p.driveSpec);
         const rivalDrive=drive({get x(){return state.rx},set x(v){state.rx=v},get z(){return state.rz},set z(v){state.rz=v},get a(){return state.ra},set a(v){state.ra=v},get vx(){return state.rvx},set vx(v){state.rvx=v},get vz(){return state.rvz},set vz(v){state.rvz=v},set turn(v){state.rturn=v}},rF,rT,dt,rivalCls.maxSpeed*.88,rivalMassKg,p.rivalDriveSpec);
 
-        // Fiziksel temas: görünür gövde, iki lastik ve gerçek sivri üçgen bıçak için ayrı çokgenler.
+        // Fiziksel temas: görünür gövde, iki lastik ve düz ön ağızlı bıçak için ayrı çokgenler.
         // Sensör menzili veya yaklaşık büyük dikdörtgenler çarpışma sayılmaz.
         const toWorldPolygon=(x,z,a,local)=>{
           const c=Math.cos(a),sn=Math.sin(a);
@@ -333,7 +308,8 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
           const rear=profile.length*.16, tip=rear+bladeL, half=bladeW*.5;
           const local=[
             [[-bw/2,-bl/2],[bw/2,-bl/2],[bw/2,bl/2],[-bw/2,bl/2]],
-            [[-half,rear],[half,rear],[0,tip]]
+            // Görsel bıçakla aynı dikdörtgen plan: ön kesici ağız dümdüz ve tam genişlikte.
+            [[-half,rear],[half,rear],[half,tip],[-half,tip]]
           ];
           const wheelR=clamp(Number(driveSpec?.wheelDiameter)||30,15,60)/400, wheelZ=-profile.length*.105;
           for(const side of [-1,1]) local.push(circlePolygon(side*profile.width*.455,wheelZ,wheelR,14));

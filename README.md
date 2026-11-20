@@ -1,6 +1,6 @@
 # PARS SUMOLAB
 
-## v0.21.0 – Motor ve lastik fiziği
+## v0.20.0 – Motor ve lastik fiziği
 
 - Her robot için motor torku, redüksiyon oranı, motor devri, tahrik tekerleği çapı ve lastik-dohyo sürtünmesi ayarlanabilir.
 - Hız, ivmelenme ve çekiş kuvveti bu parametrelerden türetilir.

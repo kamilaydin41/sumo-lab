@@ -1,6 +1,13 @@
 # Changelog
 
-## v0.21.0 – Motor ve lastik temelli sürüş fiziği
+## v0.20.1 – Düz ön ağızlı, zemine sıfır bıçak
+- Geliştirme tabanı v0.20.0 olarak korundu; sonraki sürümlerdeki robot gövde/üçgen burun değişiklikleri alınmadı.
+- Sivri üçgen planlı kama kaldırıldı; yerine robotun önünde tam genişlikte, düz kesici ağızlı metal bıçak eklendi.
+- Bıçak üst yüzeyi gövdeden ön ağza doğru eğimli, alt yüzeyi düzdür.
+- Bıçağın alt kotu siyah dohyo yüzeyinin üst kotuna (.0955 Three.js birimi) eşitlendi.
+- Çarpışma geometrisi görsel bıçakla aynı dikdörtgen plan şekline getirildi; ön ağız boyunca temas algılanır.
+
+## v0.20.0 – Motor ve lastik temelli sürüş fiziği
 - Oyuncu ve rakip robot için motor torku (mNm), redüksiyon oranı, motor devri, tekerlek çapı ve lastik sürtünme katsayısı bağımsız ayarlanabilir.
 - İvmelenme, iki motorun redüksiyon sonrası tekerlek torkundan hesaplanan çekiş kuvveti ile lastik tutuşunun izin verdiği kuvvetin küçüğüne göre hesaplanır.
 - Azami hız, motor devri / redüksiyon oranı / tekerlek çevresinden hesaplanır.

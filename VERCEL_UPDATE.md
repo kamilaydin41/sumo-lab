@@ -29,3 +29,12 @@ Oyuncu ve rakip robotun başlangıç yönlerini simülasyon panelindeki “Robot
 ## v0.11.0 yeniliği
 
 Simülasyon duraklatılmışken 3B dohyo üzerindeki oyuncu veya rakip robotun gövdesini fareyle ya da dokunmatik ekranda sürükleyerek başlangıç konumunu belirleyebilirsin. Açı ayarları ayrı panelden yapılır. Projeyi kaydettiğinde konum ve yön bilgileri birlikte saklanır.
+
+
+## v0.12.0 güncellemesi
+
+GitHub deposuna yeni ZIP içeriğini yükleyin ve şu commit mesajını kullanın:
+
+`PARS SUMOLAB v0.12.0: Gerçekçi itiş ve devrilme fiziği`
+
+Vercel dağıtımı tamamlandıktan sonra özellikle düz kafa kafaya temas, kama altına girme, yanal çarpışma ve dohyo dışına itme senaryolarını ayrı ayrı deneyin.

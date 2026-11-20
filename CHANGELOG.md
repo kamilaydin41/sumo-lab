@@ -14,3 +14,15 @@
 - Oyuncu ve rakip için bağımsız başlangıç yönü ayarı eklendi.
 - 0–359 derece açı seçimi ve dört yön hızlı seçimleri eklendi.
 - Başlangıç yönleri proje kaydına eklendi.
+
+
+## v0.12.0 – Gerçekçi mücadele davranışı
+
+- Normal çarpışmalarda otomatik takla davranışı kaldırıldı.
+- Düşük sekme katsayısı ve daha kontrollü momentum aktarımı eklendi.
+- Kama altına girme koşulları ve kama tipine göre kaldırma etkisi düzenlendi.
+- Ağırlık merkezi ve destek genişliğine bağlı devrilme eşiği eklendi.
+- Yalpalama sönümleme ve kendini toparlama davranışı eklendi.
+- Yanal çarpışmalarda devrilme daha nadir ve kademeli hale getirildi.
+- Gövde/kama dış sınırına dayalı ring-out kontrolü eklendi.
+- Dohyo üzerinde devrilme tek başına yenilgi sayılmıyor.

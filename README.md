@@ -77,3 +77,16 @@ Simülasyon eğitim amaçlı yaklaşık bir fizik modelidir. Robot ölçüleri v
 - Dört hızlı yön seçeneği (0°, 90°, 180°, 270°) eklendi.
 - Başlangıç yönleri proje kaydına dahil edildi.
 - Simülasyon çalışırken yön ayarları kilitlenir; durdurulduğunda değişiklikler anında uygulanır.
+
+
+## v0.12.0 – Daha gerçekçi sumo mücadele fiziği
+
+- Düz kafa kafaya temas artık otomatik takla üretmez.
+- Çarpışma esnekliği düşürülerek sekme yerine itiş önceliklendirildi.
+- Kama altına girme; hücum yönü, ilerleme hızı ve kama tipine bağlı hale getirildi.
+- Devrilme; ağırlık merkezi, destek izi, kama kaldırması ve yanal yükün zamana yayılan etkisiyle hesaplanır.
+- Küçük yalpalamalar toparlanır; güçlü ve sürekli kama kaldırması devrilmeye yol açabilir.
+- Dohyo üzerinde devrilmek tek başına maç kaybı değildir; robot ring-out olursa kaybeder.
+- Ring-out kontrolü robot merkezinden değil, gövde/kama dış sınırından yapılır.
+
+**Model notu:** Bu, eğitim amaçlı basitleştirilmiş 2B itiş ve açısal denge modelidir; gerçek motor tork eğrileri, lastik sürtünme haritaları, temas deformasyonu ve tam 3B rijit-cisim dinamiği içermez. Resmî kurallar organizasyona göre değişebilir.

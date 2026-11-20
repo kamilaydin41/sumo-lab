@@ -98,7 +98,7 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
     const player=makeRobot(props.current.robotColor,'#8fc2ff',props.current.bladeType,preset.robotScale,false,preset);
     const rival=makeRobot('#d84b4b','#ffb36b','Geniş kama',preset.robotScale,true,preset); scene.add(player,rival);
     const shadows=[]; for(const [color,op] of [['#3b82f6',.14],['#ef4444',.12]]){const m=new THREE.Mesh(new THREE.CircleGeometry(Math.max(preset.width,preset.length)*.72,32),new THREE.MeshBasicMaterial({color,transparent:true,opacity:op,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.y=.105;scene.add(m);shadows.push(m);}
-    const startState=()=>({x:(props.current.playerPosition?.x??-.52)*maxRadius,z:(props.current.playerPosition?.z??0)*maxRadius,a:(props.current.playerHeading??90)*Math.PI/180,vx:0,vz:0,turn:0,rx:(props.current.rivalPosition?.x??.52)*maxRadius,rz:(props.current.rivalPosition?.z??0)*maxRadius,ra:(props.current.rivalHeading??270)*Math.PI/180,rvx:0,rvz:0,rturn:0,collisions:0,pushes:0,playerRoll:0,playerPitch:0,rivalRoll:0,rivalPitch:0,playerTipped:false,rivalTipped:false,playerEdge:false,rivalEdge:false,winner:null,finishReason:'',lastHit:0,elapsed:0});
+    const startState=()=>({x:(props.current.playerPosition?.x??-.52)*maxRadius,z:(props.current.playerPosition?.z??0)*maxRadius,a:(props.current.playerHeading??90)*Math.PI/180,vx:0,vz:0,turn:0,rx:(props.current.rivalPosition?.x??.52)*maxRadius,rz:(props.current.rivalPosition?.z??0)*maxRadius,ra:(props.current.rivalHeading??270)*Math.PI/180,rvx:0,rvz:0,rturn:0,collisions:0,pushes:0,playerRoll:0,playerPitch:0,rivalRoll:0,rivalPitch:0,playerRollRate:0,playerPitchRate:0,rivalRollRate:0,rivalPitchRate:0,lastPush:0,playerTipped:false,rivalTipped:false,playerEdge:false,rivalEdge:false,winner:null,finishReason:'',lastHit:0,elapsed:0});
     const state=startState(); const keys={forward:false,back:false,left:false,right:false};
     const keyMap={KeyW:'forward',ArrowUp:'forward',KeyS:'back',ArrowDown:'back',KeyA:'left',ArrowLeft:'left',KeyD:'right',ArrowRight:'right'};
     const down=e=>{if(keyMap[e.code]&&!['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)){keys[keyMap[e.code]]=true;e.preventDefault();}};
@@ -186,65 +186,90 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         }
         if(minOverlap>0&&collisionNormal){
           const nx=collisionNormal.x,nz=collisionNormal.z;
-          // Konum düzeltmesi iki robotun gövde hacimlerini ayırır.
-          const separation=Math.max(.001,minOverlap+.006);
+          // Temas düzeltmesi: iki OBB gövde birbirinin içine geçmez; düzeltme kontrollüdür.
+          const separation=Math.max(.001,minOverlap+.003);
           state.x-=nx*separation*.5;state.z-=nz*separation*.5;
           state.rx+=nx*separation*.5;state.rz+=nz*separation*.5;
           const pForward=state.vx*nx+state.vz*nz;
           const rForward=-(state.rvx*nx+state.rvz*nz);
           const pNose=Math.sin(state.a)*nx+Math.cos(state.a)*nz;
           const rNose=-(Math.sin(state.ra)*nx+Math.cos(state.ra)*nz);
-          // Kama rakibin altına girdiğinde yatay itiş ve devrilme momenti artar.
-          const pWedge=pNose>.62 && props.current.bladeType!=='Dar hassas kama';
-          const rWedge=rNose>.62;
           const pMass=Math.max(.05,(p.totalWeight||preset.mass*1000)/1000);
           const rMass=preset.mass;
           const relative=(state.vx-state.rvx)*nx+(state.vz-state.rvz)*nz;
-          if(relative>0){
-            const restitution=(pWedge||rWedge)?.48:.22;
-            const impulse=(1+restitution)*relative/(1/pMass+1/rMass);
+          const closingSpeed=Math.max(0,relative);
+          // Sumo dohyo'sunda darbeler çoğunlukla elastik sekme değil, lastik tutuşuyla itiş üretir.
+          if(closingSpeed>0){
+            const restitution=.035;
+            const impulse=(1+restitution)*closingSpeed/(1/pMass+1/rMass);
             state.vx-=impulse*nx/pMass;state.vz-=impulse*nz/pMass;
             state.rvx+=impulse*nx/rMass;state.rvz+=impulse*nz/rMass;
           }
-          if(pWedge&&pForward>.04){
-            const shove=Math.min(2.8,pForward*(1.35+(pMass/rMass)*.18));
-            state.rvx+=nx*shove;state.rvz+=nz*shove;
-            state.rivalPitch=clamp(state.rivalPitch+(pForward*.95),-1.65,1.65);
-            state.playerPitch=clamp(state.playerPitch-.12,-1.65,1.65);
+          // Kama ancak robot gerçekten öne bakıyor ve rakibe doğru ilerliyorsa altına girmiş sayılır.
+          // Yalnızca kafa kafaya temas etmek takla oluşturmaz.
+          const pBladeFactor=p.bladeType==='Uzun alçak kama'?1.18:p.bladeType==='Geniş kama'?1.08:p.bladeType==='Çift kademeli'?1.0:p.bladeType==='Dar hassas kama'?.62:.88;
+          const rBladeFactor=1.05;
+          const pWedge=pNose>.82&&pForward>.42&&p.bladeType!=='Dar hassas kama';
+          const rWedge=rNose>.82&&rForward>.42;
+          // Devrilme eşiği: düşük ağırlık merkezi ve geniş tekerlek izi dengeyi artırır.
+          // 1 simülasyon birimi = 20 cm; CoM gövde yüksekliğinin yaklaşık %38'i kabul edilir.
+          const comHeightM=preset.height*.20*.38;
+          const supportHalfM=preset.length*.20*.34;
+          const vulnerability=clamp(comHeightM/Math.max(.001,supportHalfM*.72),.22,.82);
+          const liftDriveP=pWedge?clamp((pForward-.42)*2.0,0,1.8)*pBladeFactor:0;
+          const liftDriveR=rWedge?clamp((rForward-.42)*2.0,0,1.8)*rBladeFactor:0;
+          // Kama altına girdikçe hedefin ön desteği boşalır; eğim kademeli birikir.
+          // Düşük hızlı sürtünme/temas veya düz çarpışma tek başına takla attırmaz.
+          if(liftDriveP>0&&!state.rivalTipped){
+            state.rivalPitchRate+=liftDriveP*vulnerability*2.15*dt;
+            state.playerPitchRate-=liftDriveP*.035*dt;
           }
-          if(rWedge&&rForward>.04){
-            const shove=Math.min(2.8,rForward*(1.35+(rMass/pMass)*.18));
-            state.vx-=nx*shove;state.vz-=nz*shove;
-            state.playerPitch=clamp(state.playerPitch-(rForward*.95),-1.65,1.65);
-            state.rivalPitch=clamp(state.rivalPitch-.12,-1.65,1.65);
+          if(liftDriveR>0&&!state.playerTipped){
+            state.playerPitchRate-=liftDriveR*vulnerability*2.15*dt;
+            state.rivalPitchRate+=liftDriveR*.035*dt;
           }
-          // Yandan çarpışma robotun roll ekseninde takla atmasına yol açabilir.
-          const sideImpact=Math.abs((state.vx-state.rvx)*(-nz)+(state.vz-state.rvz)*nx);
-          const sideSign=Math.sign((state.vx-state.rvx)*(-nz)+(state.vz-state.rvz)*nx)||1;
-          if(sideImpact>.22){
-            if(pWedge||sideImpact>.75) state.playerRoll=clamp(state.playerRoll+sideSign*sideImpact*.42,-1.72,1.72);
-            if(rWedge||sideImpact>.75) state.rivalRoll=clamp(state.rivalRoll-sideSign*sideImpact*.42,-1.72,1.72);
+          // Yandan çarpışma: yalnızca yüksek bağıl hızda ve dengesiz yanal yükte küçük roll üretir.
+          const lateralSpeed=Math.abs((state.vx-state.rvx)*(-nz)+(state.vz-state.rvz)*nx);
+          const sideContact=Math.abs(pNose)<.48||Math.abs(rNose)<.48;
+          if(sideContact&&lateralSpeed>1.45){
+            const sideSign=Math.sign((state.vx-state.rvx)*(-nz)+(state.vz-state.rvz)*nx)||1;
+            const sideLoad=clamp((lateralSpeed-1.45)*.65,0,1.0)*vulnerability;
+            if(!state.playerTipped)state.playerRollRate+=sideSign*sideLoad*dt;
+            if(!state.rivalTipped)state.rivalRollRate-=sideSign*sideLoad*dt;
           }
-          state.playerTipped=Math.abs(state.playerRoll)>1.28||Math.abs(state.playerPitch)>1.35;
-          state.rivalTipped=Math.abs(state.rivalRoll)>1.28||Math.abs(state.rivalPitch)>1.35;
-          if((pWedge&&pForward>.05)||(rWedge&&rForward>.05))state.pushes++;
-          if(now-state.lastHit>220){state.collisions++;state.lastHit=now;}
+          if((liftDriveP>0||liftDriveR>0)&&now-state.lastPush>350){state.pushes++;state.lastPush=now;}
+          if(now-state.lastHit>260){state.collisions++;state.lastHit=now;}
         }
-        // Devrilme salınımı yavaşça sönümlenir; devrilen robot kendi motoruyla doğrulamaz.
-        state.playerRoll*=Math.max(0,1-dt*.22);state.playerPitch*=Math.max(0,1-dt*.18);
-        state.rivalRoll*=Math.max(0,1-dt*.22);state.rivalPitch*=Math.max(0,1-dt*.18);
-        state.playerTipped=state.playerTipped&&(Math.abs(state.playerRoll)>1.05||Math.abs(state.playerPitch)>1.1);
-        state.rivalTipped=state.rivalTipped&&(Math.abs(state.rivalRoll)>1.05||Math.abs(state.rivalPitch)>1.1);
+        // Açısal hareket sönümlenir. Küçük yalpalamalar yay etkisiyle toparlanır;
+        // devrilme ancak kama kaldırması/kuvvetli yanal yük birikerek eşiği aşarsa olur.
+        const angularDamping=Math.exp(-2.4*dt),selfRighting=2.8;
+        const integrateTilt=(angle,rate,axis)=>{
+          if(Math.abs(angle)<.72)rate-=angle*selfRighting*dt;
+          rate*=angularDamping;angle+=rate*dt;
+          return {angle:clamp(angle,-1.58,1.58),rate};
+        };
+        if(!state.playerTipped){
+          let q=integrateTilt(state.playerPitch,state.playerPitchRate,'pitch');state.playerPitch=q.angle;state.playerPitchRate=q.rate;
+          q=integrateTilt(state.playerRoll,state.playerRollRate,'roll');state.playerRoll=q.angle;state.playerRollRate=q.rate;
+          state.playerTipped=Math.abs(state.playerRoll)>1.34||Math.abs(state.playerPitch)>1.38;
+        }
+        if(!state.rivalTipped){
+          let q=integrateTilt(state.rivalPitch,state.rivalPitchRate,'pitch');state.rivalPitch=q.angle;state.rivalPitchRate=q.rate;
+          q=integrateTilt(state.rivalRoll,state.rivalRollRate,'roll');state.rivalRoll=q.angle;state.rivalRollRate=q.rate;
+          state.rivalTipped=Math.abs(state.rivalRoll)>1.34||Math.abs(state.rivalPitch)>1.38;
+        }
         // Surface friction and natural deceleration.
         const friction=Math.max(0,1-dt*.55);state.vx*=friction;state.vz*=friction;state.rvx*=friction;state.rvz*=friction;
-        // A robot loses only after its chassis center leaves the dohyo; no artificial edge teleport/clamp.
-        const outP=Math.hypot(state.x,state.z)>maxRadius+.06,outR=Math.hypot(state.rx,state.rz)>maxRadius+.06;
+        // Resmi sumo yaklaşımı: gövdenin herhangi bir bölümü dohyo dışına temas ederse ring-out.
+        const footprintRadius=Math.hypot(preset.width*.5,(preset.length*.5+.43*(preset.length/1.02)));
+        const outP=Math.hypot(state.x,state.z)+footprintRadius>maxRadius+.015;
+        const outR=Math.hypot(state.rx,state.rz)+footprintRadius>maxRadius+.015;
         if(outP||outR){state.winner=outP?'RAKİP KAZANDI':'SEN KAZANDIN';state.finishReason=outP?'Oyuncu robot dohyo dışına çıktı':'Rakip robot dohyo dışına çıktı';}
         // Update sensor lamps with the live readings.
         player.userData.sensors.forEach((s,i)=>s.mesh.material.color.set(playerSensors[i].edge?'#ff4d4d':'#35d7f4'));
         rival.userData.sensors.forEach((s,i)=>s.mesh.material.color.set(rivalSensors[i].edge?'#ff4d4d':'#35d7f4'));
       }
-      player.position.set(state.x,state.playerTipped?-.015:0,state.z);player.rotation.set(state.playerPitch,state.a,state.playerRoll,'YXZ');rival.position.set(state.rx,state.rivalTipped?-.015:0,state.rz);rival.rotation.set(state.rivalPitch,state.ra,state.rivalRoll,'YXZ');
+      player.position.set(state.x,0,state.z);player.rotation.set(state.playerPitch,state.a,state.playerRoll,'YXZ');rival.position.set(state.rx,0,state.rz);rival.rotation.set(state.rivalPitch,state.ra,state.rivalRoll,'YXZ');
       shadows[0].position.set(state.x,.105,state.z);shadows[1].position.set(state.rx,.105,state.rz);
       const distance=Math.hypot(state.rx-state.x,state.rz-state.z);
       if(now-lastTelemetry>140){p.onTelemetry?.({distance:distance.toFixed(2),speed:p.running&&!state.winner?p.speed:0,mode:p.mode,collisions:state.collisions,pushes:state.pushes,edge:state.playerEdge?'UYARI':'GÜVENLİ',lineSensors:state.playerEdge?'SINIR ALGILANDI':'ZEMİN',winner:state.winner,finishReason:state.finishReason,elapsed:state.elapsed.toFixed(1),playerTipped:state.playerTipped,rivalTipped:state.rivalTipped});lastTelemetry=now;}

@@ -121,6 +121,12 @@ Simülasyon eğitim amaçlı yaklaşık bir fizik modelidir. Robot ölçüleri v
 - Rakip robotun adı, sınıfı, şasi ağırlığı, rengi, kama tipi ve bileşenleri bağımsız düzenlenebilir.
 - İki robotun sınıf ve kütle değerleri simülasyon fiziğinde ayrı kullanılır.
 
+### v0.17.0 – Gerçekçi sumo robot gövdeleri ve sivri bıçak
+
+- Yuvarlatılmış alçak şasi, üst elektronik kapağı, motor yuvaları ve tekerlek detayları.
+- Zemine yakın, düz alt yüzeyli ve sivri uçlu metal sumo bıçağı.
+- Sivri bıçak ucuna uygun ayrı çarpışma hacimleri.
+
 ### v0.16.1 – Temas fiziği hassasiyeti
 - Görünür tekerlek, şasi ve kama geometrileriyle eşleşen çarpışma hacimleri kullanılır.
 - En derin SAT teması doğrulanmadan itme, momentum aktarımı veya kama kaldırması uygulanmaz.

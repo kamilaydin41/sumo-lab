@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const wrapAngle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
@@ -23,35 +24,63 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   const bodyMat = new THREE.MeshStandardMaterial({ color, metalness: .42, roughness: .38 });
   const darkMat = new THREE.MeshStandardMaterial({ color: '#111827', metalness: .25, roughness: .65 });
   const accentMat = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: .18, metalness: .3 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.length), bodyMat);
-  body.position.y = .105 + dimensions.height / 2; body.castShadow = true; root.add(body);
-  const top = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width * .62, dimensions.width * .07, dimensions.length * .55), darkMat);
-  top.position.set(0, .105 + dimensions.height + dimensions.width * .035, -.02); top.castShadow = true; root.add(top);
+  // Alçak profilli, köşeleri yuvarlatılmış metal şasi: gerçek mini-sumo gövdelerine daha yakın.
+  const bodyRadius = Math.min(dimensions.width, dimensions.height, dimensions.length) * .075;
+  const body = new THREE.Mesh(new RoundedBoxGeometry(dimensions.width, dimensions.height, dimensions.length, 4, bodyRadius), bodyMat);
+  body.position.y = .105 + dimensions.height / 2; body.castShadow = true; body.receiveShadow = true; root.add(body);
+  // Üst elektronik kapağı ve küçük bağlantı/vida detayları.
+  const top = new THREE.Mesh(new RoundedBoxGeometry(dimensions.width * .66, Math.max(.012, dimensions.height * .12), dimensions.length * .58, 3, bodyRadius*.45), darkMat);
+  top.position.set(0, .105 + dimensions.height * .88, -.025); top.castShadow = true; root.add(top);
+  const controller = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width*.28, dimensions.height*.055, dimensions.length*.25), new THREE.MeshStandardMaterial({color:'#263445',metalness:.35,roughness:.55}));
+  controller.position.set(0,.105+dimensions.height*.96,-dimensions.length*.06); root.add(controller);
+  for (const x of [-1,1]) for (const z of [-1,1]) {
+    const bolt = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.018,dimensions.width*.018,dimensions.height*.025,10),new THREE.MeshStandardMaterial({color:'#d5dce5',metalness:.9,roughness:.25}));
+    bolt.position.set(x*dimensions.width*.39,.105+dimensions.height*.91,z*dimensions.length*.39); root.add(bolt);
+  }
 
+  // Sumo bıçağı: alttaki yüzey düz, ön uç çok ince/sivri ve dohyo yüzeyine sıfıra yakın.
   const blade = new THREE.Group();
   const width = (bladeType === 'Geniş kama' ? 1.08 : bladeType === 'Dar hassas kama' ? .72 : bladeType === 'Çift kademeli' ? .96 : .94) * dimensions.width / .92;
   const length = (bladeType === 'Uzun alçak kama' ? .98 : .76) * dimensions.length / 1.02;
   const rearZ = dimensions.length * .18, tipZ = rearZ + length;
-  const y0 = .105 + dimensions.width * .10, yRear = .105 + dimensions.width * .30, yTip = .105 + (bladeType === 'Çift kademeli' ? dimensions.width * .18 : dimensions.width * .145);
-  const h = width / 2;
-  const verts = [-h,y0,rearZ, h,y0,rearZ, -h,yRear,rearZ, h,yRear,rearZ, -h,.105+dimensions.width*.02,tipZ, h,.105+dimensions.width*.02,tipZ, -h,yTip,tipZ, h,yTip,tipZ];
-  const idx = [];
-  const face = (a,b,c,d) => idx.push(a,b,c,a,c,d);
-  face(0,1,5,4); face(2,3,7,6); face(0,2,6,4); face(1,5,7,3); face(0,1,3,2); face(4,6,7,5);
-  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(verts,3)); geo.setIndex(idx); geo.computeVertexNormals();
-  const metal = new THREE.MeshStandardMaterial({ color: '#aeb9c5', metalness: .92, roughness: .22, side: THREE.DoubleSide });
-  const wedge = new THREE.Mesh(geo, metal); wedge.castShadow = true; wedge.receiveShadow = true; blade.add(wedge);
-  const lip = new THREE.Mesh(new THREE.BoxGeometry(width,dimensions.width*.022,dimensions.width*.028), new THREE.MeshStandardMaterial({color:'#e5edf5',metalness:1,roughness:.16}));
-  lip.position.set(0,yTip-dimensions.width*.012,tipZ-dimensions.width*.008); blade.add(lip);
+  const h = width / 2, tipHalf = Math.max(.002, width*.018);
+  const floorY = .097; // Dohyo üst yüzeyi yaklaşık .0955; 0.3 mm görsel boşluk.
+  const rearTopY = .105 + dimensions.height*.62;
+  const rearBottomY = floorY + .004;
+  const v = [
+    -h,rearBottomY,rearZ,  h,rearBottomY,rearZ,
+    -h,rearTopY,rearZ,     h,rearTopY,rearZ,
+    -tipHalf,floorY,tipZ,  tipHalf,floorY,tipZ
+  ];
+  const faces = [
+    2,3,5, 2,5,4,       // eğimli üst yüzey
+    0,4,5, 0,5,1,       // düz alt yüzey
+    0,2,4, 1,5,3,       // yan yüzeyler
+    0,1,3, 0,3,2        // arka kapak
+  ];
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(v,3)); geo.setIndex(faces); geo.computeVertexNormals();
+  const metal = new THREE.MeshStandardMaterial({color:'#c5ced8',metalness:.96,roughness:.19,side:THREE.DoubleSide});
+  const wedge = new THREE.Mesh(geo,metal); wedge.castShadow=true; wedge.receiveShadow=true; blade.add(wedge);
+  // Keskin ön ağız; kalın bir tampon/lip kullanılmaz.
+  const edgeGeo = new THREE.BufferGeometry();
+  edgeGeo.setAttribute('position',new THREE.Float32BufferAttribute([-tipHalf,floorY,tipZ,tipHalf,floorY,tipZ,0,floorY+.002,tipZ-.012],3));
+  edgeGeo.setIndex([0,1,2]); edgeGeo.computeVertexNormals();
+  blade.add(new THREE.Mesh(edgeGeo,new THREE.MeshStandardMaterial({color:'#f1f5f9',metalness:1,roughness:.12,side:THREE.DoubleSide})));
+  // Bıçağın gövdeye bağlandığı iki metal kulak ve görünür bağlantı vidaları.
   for (const x of [-h*.68,h*.68]) {
-    const mount = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width*.09,dimensions.width*.055,dimensions.length*.22),accentMat); mount.position.set(x,.105+dimensions.height*.78,dimensions.length*.28); blade.add(mount);
-    const screw = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.022,dimensions.width*.022,dimensions.width*.014,12),darkMat); screw.rotation.x=Math.PI/2; screw.position.set(x,.105+dimensions.height*.9,dimensions.length*.31); blade.add(screw);
+    const mount = new THREE.Mesh(new THREE.BoxGeometry(dimensions.width*.075,dimensions.height*.16,dimensions.length*.12),accentMat);
+    mount.position.set(x,.105+dimensions.height*.62,dimensions.length*.22); blade.add(mount);
+    const screw = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.018,dimensions.width*.018,dimensions.width*.012,12),darkMat);
+    screw.rotation.x=Math.PI/2; screw.position.set(x,.105+dimensions.height*.69,dimensions.length*.26); blade.add(screw);
   }
   root.add(blade);
   for (const x of [-dimensions.width*.46,dimensions.width*.46]) {
-    const wheelRadius=dimensions.width*.16, wheelWidth=dimensions.width*.10;
-    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius,wheelRadius,wheelWidth,24),darkMat); wheel.rotation.z=Math.PI/2; wheel.position.set(x,.0925+wheelRadius,-dimensions.length*.12); wheel.castShadow=true; root.add(wheel);
-    const hub = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius*.42,wheelRadius*.42,wheelWidth*1.04,16),accentMat); hub.rotation.z=Math.PI/2; hub.position.copy(wheel.position); root.add(hub);
+    const wheelRadius=dimensions.width*.155, wheelWidth=dimensions.width*.105;
+    const motorPod = new THREE.Mesh(new RoundedBoxGeometry(dimensions.width*.16,dimensions.height*.36,dimensions.length*.31,3,dimensions.width*.025),darkMat);
+    motorPod.position.set(x*.72,.105+dimensions.height*.35,-dimensions.length*.12); root.add(motorPod);
+    const wheel = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius,wheelRadius,wheelWidth,32),darkMat); wheel.rotation.z=Math.PI/2; wheel.position.set(x,.0925+wheelRadius,-dimensions.length*.12); wheel.castShadow=true; root.add(wheel);
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius*.40,wheelRadius*.40,wheelWidth*1.08,20),accentMat); hub.rotation.z=Math.PI/2; hub.position.copy(wheel.position); root.add(hub);
+    const hubCap = new THREE.Mesh(new THREE.CylinderGeometry(wheelRadius*.16,wheelRadius*.16,wheelWidth*1.12,16),new THREE.MeshStandardMaterial({color:'#d7e0e9',metalness:.95,roughness:.2})); hubCap.rotation.z=Math.PI/2; hubCap.position.copy(wheel.position); root.add(hubCap);
   }
   // Five visible line sensors: three front, two rear. Their state is updated from the dohyo surface.
   const sensors = [];
@@ -217,10 +246,12 @@ export default function Arena({ running, speed, mode, driveInput={ throttle: 0, 
         const bladeWidthP=(p.bladeType==='Geniş kama'?1.08:p.bladeType==='Dar hassas kama'?.72:p.bladeType==='Çift kademeli'?.96:.94)/.92;
         const bladeWidthR=(p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.72:p.rivalBladeType==='Çift kademeli'?.96:.94)/.92;
         const makeShapes=(x,z,a,profile,bladeLen,bladeWidth)=>[
-          // Şasiye ek olarak yanlarda görünen tekerleklerin dış sınırını da kapsa.
+          // Yuvarlatılmış şasi ve dışarı taşan tekerlekler için muhafazakâr çarpışma hacmi.
           {x,z,a,hw:profile.width*.62,hl:profile.length*.50},
-          // Kama şekli, görsel modeldeki arka başlangıç ve uç koordinatlarıyla eşleşir.
-          {x:x+Math.sin(a)*(profile.length*(.18+bladeLen*.5)),z:z+Math.cos(a)*(profile.length*(.18+bladeLen*.5)),a,hw:profile.width*bladeWidth*.5,hl:profile.length*bladeLen*.5}
+          // Bıçağın geniş arka tabanı ve daralan sivri burnu ayrı hacimlerdir.
+          // Böylece üçgen bıçağın ön ucu tam genişlikte dikdörtgen gibi davranmaz.
+          {x:x+Math.sin(a)*(profile.length*(.18+bladeLen*.35)),z:z+Math.cos(a)*(profile.length*(.18+bladeLen*.35)),a,hw:profile.width*bladeWidth*.5,hl:profile.length*bladeLen*.35},
+          {x:x+Math.sin(a)*(profile.length*(.18+bladeLen*.84)),z:z+Math.cos(a)*(profile.length*(.18+bladeLen*.84)),a,hw:profile.width*bladeWidth*.10,hl:profile.length*bladeLen*.16}
         ];
         const pShapes=makeShapes(state.x,state.z,state.a,preset,bladeLenP,bladeWidthP);
         const rShapes=makeShapes(state.rx,state.rz,state.ra,rivalPreset,bladeLenR,bladeWidthR);

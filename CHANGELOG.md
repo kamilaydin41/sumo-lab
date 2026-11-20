@@ -1,3 +1,11 @@
+## v0.17.0 – Gerçekçi sumo robot gövdeleri ve sivri, zemine yakın bıçak
+
+- Robot şasileri yuvarlatılmış, alçak profilli metal gövde görünümüne geçirildi.
+- Üst elektronik kapağı, kontrol kartı, bağlantı vidaları, motor yuvaları ve detaylı tekerlek göbekleri eklendi.
+- Bıçak geometrisi düz alt yüzeyli, üstten incelen ve ön ucu sivrilen metal kama olarak yeniden modellendi.
+- Bıçağın ön kesici ağzı dohyo yüzeyine yaklaşık 0,3 mm boşlukla konumlandırıldı.
+- Bıçak çarpışma alanı geniş taban ve dar sivri uç olarak ayrıldı.
+
 ## v0.16.1
 - Görünür tekerleklerin dış sınırları çarpışma modeline eklendi; şasi temas ölçüleri 3B modelle eşleştirildi.
 - Kama çarpışma hacminin uzunluk ve genişliği 3B modeldeki gerçek ölçek katsayılarıyla eşitlendi.

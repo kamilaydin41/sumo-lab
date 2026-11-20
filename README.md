@@ -2,7 +2,14 @@
 
 PARS SUMOLAB, sumo robotlarını tasarlamak, programlamak ve sanal dohyo üzerinde karşılaştırmak için hazırlanmış React + Vite + Three.js tabanlı eğitim simülatörüdür.
 
-## v0.10.0 yenilikleri
+## v0.11.0 yenilikleri
+
+- Oyuncu ve rakip robot, simülasyon duraklatılmışken 3B dohyo üzerinde fareyle veya dokunmatik ekranda sürüklenerek istenen başlangıç noktasına taşınabilir.
+- Robotlar dohyo sınırları içinde kalacak şekilde konum kısıtlaması uygulanır.
+- Başlangıç konumları ve yönleri birlikte proje kaydına yazılır; sayfa yeniden açıldığında geri yüklenir.
+- Yerleşim sıfırlama düğmesi iki robotu varsayılan karşılıklı başlangıç noktalarına taşır.
+
+## Önceki v0.10.0 yenilikleri
 
 - Uygulama adı ve tarayıcı sekmesi başlığı **PARS SUMOLAB** olarak güncellendi.
 - Robot sınıflarına göre ayrı 3B boyut profilleri eklendi. Mini Sumo başlangıç ölçüsü 100 × 100 × 30 mm, Micro Sumo 50 × 50 × 22 mm olarak tanımlandı.

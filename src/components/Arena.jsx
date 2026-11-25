@@ -146,7 +146,8 @@ function readOpponentSensors(robot, self, target, range=1.75) {
   const bearing=wrapAngle(Math.atan2(dx,dz)-self.a);
   const readings=robot.userData.opponentSensors.map(sensor=>{
     const relative=wrapAngle(bearing-sensor.angle);
-    const detected=distance<=range && Math.abs(relative)<=Math.PI/5;
+    // Fiziksel dijital IR sensör için yaklaşık 30° görüş konisi (±15°).
+    const detected=distance<=range && Math.abs(relative)<=Math.PI/12;
     sensor.detected=detected; sensor.mesh.material.color.set(detected?'#fbbf24':'#38bdf8');
     if(sensor.beam){sensor.beam.material.color.set(detected?'#fbbf24':'#38bdf8'); sensor.beam.material.opacity=detected?.24:.16; if(sensor.beamEdge) sensor.beamEdge.material.color.set(detected?'#fbbf24':'#38bdf8');}
     return {detected,angle:sensor.angle};
@@ -159,7 +160,7 @@ function readOpponentSensors(robot, self, target, range=1.75) {
 }
 
 export default function Arena({ running, speed, animationSpeed=1, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', playerOpponentSensorCount=3, rivalOpponentSensorCount=3, playerOpponentSensorRangeCm=40, rivalOpponentSensorRangeCm=40, driveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, rivalDriveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, playerMotorPower=75, rivalMotorPower=75, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
-  const [showIRRays,setShowIRRays]=useState(true); const showIRRaysRef=useRef(true); useEffect(()=>{showIRRaysRef.current=showIRRays;},[showIRRays]);
+  const [showIRRays,setShowIRRays]=useState(true); const showIRRaysRef=useRef(true); useEffect(()=>{showIRRaysRef.current=showIRRays; if(api.current?.state?.player){} },[showIRRays]);
   const host = useRef(null);
   const api = useRef(null);
   const props = useRef({running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,playerMotorPower,rivalMotorPower,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange});
@@ -276,7 +277,7 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
         const playerTarget=readOpponentSensors(player,state,{x:state.rx,z:state.rz},clamp((p.playerOpponentSensorRangeCm||40)/20,.5,5));
         const rivalTarget=readOpponentSensors(rival,{x:state.rx,z:state.rz,a:state.ra},{x:state.x,z:state.z},clamp((p.rivalOpponentSensorRangeCm||40)/20,.5,5));
         const rayVisibility=(robot,target,range)=>robot.userData.opponentSensors.forEach(sensor=>{
-          const len=range, halfWidth=Math.PI/15, segments=18, positions=[0,0,0], indices=[], edgePts=[];
+          const len=range, halfWidth=Math.PI/12, segments=24, positions=[0,0,0], indices=[], edgePts=[];
           for(let i=0;i<=segments;i++){const a=sensor.angle-halfWidth+(2*halfWidth*i/segments); positions.push(Math.sin(a)*len,0,Math.cos(a)*len);}
           for(let i=1;i<=segments;i++)indices.push(0,i,i+1);
           const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
@@ -507,6 +508,6 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
   useEffect(()=>{if(api.current&&!running){const s=api.current.state;const radius=Math.max(.75,(arenaDiameterCm||80)/40);s.a=(playerHeading*Math.PI)/180;s.ra=(rivalHeading*Math.PI)/180;s.x=(playerPosition?.x??-.52)*radius;s.z=(playerPosition?.z??0)*radius;s.rx=(rivalPosition?.x??.52)*radius;s.rz=(rivalPosition?.z??0)*radius;s.vx=0;s.vz=0;s.rvx=0;s.rvz=0;}},[playerHeading,rivalHeading,playerPosition,rivalPosition,running,arenaDiameterCm]);
   return <div className="arena-canvas" ref={host}>
     <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> PARS SUMOLAB · RC / OTONOM / ARDUINO C++</div>
-    <div className="arena-help"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> sürüş <span>·</span> Duraklat: robotu sürükle <span>·</span> Boş alan: kamera <span>·</span> <button onClick={()=>setShowIRRays(v=>!v)} style={{pointerEvents:'auto',cursor:'pointer',border:'1px solid #64748b',background:'#172334',color:'#e2e8f0',borderRadius:6,padding:'4px 8px'}}>{showIRRays?'IR ışınlarını kapat':'IR ışınlarını aç'}</button></div>
+    <div className="arena-help" style={{pointerEvents:'auto',zIndex:10}}><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> sürüş <span>·</span> Duraklat: robotu sürükle <span>·</span> Boş alan: kamera <span>·</span> <button onClick={()=>setShowIRRays(v=>!v)} style={{pointerEvents:'auto',cursor:'pointer',border:'1px solid #64748b',background:'#172334',color:'#e2e8f0',borderRadius:6,padding:'4px 8px'}}>{showIRRays?'IR ışınlarını kapat':'IR ışınlarını aç'}</button></div>
   </div>;
 }

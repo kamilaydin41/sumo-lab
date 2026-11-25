@@ -1,12 +1,17 @@
-## v0.22.6
+## v0.22.7
+- IR beam toggle hit area and visibility synchronization fixed.
+- Opponent sensor field of view narrowed to a more realistic ~30° cone (±15°).
+- Beam cone geometry now matches detection field angle.
+
+## v0.22.7
 - IR sensor beam visuals changed to translucent, angled cones with outline edges.
 - Cone width and range follow sensor positions and range settings; detection changes color.
 - Version is shown consistently in app and release notes.
 
-## v0.22.6
+## v0.22.7
 - Visualized IR opponent sensor rays for both robots; ray color changes when target detected; toggle in simulation controls.
 
-# PARS SUMOLAB v0.22.6
+# PARS SUMOLAB v0.22.7
 
 ## Temas boşluğu ve başlangıç ayarları
 - SAT çarpışma çözümündeki işaret hatası düzeltildi: küçük negatif örtüşme (gerçek geometrik boşluk) artık robotları ayırmak yerine birbirine yaklaştırıyor.

@@ -1,38 +1,40 @@
-## v0.22.13
-- Durdur komutu robotların pozisyon, hız, yön ve eğim durumlarını sabit tutacak şekilde düzeltildi.
+## PARS SUMOLAB v0.22.12
 
-## PARS SUMOLAB v0.22.13
+- Simülasyon duraklatıldığında fizik ve robot hareketi dondurulur; Devam et ile kaldığı yerden sürer.
+- Duraklatma, robot yerleşimini ayarlara göre yeniden eşitleyip konumları sıçratmaz.
+
+## PARS SUMOLAB v0.22.11
 - Temas noktasına bağlı yaklaşık yaw momenti ve tork etkisi eklendi.
 - Yandan/kama köşesi temasları moment koluyla yön değişimine etki eder.
 - Robot Ayarlarından bıçak tipi seçimi kaldırıldı; tek tip dar hassas bıçak sabitlendi.
 
-## v0.22.13
+## v0.22.11
 - IR ışınları kontrolü, simülasyon başlamadan önce ve çalışırken anında uygulanır; koniler ilk renderda oluşturulur.
 
-## v0.22.13
+## v0.22.11
 - IR ışın görünürlüğü simülasyon başlamadan ve çalışma sırasında ana simülasyon araç çubuğundan değiştirilebilir.
 
-## v0.22.13 — Temas sürtünmesi ve kör dönüş azaltma
+## v0.22.11 — Temas sürtünmesi ve kör dönüş azaltma
 
 - Temas sırasında yanal bağıl kayma azaltıldı (lastik tutunmasına göre).
 - Burun-burun temasında sürekli pivot dönüşün bir kısmı dengeleniyor; saldırı/manevra tamamen kilitlenmiyor.
 - IR ışın görünürlük ref temizliği.
 
-## v0.22.13
+## v0.22.11
 IR sensor ray visibility toggle fixed; sensor cones and detection angle aligned to an approximate 30-degree physical field of view.
 
-## v0.22.13
+## v0.22.11
 - IR sensors visualize their field as translucent angular cones, not single lines.
 - Range setting controls cone length; detected targets tint cones amber.
 
 
-## v0.22.13
+## v0.22.11
 IR opponent-sensor rays are visualized for both robots with detection color and toggle control.
 
-## v0.22.13 – Temaslı itiş düzeltmesi
+## v0.22.11 – Temaslı itiş düzeltmesi
 Karşılıklı burun buruna itişte robotların birbirinden uzaklaşmasına neden olan bağıl normal hız giderildi.
 
-## v0.22.13 düzeltmesi
+## v0.22.11 düzeltmesi
 
 - Temel alınan sürüm v0.21.5'tir; v0.21.6–v0.21.8 arasındaki diğer değişiklikler taşınmamıştır.
 - v0.21.8'deki ileri hareket düzeltmesi uygulandı: motor RPM değeri redüktör çıkış devri kabul edilir ve hız hesabında tekrar redüksiyon oranına bölünmez.

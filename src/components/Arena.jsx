@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -120,7 +120,9 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   for (const deg of sensorAngles) {
     const a=deg*Math.PI/180, x=Math.sin(a)*dimensions.width*.57, z=Math.cos(a)*dimensions.length*.57;
     const mesh=new THREE.Mesh(new THREE.SphereGeometry(dimensions.width*.035,12,10),new THREE.MeshBasicMaterial({color:'#38bdf8'}));
-    mesh.position.set(x,.105+dimensions.height*.72,z); root.add(mesh); opponentSensors.push({mesh,angle:a,detected:false});
+    mesh.position.set(x,.105+dimensions.height*.72,z); root.add(mesh);
+    const beamLen=2.0, beamGeo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(Math.sin(a)*beamLen,0,Math.cos(a)*beamLen)]);
+    const beamMat=new THREE.LineBasicMaterial({color:'#38bdf8',transparent:true,opacity:.48,depthWrite:false}); const beam=new THREE.Line(beamGeo,beamMat); beam.position.copy(mesh.position); beam.renderOrder=4; root.add(beam); opponentSensors.push({mesh,beam,angle:a,detected:false});
   }
   const beacon = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.07,dimensions.width*.07,dimensions.width*.025,24),accentMat); beacon.position.set(0,.105+dimensions.height+dimensions.width*.055,-.02); root.add(beacon);
   root.userData = { sensors, opponentSensors, bladeType, label: isRival ? 'RAKİP' : 'OYUNCU', dimensions };
@@ -142,6 +144,7 @@ function readOpponentSensors(robot, self, target, range=1.75) {
     const relative=wrapAngle(bearing-sensor.angle);
     const detected=distance<=range && Math.abs(relative)<=Math.PI/5;
     sensor.detected=detected; sensor.mesh.material.color.set(detected?'#fbbf24':'#38bdf8');
+    if(sensor.beam){sensor.beam.material.color.set(detected?'#fbbf24':'#38bdf8'); sensor.beam.material.opacity=detected?.95:.48;}
     return {detected,angle:sensor.angle};
   });
   const active=readings.filter(x=>x.detected);
@@ -151,11 +154,12 @@ function readOpponentSensors(robot, self, target, range=1.75) {
   return { any:active.length>0, left, right, front:active.length>0 && (centerSensorActive || (left&&right)), readings, distance, bearing };
 }
 
-export default function Arena({ showSensorLights=true, running, speed, animationSpeed=1, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', playerOpponentSensorCount=3, rivalOpponentSensorCount=3, playerOpponentSensorRangeCm=40, rivalOpponentSensorRangeCm=40, driveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, rivalDriveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, playerMotorPower=75, rivalMotorPower=75, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
+export default function Arena({ running, speed, animationSpeed=1, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', playerOpponentSensorCount=3, rivalOpponentSensorCount=3, playerOpponentSensorRangeCm=40, rivalOpponentSensorRangeCm=40, driveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, rivalDriveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, playerMotorPower=75, rivalMotorPower=75, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
+  const [showIRRays,setShowIRRays]=useState(true); const showIRRaysRef=useRef(true); useEffect(()=>{showIRRaysRef.current=showIRRays;},[showIRRays]);
   const host = useRef(null);
   const api = useRef(null);
   const props = useRef({running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,playerMotorPower,rivalMotorPower,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange});
-  useEffect(()=>{props.current={running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,playerMotorPower,rivalMotorPower,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange,showSensorLights};},[running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,playerMotorPower,rivalMotorPower,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange,showSensorLights]);
+  useEffect(()=>{props.current={running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,playerMotorPower,rivalMotorPower,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange};},[running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,playerMotorPower,rivalMotorPower,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange]);
 
   useEffect(()=>{
     const el=host.current; if(!el) return;
@@ -267,6 +271,8 @@ export default function Arena({ showSensorLights=true, running, speed, animation
         state.playerEdge=pFront;state.rivalEdge=rFront;
         const playerTarget=readOpponentSensors(player,state,{x:state.rx,z:state.rz},clamp((p.playerOpponentSensorRangeCm||40)/20,.5,5));
         const rivalTarget=readOpponentSensors(rival,{x:state.rx,z:state.rz,a:state.ra},{x:state.x,z:state.z},clamp((p.rivalOpponentSensorRangeCm||40)/20,.5,5));
+        const rayVisibility=(robot,target,range)=>robot.userData.opponentSensors.forEach(sensor=>{sensor.beam.visible=showIRRaysRef.current; const len=range; const pts=[new THREE.Vector3(0,0,0),new THREE.Vector3(Math.sin(sensor.angle)*len,0,Math.cos(sensor.angle)*len)]; sensor.beam.geometry.setFromPoints(pts); sensor.beam.position.copy(sensor.mesh.position);});
+        rayVisibility(player,playerTarget,clamp((p.playerOpponentSensorRangeCm||40)/20,.5,5)); rayVisibility(rival,rivalTarget,clamp((p.rivalOpponentSensorRangeCm||40)/20,.5,5));
         let pF=0,pT=0;
         if(state.playerTipped){pF=0;pT=0;} else if(p.mode==='AUTO'||p.mode==='OTONOM'){
           const tactic=(p.dipSwitches||[]).reduce((n,on,i)=>n+(on?(1<<i):0),0);
@@ -467,10 +473,8 @@ export default function Arena({ showSensorLights=true, running, speed, animation
           state.finishReason = 'Rakip robot dohyonun dışına çıktı';
         }
         // Update sensor lamps with the live readings.
-        player.userData.sensors.forEach((s,i)=>{s.mesh.material.color.set(playerSensors[i].edge?'#ff4d4d':'#35d7f4');s.mesh.visible=p.showSensorLights;});
-        rival.userData.sensors.forEach((s,i)=>{s.mesh.material.color.set(rivalSensors[i].edge?'#ff4d4d':'#35d7f4');s.mesh.visible=p.showSensorLights;});
-        player.userData.opponentSensors.forEach(s=>s.mesh.visible=p.showSensorLights);
-        rival.userData.opponentSensors.forEach(s=>s.mesh.visible=p.showSensorLights);
+        player.userData.sensors.forEach((s,i)=>s.mesh.material.color.set(playerSensors[i].edge?'#ff4d4d':'#35d7f4'));
+        rival.userData.sensors.forEach((s,i)=>s.mesh.material.color.set(rivalSensors[i].edge?'#ff4d4d':'#35d7f4'));
       }
       // Devrilen modelin pivotu zemin seviyesinde kaldığı için gövde dohyo tablasına gömülüyordu.
       // Eğime göre en alt geometrik nokta tabla üstünde tutulur; robot kenardan ayrılırken
@@ -490,6 +494,6 @@ export default function Arena({ showSensorLights=true, running, speed, animation
   useEffect(()=>{if(api.current&&!running){const s=api.current.state;const radius=Math.max(.75,(arenaDiameterCm||80)/40);s.a=(playerHeading*Math.PI)/180;s.ra=(rivalHeading*Math.PI)/180;s.x=(playerPosition?.x??-.52)*radius;s.z=(playerPosition?.z??0)*radius;s.rx=(rivalPosition?.x??.52)*radius;s.rz=(rivalPosition?.z??0)*radius;s.vx=0;s.vz=0;s.rvx=0;s.rvz=0;}},[playerHeading,rivalHeading,playerPosition,rivalPosition,running,arenaDiameterCm]);
   return <div className="arena-canvas" ref={host}>
     <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> PARS SUMOLAB · RC / OTONOM / ARDUINO C++</div>
-    <div className="arena-help"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> sürüş <span>·</span> Duraklat: robotu sürükle <span>·</span> Boş alan: kamera</div>
+    <div className="arena-help"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> sürüş <span>·</span> Duraklat: robotu sürükle <span>·</span> Boş alan: kamera <span>·</span> <button onClick={()=>setShowIRRays(v=>!v)} style={{pointerEvents:'auto',cursor:'pointer',border:'1px solid #64748b',background:'#172334',color:'#e2e8f0',borderRadius:6,padding:'4px 8px'}}>{showIRRays?'IR ışınlarını kapat':'IR ışınlarını aç'}</button></div>
   </div>;
 }

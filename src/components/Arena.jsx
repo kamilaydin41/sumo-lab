@@ -121,8 +121,12 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
     const a=deg*Math.PI/180, x=Math.sin(a)*dimensions.width*.57, z=Math.cos(a)*dimensions.length*.57;
     const mesh=new THREE.Mesh(new THREE.SphereGeometry(dimensions.width*.035,12,10),new THREE.MeshBasicMaterial({color:'#38bdf8'}));
     mesh.position.set(x,.105+dimensions.height*.72,z); root.add(mesh);
-    const beamLen=2.0, beamGeo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0),new THREE.Vector3(Math.sin(a)*beamLen,0,Math.cos(a)*beamLen)]);
-    const beamMat=new THREE.LineBasicMaterial({color:'#38bdf8',transparent:true,opacity:.48,depthWrite:false}); const beam=new THREE.Line(beamGeo,beamMat); beam.position.copy(mesh.position); beam.renderOrder=4; root.add(beam); opponentSensors.push({mesh,beam,angle:a,detected:false});
+    // IR emitter cone: translucent fan with a soft-looking core, aligned to each sensor's field direction.
+    const beamMat=new THREE.MeshBasicMaterial({color:'#38bdf8',transparent:true,opacity:.16,depthWrite:false,side:THREE.DoubleSide});
+    const beam=new THREE.Mesh(new THREE.BufferGeometry(),beamMat); beam.position.copy(mesh.position); beam.renderOrder=3; root.add(beam);
+    const beamEdgeMat=new THREE.LineBasicMaterial({color:'#38bdf8',transparent:true,opacity:.55,depthWrite:false});
+    const beamEdge=new THREE.Line(new THREE.BufferGeometry(),beamEdgeMat); beamEdge.position.copy(mesh.position); beamEdge.renderOrder=4; root.add(beamEdge);
+    opponentSensors.push({mesh,beam,beamEdge,angle:a,detected:false});
   }
   const beacon = new THREE.Mesh(new THREE.CylinderGeometry(dimensions.width*.07,dimensions.width*.07,dimensions.width*.025,24),accentMat); beacon.position.set(0,.105+dimensions.height+dimensions.width*.055,-.02); root.add(beacon);
   root.userData = { sensors, opponentSensors, bladeType, label: isRival ? 'RAKİP' : 'OYUNCU', dimensions };
@@ -144,7 +148,7 @@ function readOpponentSensors(robot, self, target, range=1.75) {
     const relative=wrapAngle(bearing-sensor.angle);
     const detected=distance<=range && Math.abs(relative)<=Math.PI/5;
     sensor.detected=detected; sensor.mesh.material.color.set(detected?'#fbbf24':'#38bdf8');
-    if(sensor.beam){sensor.beam.material.color.set(detected?'#fbbf24':'#38bdf8'); sensor.beam.material.opacity=detected?.95:.48;}
+    if(sensor.beam){sensor.beam.material.color.set(detected?'#fbbf24':'#38bdf8'); sensor.beam.material.opacity=detected?.24:.16; if(sensor.beamEdge) sensor.beamEdge.material.color.set(detected?'#fbbf24':'#38bdf8');}
     return {detected,angle:sensor.angle};
   });
   const active=readings.filter(x=>x.detected);
@@ -271,7 +275,16 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
         state.playerEdge=pFront;state.rivalEdge=rFront;
         const playerTarget=readOpponentSensors(player,state,{x:state.rx,z:state.rz},clamp((p.playerOpponentSensorRangeCm||40)/20,.5,5));
         const rivalTarget=readOpponentSensors(rival,{x:state.rx,z:state.rz,a:state.ra},{x:state.x,z:state.z},clamp((p.rivalOpponentSensorRangeCm||40)/20,.5,5));
-        const rayVisibility=(robot,target,range)=>robot.userData.opponentSensors.forEach(sensor=>{sensor.beam.visible=showIRRaysRef.current; const len=range; const pts=[new THREE.Vector3(0,0,0),new THREE.Vector3(Math.sin(sensor.angle)*len,0,Math.cos(sensor.angle)*len)]; sensor.beam.geometry.setFromPoints(pts); sensor.beam.position.copy(sensor.mesh.position);});
+        const rayVisibility=(robot,target,range)=>robot.userData.opponentSensors.forEach(sensor=>{
+          const len=range, halfWidth=Math.PI/15, segments=18, positions=[0,0,0], indices=[], edgePts=[];
+          for(let i=0;i<=segments;i++){const a=sensor.angle-halfWidth+(2*halfWidth*i/segments); positions.push(Math.sin(a)*len,0,Math.cos(a)*len);}
+          for(let i=1;i<=segments;i++)indices.push(0,i,i+1);
+          const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
+          sensor.beam.geometry.dispose();sensor.beam.geometry=geo;
+          edgePts.push(new THREE.Vector3(0,0,0),new THREE.Vector3(Math.sin(sensor.angle-halfWidth)*len,0,Math.cos(sensor.angle-halfWidth)*len),new THREE.Vector3(Math.sin(sensor.angle+halfWidth)*len,0,Math.cos(sensor.angle+halfWidth)*len));
+          sensor.beamEdge.geometry.setFromPoints(edgePts);sensor.beam.position.copy(sensor.mesh.position);sensor.beamEdge.position.copy(sensor.mesh.position);
+          sensor.beam.visible=sensor.beamEdge.visible=showIRRaysRef.current;
+        });
         rayVisibility(player,playerTarget,clamp((p.playerOpponentSensorRangeCm||40)/20,.5,5)); rayVisibility(rival,rivalTarget,clamp((p.rivalOpponentSensorRangeCm||40)/20,.5,5));
         let pF=0,pT=0;
         if(state.playerTipped){pF=0;pT=0;} else if(p.mode==='AUTO'||p.mode==='OTONOM'){

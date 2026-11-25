@@ -1,17 +1,15 @@
 ## v0.22.6
-
-- Uygulama içi sürüm etiketleri, kod şablonları ve paket sürümü v0.22.6 olarak eşitlendi.
-- IR rakip sensör ışınları görünür ve açılıp kapatılabilir özellik korunur.
-- Bu sürüm, sürüm etiketi tutarsızlığını gideren bakım güncellemesidir.
+- IR sensors visualize their field as translucent angular cones, not single lines.
+- Range setting controls cone length; detected targets tint cones amber.
 
 
-## v0.22.5
+## v0.22.6
 IR opponent-sensor rays are visualized for both robots with detection color and toggle control.
 
-## v0.22.5 – Temaslı itiş düzeltmesi
+## v0.22.6 – Temaslı itiş düzeltmesi
 Karşılıklı burun buruna itişte robotların birbirinden uzaklaşmasına neden olan bağıl normal hız giderildi.
 
-## v0.22.5 düzeltmesi
+## v0.22.6 düzeltmesi
 
 - Temel alınan sürüm v0.21.5'tir; v0.21.6–v0.21.8 arasındaki diğer değişiklikler taşınmamıştır.
 - v0.21.8'deki ileri hareket düzeltmesi uygulandı: motor RPM değeri redüktör çıkış devri kabul edilir ve hız hesabında tekrar redüksiyon oranına bölünmez.

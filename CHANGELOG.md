@@ -1,12 +1,12 @@
 ## v0.22.6
-- Uygulama arayüzü (sidebar ve footer), kod şablonları ve paket sürümü v0.22.6 olarak eşitlendi.
-- IR rakip sensör ışınlarının görsel gösterimi ve aç/kapat kontrolü v0.22.5 tabanından korunur.
-- Sürüm etiketi tutarsızlığı giderildi.
+- IR sensor beam visuals changed to translucent, angled cones with outline edges.
+- Cone width and range follow sensor positions and range settings; detection changes color.
+- Version is shown consistently in app and release notes.
 
-## v0.22.5
+## v0.22.6
 - Visualized IR opponent sensor rays for both robots; ray color changes when target detected; toggle in simulation controls.
 
-# PARS SUMOLAB v0.22.5
+# PARS SUMOLAB v0.22.6
 
 ## Temas boşluğu ve başlangıç ayarları
 - SAT çarpışma çözümündeki işaret hatası düzeltildi: küçük negatif örtüşme (gerçek geometrik boşluk) artık robotları ayırmak yerine birbirine yaklaştırıyor.

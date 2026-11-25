@@ -1,22 +1,25 @@
-## v0.22.8
+## v0.22.9
+- IR ışınları için simülasyon araç çubuğunda sürekli erişilebilir Açık/Kapalı kontrolü eklendi. Başlamadan önce veya simülasyon sırasında değiştirilebilir.
+
+## v0.22.9
 - Temas sırasında yanal bağıl kayma sürtünmeye göre sönümlenir.
 - Burun-burun temasında sürekli pivot dönüş azaltılır, kontrollü manevra korunur.
 - IR ışın görünürlük kodundaki gereksiz koşul temizlendi.
 
-## v0.22.8
+## v0.22.9
 - IR beam toggle hit area and visibility synchronization fixed.
 - Opponent sensor field of view narrowed to a more realistic ~30° cone (±15°).
 - Beam cone geometry now matches detection field angle.
 
-## v0.22.8
+## v0.22.9
 - IR sensor beam visuals changed to translucent, angled cones with outline edges.
 - Cone width and range follow sensor positions and range settings; detection changes color.
 - Version is shown consistently in app and release notes.
 
-## v0.22.8
+## v0.22.9
 - Visualized IR opponent sensor rays for both robots; ray color changes when target detected; toggle in simulation controls.
 
-# PARS SUMOLAB v0.22.8
+# PARS SUMOLAB v0.22.9
 
 ## Temas boşluğu ve başlangıç ayarları
 - SAT çarpışma çözümündeki işaret hatası düzeltildi: küçük negatif örtüşme (gerçek geometrik boşluk) artık robotları ayırmak yerine birbirine yaklaştırıyor.

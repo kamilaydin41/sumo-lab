@@ -1,24 +1,27 @@
-## v0.22.8 — Temas sürtünmesi ve kör dönüş azaltma
+## v0.22.9
+- IR ışın görünürlüğü simülasyon başlamadan ve çalışma sırasında ana simülasyon araç çubuğundan değiştirilebilir.
+
+## v0.22.9 — Temas sürtünmesi ve kör dönüş azaltma
 
 - Temas sırasında yanal bağıl kayma azaltıldı (lastik tutunmasına göre).
 - Burun-burun temasında sürekli pivot dönüşün bir kısmı dengeleniyor; saldırı/manevra tamamen kilitlenmiyor.
 - IR ışın görünürlük ref temizliği.
 
-## v0.22.8
+## v0.22.9
 IR sensor ray visibility toggle fixed; sensor cones and detection angle aligned to an approximate 30-degree physical field of view.
 
-## v0.22.8
+## v0.22.9
 - IR sensors visualize their field as translucent angular cones, not single lines.
 - Range setting controls cone length; detected targets tint cones amber.
 
 
-## v0.22.8
+## v0.22.9
 IR opponent-sensor rays are visualized for both robots with detection color and toggle control.
 
-## v0.22.8 – Temaslı itiş düzeltmesi
+## v0.22.9 – Temaslı itiş düzeltmesi
 Karşılıklı burun buruna itişte robotların birbirinden uzaklaşmasına neden olan bağıl normal hız giderildi.
 
-## v0.22.8 düzeltmesi
+## v0.22.9 düzeltmesi
 
 - Temel alınan sürüm v0.21.5'tir; v0.21.6–v0.21.8 arasındaki diğer değişiklikler taşınmamıştır.
 - v0.21.8'deki ileri hareket düzeltmesi uygulandı: motor RPM değeri redüktör çıkış devri kabul edilir ve hız hesabında tekrar redüksiyon oranına bölünmez.

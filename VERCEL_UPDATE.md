@@ -1,29 +1,32 @@
-## v0.22.8 güncellemesi
+## v0.22.9
+- IR ışınları kontrolü simülasyon toolbarına taşındı; simülasyon öncesi ve esnasında erişilebilir.
+
+## v0.22.9 güncellemesi
 Temas sürtünmesi ve burun-burun temasında kör pivot dönüş azaltma eklendi.
 
-# PARS SUMOLAB v0.22.8 update
+# PARS SUMOLAB v0.22.9 update
 IR ray toggle fix and approximately 30-degree detection cone.
 
-## v0.22.8 update
+## v0.22.9 update
 - Deploy this package to publish the IR sensor cone visualization.
 - Update version number in the app and release notes for every future release.
 
 
-## v0.22.8 update
+## v0.22.9 update
 IR sensor ray visualization and toggle are included.
 
-# Vercel güncelleme rehberi – PARS SUMOLAB v0.22.8
+# Vercel güncelleme rehberi – PARS SUMOLAB v0.22.9
 
 Bu sürümde kafa kafaya itişte temasın korunması için ayırıcı bağıl hız sınırlandırıldı.
 
-# Vercel güncelleme rehberi – PARS SUMOLAB v0.22.8
+# Vercel güncelleme rehberi – PARS SUMOLAB v0.22.9
 
 1. ZIP arşivini bilgisayarına indirip çıkar.
 2. Proje dosyalarını GitHub deposundaki mevcut dosyalarla değiştir.
 3. Aşağıdaki Türkçe commit mesajını kullan:
 
 ```text
-PARS SUMOLAB v0.22.8: Ön sensör saldırı davranışını düzelt Oyuncu ve rakip ağırlık özetlerini eşitle
+PARS SUMOLAB v0.22.9: Ön sensör saldırı davranışını düzelt Oyuncu ve rakip ağırlık özetlerini eşitle
 ```
 
 4. Değişiklikleri bağlı dala gönder. Vercel otomatik dağıtımı başlatır.
@@ -32,6 +35,6 @@ PARS SUMOLAB v0.22.8: Ön sensör saldırı davranışını düzelt Oyuncu ve ra
 Yerel kontrol için `npm install` ve `npm run build` komutlarını çalıştır.
 
 
-## v0.22.8
+## v0.22.9
 
 Bu sürüm v0.21.5 tabanını korur ve yalnızca v0.21.8 motor çıkış devri düzeltmesini içerir.

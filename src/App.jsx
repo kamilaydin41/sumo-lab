@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import Arena from './components/Arena.jsx';
 
-const jsStarter = `// PARS SUMOLAB v0.22.16 | JavaScript sumo kontrol algoritması
+const jsStarter = `// PARS SUMOLAB v0.22.17 | JavaScript sumo kontrol algoritması
 // Simülatörün üç ön çizgi sensörü ve 2–7 fiziksel rakip sensörüne göre örnek davranış.
 
 function decide(sensor) {
@@ -27,7 +27,7 @@ function decide(sensor) {
 
 // Örnek: const motorCommand = decide(sensorData);`;
 
-const cppStarter = `// PARS SUMOLAB v0.22.16 | Arduino C++ örnek sumo algoritması
+const cppStarter = `// PARS SUMOLAB v0.22.17 | Arduino C++ örnek sumo algoritması
 // Örnek kart: Arduino UNO + TB6612FNG
 // QTR/çizgi sensörleri: yalnızca ön-sol A0, ön-orta A1, ön-sağ A2
 // Rakip IR algı bölgeleri: sol D2, ön D3, sağ D11 (2–7 sensörün bölgesel özeti)
@@ -374,7 +374,7 @@ export default function App() {
         <div className="side-label">SENSÖR DURUMU</div>
         <div className="sensor-chip"><span className="sensor-dot blue"/> Rakip algılama <b>Simüle</b></div>
         <div className="sensor-chip"><span className="sensor-dot orange"/> Çizgi algılama <b>Simüle</b></div>
-        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>PARS SUMOLAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">PARS SUMOLAB <span>v0.22.16 · SUMO FİZİĞİ</span></div></div>
+        <div className="sidebar-bottom"><div className="help-card"><CircleHelp size={17}/><div><strong>PARS SUMOLAB rehberi</strong><span>Robot tasarla, programla, test et.</span></div></div><div className="version">PARS SUMOLAB <span>v0.22.17 · SUMO FİZİĞİ</span></div></div>
       </aside>
 
       <section className="main-content">
@@ -440,7 +440,7 @@ export default function App() {
 
         {tab === 'parts' && <div className="panel parts-workspace"><div className="panel-title"><div><Package size={18}/><strong>Donanım bileşenleri</strong></div><span className="muted-tag">{selectedParts.length} PARÇA SEÇİLİ</span></div><p className="parts-intro">Robotunda kullanacağın parçaları seç. Seçimler ağırlık hesabına ve robot profiline yansır.</p><div className="parts-grid">{partCatalog.map(part => { const Icon = part.icon; const active = selectedParts.includes(part.name); return <button key={part.name} className={`part-card ${active ? 'part-selected' : ''}`} onClick={() => togglePart(part.name)}><div className="part-icon"><Icon size={20}/></div><div className="part-copy"><strong>{part.name}</strong><span>{part.category} · {part.detail}</span></div><div className="part-weight">{part.weight} g</div><div className={`part-check ${active ? 'checked' : ''}`}>{active ? <Check size={13}/> : '+'}</div></button>; })}</div><div className="parts-summary"><div><span>Toplam robot ağırlığı</span><strong>{totalWeight} g</strong></div><div><span>İzin verilen ağırlık</span><strong>{weightLimit} g</strong></div><span className="muted-copy">Tüm değişiklikleri üstteki “Tüm robot ayarlarını kaydet” düğmesiyle kaydet.</span></div></div>}
 
-        <footer className="main-footer"><span>PARS SUMOLAB · Robot sumo eğitim ve simülasyon platformu</span><span>v0.22.16 · IR sensör konisi + sensör sayısı ayarları</span></footer>
+        <footer className="main-footer"><span>PARS SUMOLAB · Robot sumo eğitim ve simülasyon platformu</span><span>v0.22.17 · IR sensör konisi + sensör sayısı ayarları</span></footer>
       </section>
     </main>
     <iframe ref={runtimeFrame} title="Arduino kod çalışma alanı" sandbox="allow-scripts" srcDoc={runtimeDoc} className="arduino-runtime-frame"/>

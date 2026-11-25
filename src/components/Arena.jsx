@@ -449,22 +449,22 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
           // Kama altına girdikçe hedefin ön desteği boşalır; eğim kademeli birikir.
           // Düşük hızlı sürtünme/temas veya düz çarpışma tek başına takla attırmaz.
           if(liftDriveP>0&&!state.rivalTipped){
-            state.rivalPitchRate+=liftDriveP*vulnerability*2.15*dt;
-            state.playerPitchRate-=liftDriveP*.035*dt;
+            state.rivalPitchRate+=liftDriveP*vulnerability*.55*dt;
+            state.playerPitchRate-=liftDriveP*.012*dt;
           }
           if(liftDriveR>0&&!state.playerTipped){
-            state.playerPitchRate-=liftDriveR*vulnerability*2.15*dt;
-            state.rivalPitchRate+=liftDriveR*.035*dt;
+            state.playerPitchRate-=liftDriveR*vulnerability*.55*dt;
+            state.rivalPitchRate+=liftDriveR*.012*dt;
           }
           // Yandan çarpışma: yalnızca yüksek bağıl hızda ve dengesiz yanal yükte küçük roll üretir.
           const lateralSpeed=Math.abs((state.vx-state.rvx)*(-nz)+(state.vz-state.rvz)*nx);
           const sideContact=Math.abs(pNose)<.48||Math.abs(rNose)<.48;
-          if(sideContact&&lateralSpeed>1.45){
+          if(sideContact&&lateralSpeed>2.2){
             const sideSign=Math.sign((state.vx-state.rvx)*(-nz)+(state.vz-state.rvz)*nx)||1;
             const pSideResistance=clamp(Math.sqrt(preset.mass/pMass),.55,1.45);
             const rSideResistance=clamp(Math.sqrt(rivalPreset.mass/rMass),.55,1.45);
-            const sideLoadP=clamp((lateralSpeed-1.45)*.65,0,1.0)*vulnerability/pSideResistance;
-            const sideLoadR=clamp((lateralSpeed-1.45)*.65,0,1.0)*vulnerability/rSideResistance;
+            const sideLoadP=clamp((lateralSpeed-2.2)*.28,0,.55)*vulnerability/pSideResistance;
+            const sideLoadR=clamp((lateralSpeed-2.2)*.28,0,.55)*vulnerability/rSideResistance;
             if(!state.playerTipped)state.playerRollRate+=sideSign*sideLoadP*dt;
             if(!state.rivalTipped)state.rivalRollRate-=sideSign*sideLoadR*dt;
           }
@@ -477,7 +477,7 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
         const integrateTilt=(angle,rate,axis)=>{
           if(Math.abs(angle)<.72)rate-=angle*selfRighting*dt;
           rate*=angularDamping;angle+=rate*dt;
-          return {angle:clamp(angle,-1.58,1.58),rate};
+          return {angle:clamp(angle,-.62,.62),rate:clamp(rate,-1.8,1.8)};
         };
         if(!state.playerTipped){
           let q=integrateTilt(state.playerPitch,state.playerPitchRate,'pitch');state.playerPitch=q.angle;state.playerPitchRate=q.rate;
@@ -518,7 +518,7 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
       // Devrilen modelin pivotu zemin seviyesinde kaldığı için gövde dohyo tablasına gömülüyordu.
       // Eğime göre en alt geometrik nokta tabla üstünde tutulur; robot kenardan ayrılırken
       // görsel olarak zeminin içinden geçmez.
-      const renderLift=(profile,pitch,roll)=>{const hx=Math.max(profile.width*.58,profile.length*.48),hz=Math.max(profile.length*.58,profile.width*.48),base=.0955;const lowest=base*Math.cos(pitch)*Math.cos(roll)-hz*Math.abs(Math.sin(pitch))-hx*Math.abs(Math.sin(roll));return Math.max(0,base-lowest);};
+      const renderLift=(profile,pitch,roll)=>{const hx=Math.max(profile.width*.58,profile.length*.48),hz=Math.max(profile.length*.58,profile.width*.48),base=.0955,top=.0565;const lowest=base*Math.cos(pitch)*Math.cos(roll)-hz*Math.abs(Math.sin(pitch))-hx*Math.abs(Math.sin(roll));return Math.max(0,top-lowest);};
       player.position.set(state.x,renderLift(preset,state.playerPitch,state.playerRoll),state.z);player.rotation.set(state.playerPitch,state.a,state.playerRoll,'YXZ');rival.position.set(state.rx,renderLift(rivalPreset,state.rivalPitch,state.rivalRoll),state.rz);rival.rotation.set(state.rivalPitch,state.ra,state.rivalRoll,'YXZ');
       shadows[0].position.set(state.x,.105,state.z);shadows[1].position.set(state.rx,.105,state.rz);
       const distance=Math.hypot(state.rx-state.x,state.rz-state.z);

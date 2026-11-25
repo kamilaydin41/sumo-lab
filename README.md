@@ -1,3 +1,9 @@
+## v0.22.6
+
+- Uygulama içi sürüm etiketleri, kod şablonları ve paket sürümü v0.22.6 olarak eşitlendi.
+- IR rakip sensör ışınları görünür ve açılıp kapatılabilir özellik korunur.
+- Bu sürüm, sürüm etiketi tutarsızlığını gideren bakım güncellemesidir.
+
 
 ## v0.22.5
 IR opponent-sensor rays are visualized for both robots with detection color and toggle control.

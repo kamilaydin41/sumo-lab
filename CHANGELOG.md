@@ -1,3 +1,8 @@
+## v0.22.6
+- Uygulama arayüzü (sidebar ve footer), kod şablonları ve paket sürümü v0.22.6 olarak eşitlendi.
+- IR rakip sensör ışınlarının görsel gösterimi ve aç/kapat kontrolü v0.22.5 tabanından korunur.
+- Sürüm etiketi tutarsızlığı giderildi.
+
 ## v0.22.5
 - Visualized IR opponent sensor rays for both robots; ray color changes when target detected; toggle in simulation controls.
 

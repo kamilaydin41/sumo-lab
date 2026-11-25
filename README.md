@@ -1,16 +1,19 @@
+## v1.0.3
+- Robotlar arasında görünür boşluk varken itiş kuvveti uygulanmasını engellemek için minimum örtüşme eşiği.
 
-## v1.0.2
+
+## v1.0.3
 - Start / Durdur / Devam et toggle behavior retained and clarified.
 - Sıfırla returns to the initial placement and resets simulation state.
 - Reduced blade-driven pitch/lift and lateral roll triggers.
 - Tilt angle capped to reduce exaggerated airborne motion; render height corrected to keep tilted robot geometry above the dohyo surface.
 
-## v1.0.2
+## v1.0.3
 - Start / Durdur / Devam et tek durumlu buton.
 - Temas yalnızca gerçek geometrik örtüşmede.
 - Bıçak kaldırma ve gövde eğimi sınırlandırıldı.
 
-## PARS SUMOLAB v1.0.2
+## PARS SUMOLAB v1.0.3
 
 - Simülasyon duraklatıldığında fizik ve robot hareketi dondurulur; Devam et ile kaldığı yerden sürer.
 - Duraklatma, robot yerleşimini ayarlara göre yeniden eşitleyip konumları sıçratmaz.

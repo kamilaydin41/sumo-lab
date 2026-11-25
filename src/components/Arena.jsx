@@ -356,7 +356,7 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
             const overlap=Math.min(maxA,maxB)-Math.max(minA,minB);
             // Küçük sayısal boşluklar da temas kabul edilir; kareler arası adım
             // robotların birbirini delip geçmesine veya gözle görülür aralık oluşmasına yol açmasın.
-            if(overlap < 0)return null; // Boşluk varsa temas kuvveti yok; yalnızca gerçek örtüşme temas kabul edilir
+            if(overlap < 0.004)return null; // En az 0.8 mm fiziksel örtüşme olmadan temas/itme yok (1 sim birimi=20 cm)
             if(overlap<minOverlap){minOverlap=overlap;normal={...axis};}
           }
           const ac=A.reduce((v,q)=>({x:v.x+q.x/A.length,z:v.z+q.z/A.length}),{x:0,z:0});
@@ -367,10 +367,10 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
         const contact=satContact(pFoot,rFoot);
         if(contact&&contact.normal){
           const nx=contact.normal.x,nz=contact.normal.z,pMass=playerMassKg,rMass=rivalMassKg;
-          // Örtüşmeyi gider; SAT küçük bir boşluk bulduysa iki gövdeyi gerçek temas noktasına yaklaştır.
+          // Yalnızca ölçülebilir örtüşmede konum düzeltmesi ve temas kuvveti uygula.
           // Kütlesi düşük robot daha fazla konum düzeltmesi alır.
           const invP=1/pMass,invR=1/rMass,totalInv=invP+invR;
-          const correction=contact.overlap>=0?Math.max(0,contact.overlap-0.00015):contact.overlap*.96; // Negatif örtüşme boşluktur: robotları ayırma, birbirine yaklaştır.
+          const correction=Math.max(0,contact.overlap-0.00015); // Boşlukta temas/itme oluşturma; gerçek örtüşmeyi gider.
           if(correction>0){
             state.x-=nx*correction*(invP/totalInv);state.z-=nz*correction*(invP/totalInv);
             state.rx+=nx*correction*(invR/totalInv);state.rz+=nz*correction*(invR/totalInv);

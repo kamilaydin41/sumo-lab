@@ -479,15 +479,19 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
           rate*=angularDamping;angle+=rate*dt;
           return {angle:clamp(angle,-.58,.58),rate};
         };
-        if(!state.playerTipped){
-          let q=integrateTilt(state.playerPitch,state.playerPitchRate,'pitch');state.playerPitch=q.angle;state.playerPitchRate=q.rate;
-          q=integrateTilt(state.playerRoll,state.playerRollRate,'roll');state.playerRoll=q.angle;state.playerRollRate=q.rate;
-          state.playerTipped=Math.abs(state.playerRoll)>.58||Math.abs(state.playerPitch)>.58;
-        }
-        if(!state.rivalTipped){
-          let q=integrateTilt(state.rivalPitch,state.rivalPitchRate,'pitch');state.rivalPitch=q.angle;state.rivalPitchRate=q.rate;
-          q=integrateTilt(state.rivalRoll,state.rivalRollRate,'roll');state.rivalRoll=q.angle;state.rivalRollRate=q.rate;
-          state.rivalTipped=Math.abs(state.rivalRoll)>.58||Math.abs(state.rivalPitch)>.58;
+        // Duraklatıldığında eğim, yalpalama ve kendini düzeltme integratörleri de dondurulur.
+        // Böylece Durdur komutu pozisyon ve yön yanında robotların mevcut duruşunu da korur.
+        if(p.running){
+          if(!state.playerTipped){
+            let q=integrateTilt(state.playerPitch,state.playerPitchRate,'pitch');state.playerPitch=q.angle;state.playerPitchRate=q.rate;
+            q=integrateTilt(state.playerRoll,state.playerRollRate,'roll');state.playerRoll=q.angle;state.playerRollRate=q.rate;
+            state.playerTipped=Math.abs(state.playerRoll)>.58||Math.abs(state.playerPitch)>.58;
+          }
+          if(!state.rivalTipped){
+            let q=integrateTilt(state.rivalPitch,state.rivalPitchRate,'pitch');state.rivalPitch=q.angle;state.rivalPitchRate=q.rate;
+            q=integrateTilt(state.rivalRoll,state.rivalRollRate,'roll');state.rivalRoll=q.angle;state.rivalRollRate=q.rate;
+            state.rivalTipped=Math.abs(state.rivalRoll)>.58||Math.abs(state.rivalPitch)>.58;
+          }
         }
         // Surface friction and natural deceleration.
         const playerSurfaceDamping=Math.max(0,1-dt*(.16+playerDrive.mu*.42));

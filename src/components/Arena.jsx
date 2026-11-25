@@ -160,7 +160,7 @@ function readOpponentSensors(robot, self, target, range=1.75) {
 }
 
 export default function Arena({ running, speed, animationSpeed=1, mode, driveInput={ throttle: 0, steer: 0, throttleActive: false, steerActive: false }, arduinoCommand={left:0,right:0,enabled:false}, dipSwitches=[false,false,false], resetKey, onTelemetry, robotColor='#3978ed', arenaSize='mini', bladeType='Standart kama', robotClass='Mini Sumo (500 g)', totalWeight=595, rivalRobotClass='Mini Sumo (500 g)', rivalTotalWeight=595, rivalColor='#d84b4b', rivalBladeType='Geniş kama', playerOpponentSensorCount=3, rivalOpponentSensorCount=3, playerOpponentSensorRangeCm=40, rivalOpponentSensorRangeCm=40, driveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, rivalDriveSpec={motorTorque:12,gearRatio:50,motorRpm:600,wheelDiameter:30,tireMu:.9}, playerMotorPower=75, rivalMotorPower=75, arenaDiameterCm=80, playerHeading=90, rivalHeading=270, playerPosition={x:-.52,z:0}, rivalPosition={x:.52,z:0}, onPlacementChange }) {
-  const [showIRRays,setShowIRRays]=useState(true); const showIRRaysRef=useRef(true); useEffect(()=>{showIRRaysRef.current=showIRRays; if(api.current?.state?.player){} },[showIRRays]);
+  const [showIRRays,setShowIRRays]=useState(true); const showIRRaysRef=useRef(true); useEffect(()=>{showIRRaysRef.current=showIRRays;},[showIRRays]);
   const host = useRef(null);
   const api = useRef(null);
   const props = useRef({running,speed,animationSpeed,mode,driveInput,arduinoCommand,dipSwitches,onTelemetry,robotColor,arenaSize,bladeType,robotClass,totalWeight,rivalRobotClass,rivalTotalWeight,rivalColor,rivalBladeType,playerOpponentSensorCount,rivalOpponentSensorCount,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm,driveSpec,rivalDriveSpec,playerMotorPower,rivalMotorPower,arenaDiameterCm,playerHeading,rivalHeading,playerPosition,rivalPosition,onPlacementChange});
@@ -377,6 +377,22 @@ export default function Arena({ running, speed, animationSpeed=1, mode, driveInp
           }
           const pNose=Math.sin(state.a)*nx+Math.cos(state.a)*nz;
           const rNose=-(Math.sin(state.ra)*nx+Math.cos(state.ra)*nz);
+          // Temas sürtünmesi: robotlar birbirlerinin çevresinde kayıp dönmesin.
+          // Normal çarpışma çözümünden sonra bağıl yanal hız, iki lastiğin tutunmasına
+          // göre kademeli azaltılır; kütle ve mu değeri daha fazla tutunan robota avantaj verir.
+          const tx=-nz,tz=nx;
+          const tangentRelative=(state.rvx-state.vx)*tx+(state.rvz-state.vz)*tz;
+          const contactMu=clamp(Math.sqrt((playerDrive.mu||.9)*(rivalDrive.mu||.9)),.35,1.5);
+          const tangentImpulse=clamp(tangentRelative*contactMu*.42/(1/pMass+1/rMass),-Math.abs(tangentRelative)/(1/pMass+1/rMass),Math.abs(tangentRelative)/(1/pMass+1/rMass));
+          state.vx+=tangentImpulse*tx/pMass;state.vz+=tangentImpulse*tz/pMass;
+          state.rvx-=tangentImpulse*tx/rMass;state.rvz-=tangentImpulse*tz/rMass;
+          // İki robotun burunları temas doğrultusuna dönükken, saldırıyı boşa çeviren
+          // sürekli pivot hareketinin bir kısmı geri alınır; manevra tamamen kilitlenmez.
+          if(pNose>.35&&rNose>.35){
+            const pTurnCorrection=clamp(pT,-1,1)*2.45*dt*clamp(Math.sqrt((p.driveSpec?.tireMu||.9)/.9),.55,1.28)*.52;
+            const rTurnCorrection=clamp(rT,-1,1)*2.45*dt*clamp(Math.sqrt((p.rivalDriveSpec?.tireMu||.9)/.9),.55,1.28)*.52;
+            state.a=wrapAngle(state.a-pTurnCorrection);state.ra=wrapAngle(state.ra-rTurnCorrection);
+          }
           const relative=(state.rvx-state.vx)*nx+(state.rvz-state.vz)*nz;
           // Temas sırasında elastik sekmeyi azalt; birbirinden uzaklaşan normal hız oluşmasın.
           if(relative>0){

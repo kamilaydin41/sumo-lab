@@ -50,8 +50,8 @@ function makeRobot(color, accent, bladeType, scale = 1, isRival = false, dimensi
   // Düz ön ağızlı, tam genişlikte metal sumo bıçağı. Plan görünüşü dikdörtgendir;
   // sivri burun yoktur. Üst yüzey gövdeden ön kesici ağza doğru alçalır.
   const blade = new THREE.Group();
-  const bladeWidth = (bladeType === 'Geniş kama' ? 1.08 : bladeType === 'Dar hassas kama' ? .72 : bladeType === 'Çift kademeli' ? .96 : .94) * dimensions.width / .92;
-  const bladeLength = (bladeType === 'Uzun alçak kama' ? .98 : .76) * dimensions.length / 1.02;
+  const bladeWidth = .72 * dimensions.width / .92; // Tek tip dar hassas sumo bıçağı
+  const bladeLength = .76 * dimensions.length / 1.02; // Sabit bıçak boyu
   const rearZ = dimensions.length * .16, tipZ = rearZ + bladeLength;
   const half = bladeWidth*.5;
   // Siyah dohyo üst yüzeyi: CylinderGeometry merkez .0565, kalınlık .078 => üst kot .0955.
@@ -336,8 +336,8 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
         };
         const makeFootprint=(x,z,a,profile,bladeType,driveSpec)=>{
           const bw=profile.width*.78,bl=profile.length*.82;
-          const bladeW=(bladeType==='Geniş kama'?1.08:bladeType==='Dar hassas kama'?.72:bladeType==='Çift kademeli'?.96:.94)*profile.width/.92;
-          const bladeL=(bladeType==='Uzun alçak kama'?.98:.76)*profile.length/1.02;
+          const bladeW=.72*profile.width/.92;
+          const bladeL=.76*profile.length/1.02;
           const rear=profile.length*.16,tip=rear+bladeL;
           const wheelR=clamp(Number(driveSpec?.wheelDiameter)||30,15,60)/400,wheelZ=-profile.length*.105;
           const raw=[[-bw/2,-bl/2],[bw/2,-bl/2],[bw/2,bl/2],[-bw/2,bl/2],[-bladeW/2,rear],[bladeW/2,rear],[bladeW/2,tip],[-bladeW/2,tip]];
@@ -409,6 +409,15 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
           const pPush=pNose>.45&&pF>.04?playerDrive.usableForceN*clamp(pF,0,1)*clamp(pNose,0,1):0;
           const rPush=rNose>.45&&rF>.04?rivalDrive.usableForceN*clamp(rF,0,1)*clamp(rNose,0,1):0;
           const pImpulse=pPush*dt*5,rImpulse=rPush*dt*5;
+          // Temas noktasının merkezden uzaklığı (moment kolu): yandan/kama köşesinden kuvvet
+          // uygulanınca robotun yaw momenti oluşur. Basit rijit-cisim atalet yaklaşımı.
+          const contactTangent={x:-nz,z:nx};
+          const lateralOffset=clamp((state.rx-state.x)*contactTangent.x+(state.rz-state.z)*contactTangent.z,-Math.max(preset.width,rivalPreset.width)*.48,Math.max(preset.width,rivalPreset.width)*.48);
+          const pLever=clamp(lateralOffset,-preset.width*.45,preset.width*.45),rLever=clamp(-lateralOffset,-rivalPreset.width*.45,rivalPreset.width*.45);
+          const pYawInertia=Math.max(.012,pMass*(preset.width*preset.width+preset.length*preset.length)/12),rYawInertia=Math.max(.012,rMass*(rivalPreset.width*rivalPreset.width+rivalPreset.length*rivalPreset.length)/12);
+          const pMoment=pPush*pLever,rMoment=rPush*rLever;
+          state.a=wrapAngle(state.a+clamp(pMoment/pYawInertia*dt*.035,-.16,.16));
+          state.ra=wrapAngle(state.ra+clamp(rMoment/rYawInertia*dt*.035,-.16,.16));
           state.rvx+=pImpulse*nx/rMass;state.rvz+=pImpulse*nz/rMass;
           state.vx-=rImpulse*nx/pMass;state.vz-=rImpulse*nz/pMass;
           // Burun buruna itişte motorların birbirinden ayıran hız bileşeni sıfırlanır.
@@ -422,10 +431,10 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
           const rForward=-(state.rvx*nx+state.rvz*nz);
           // Kama ancak robot gerçekten öne bakıyor ve rakibe doğru ilerliyorsa altına girmiş sayılır.
           // Yalnızca kafa kafaya temas etmek takla oluşturmaz.
-          const pBladeFactor=p.bladeType==='Uzun alçak kama'?1.18:p.bladeType==='Geniş kama'?1.08:p.bladeType==='Çift kademeli'?1.0:p.bladeType==='Dar hassas kama'?.62:.88;
-          const rBladeFactor=p.rivalBladeType==='Geniş kama'?1.08:p.rivalBladeType==='Dar hassas kama'?.62:p.rivalBladeType==='Çift kademeli'?1.0:.88;
-          const pWedge=pNose>.82&&pForward>.42&&p.bladeType!=='Dar hassas kama';
-          const rWedge=rNose>.82&&rForward>.42&&p.rivalBladeType!=='Dar hassas kama';
+          const pBladeFactor=.72;
+          const rBladeFactor=.72;
+          const pWedge=pNose>.82&&pForward>.42;
+          const rWedge=rNose>.82&&rForward>.42;
           // Devrilme eşiği: düşük ağırlık merkezi ve geniş tekerlek izi dengeyi artırır.
           // 1 simülasyon birimi = 20 cm; CoM gövde yüksekliğinin yaklaşık %38'i kabul edilir.
           const comHeightM=preset.height*.20*.38;

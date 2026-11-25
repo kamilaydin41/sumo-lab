@@ -356,7 +356,7 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
             const overlap=Math.min(maxA,maxB)-Math.max(minA,minB);
             // Küçük sayısal boşluklar da temas kabul edilir; kareler arası adım
             // robotların birbirini delip geçmesine veya gözle görülür aralık oluşmasına yol açmasın.
-            if(overlap < -0.075)return null; // 1.5 cm'ye kadar küçük adım boşluğunu fiziksel temas kabul et
+            if(overlap < 0)return null; // Gerçek geometrik temas olmadan kuvvet/itiş uygulanmaz
             if(overlap<minOverlap){minOverlap=overlap;normal={...axis};}
           }
           const ac=A.reduce((v,q)=>({x:v.x+q.x/A.length,z:v.z+q.z/A.length}),{x:0,z:0});
@@ -370,7 +370,7 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
           // Örtüşmeyi gider; SAT küçük bir boşluk bulduysa iki gövdeyi gerçek temas noktasına yaklaştır.
           // Kütlesi düşük robot daha fazla konum düzeltmesi alır.
           const invP=1/pMass,invR=1/rMass,totalInv=invP+invR;
-          const correction=contact.overlap>=0?Math.max(0,contact.overlap-0.00015):contact.overlap*.96; // Negatif örtüşme boşluktur: robotları ayırma, birbirine yaklaştır.
+          const correction=Math.max(0,contact.overlap-0.00015); // Yalnızca gerçek örtüşmeyi gider.
           if(correction>0){
             state.x-=nx*correction*(invP/totalInv);state.z-=nz*correction*(invP/totalInv);
             state.rx+=nx*correction*(invR/totalInv);state.rz+=nz*correction*(invR/totalInv);
@@ -433,8 +433,8 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
           // Yalnızca kafa kafaya temas etmek takla oluşturmaz.
           const pBladeFactor=.72;
           const rBladeFactor=.72;
-          const pWedge=pNose>.82&&pForward>.42;
-          const rWedge=rNose>.82&&rForward>.42;
+          const pWedge=contact.overlap>.0015&&pNose>.86&&pForward>.75;
+          const rWedge=contact.overlap>.0015&&rNose>.86&&rForward>.75;
           // Devrilme eşiği: düşük ağırlık merkezi ve geniş tekerlek izi dengeyi artırır.
           // 1 simülasyon birimi = 20 cm; CoM gövde yüksekliğinin yaklaşık %38'i kabul edilir.
           const comHeightM=preset.height*.20*.38;
@@ -444,16 +444,16 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
           // daha ağır ve hızlı gelen saldırganın kama etkisi ise nispeten artar.
           const pLiftMassFactor=clamp(Math.sqrt(pMass/rMass),.38,1.65);
           const rLiftMassFactor=clamp(Math.sqrt(rMass/pMass),.38,1.65);
-          const liftDriveP=pWedge?clamp((pForward-.42)*2.0,0,1.8)*pBladeFactor*pLiftMassFactor:0;
-          const liftDriveR=rWedge?clamp((rForward-.42)*2.0,0,1.8)*rBladeFactor*rLiftMassFactor:0;
+          const liftDriveP=pWedge?clamp((pForward-.75)*1.35,0,1.0)*pBladeFactor*pLiftMassFactor:0;
+          const liftDriveR=rWedge?clamp((rForward-.75)*1.35,0,1.0)*rBladeFactor*rLiftMassFactor:0;
           // Kama altına girdikçe hedefin ön desteği boşalır; eğim kademeli birikir.
           // Düşük hızlı sürtünme/temas veya düz çarpışma tek başına takla attırmaz.
           if(liftDriveP>0&&!state.rivalTipped){
-            state.rivalPitchRate+=liftDriveP*vulnerability*2.15*dt;
+            state.rivalPitchRate+=liftDriveP*vulnerability*1.05*dt;
             state.playerPitchRate-=liftDriveP*.035*dt;
           }
           if(liftDriveR>0&&!state.playerTipped){
-            state.playerPitchRate-=liftDriveR*vulnerability*2.15*dt;
+            state.playerPitchRate-=liftDriveR*vulnerability*1.05*dt;
             state.rivalPitchRate+=liftDriveR*.035*dt;
           }
           // Yandan çarpışma: yalnızca yüksek bağıl hızda ve dengesiz yanal yükte küçük roll üretir.
@@ -463,8 +463,8 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
             const sideSign=Math.sign((state.vx-state.rvx)*(-nz)+(state.vz-state.rvz)*nx)||1;
             const pSideResistance=clamp(Math.sqrt(preset.mass/pMass),.55,1.45);
             const rSideResistance=clamp(Math.sqrt(rivalPreset.mass/rMass),.55,1.45);
-            const sideLoadP=clamp((lateralSpeed-1.45)*.65,0,1.0)*vulnerability/pSideResistance;
-            const sideLoadR=clamp((lateralSpeed-1.45)*.65,0,1.0)*vulnerability/rSideResistance;
+            const sideLoadP=clamp((lateralSpeed-1.8)*.35,0,.45)*vulnerability/pSideResistance;
+            const sideLoadR=clamp((lateralSpeed-1.8)*.35,0,.45)*vulnerability/rSideResistance;
             if(!state.playerTipped)state.playerRollRate+=sideSign*sideLoadP*dt;
             if(!state.rivalTipped)state.rivalRollRate-=sideSign*sideLoadR*dt;
           }
@@ -477,17 +477,21 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
         const integrateTilt=(angle,rate,axis)=>{
           if(Math.abs(angle)<.72)rate-=angle*selfRighting*dt;
           rate*=angularDamping;angle+=rate*dt;
-          return {angle:clamp(angle,-1.58,1.58),rate};
+          return {angle:clamp(angle,-.58,.58),rate};
         };
-        if(!state.playerTipped){
-          let q=integrateTilt(state.playerPitch,state.playerPitchRate,'pitch');state.playerPitch=q.angle;state.playerPitchRate=q.rate;
-          q=integrateTilt(state.playerRoll,state.playerRollRate,'roll');state.playerRoll=q.angle;state.playerRollRate=q.rate;
-          state.playerTipped=Math.abs(state.playerRoll)>1.34||Math.abs(state.playerPitch)>1.38;
-        }
-        if(!state.rivalTipped){
-          let q=integrateTilt(state.rivalPitch,state.rivalPitchRate,'pitch');state.rivalPitch=q.angle;state.rivalPitchRate=q.rate;
-          q=integrateTilt(state.rivalRoll,state.rivalRollRate,'roll');state.rivalRoll=q.angle;state.rivalRollRate=q.rate;
-          state.rivalTipped=Math.abs(state.rivalRoll)>1.34||Math.abs(state.rivalPitch)>1.38;
+        // Duraklatıldığında eğim, yalpalama ve kendini düzeltme integratörleri de dondurulur.
+        // Böylece Durdur komutu pozisyon ve yön yanında robotların mevcut duruşunu da korur.
+        if(p.running){
+          if(!state.playerTipped){
+            let q=integrateTilt(state.playerPitch,state.playerPitchRate,'pitch');state.playerPitch=q.angle;state.playerPitchRate=q.rate;
+            q=integrateTilt(state.playerRoll,state.playerRollRate,'roll');state.playerRoll=q.angle;state.playerRollRate=q.rate;
+            state.playerTipped=Math.abs(state.playerRoll)>.58||Math.abs(state.playerPitch)>.58;
+          }
+          if(!state.rivalTipped){
+            let q=integrateTilt(state.rivalPitch,state.rivalPitchRate,'pitch');state.rivalPitch=q.angle;state.rivalPitchRate=q.rate;
+            q=integrateTilt(state.rivalRoll,state.rivalRollRate,'roll');state.rivalRoll=q.angle;state.rivalRollRate=q.rate;
+            state.rivalTipped=Math.abs(state.rivalRoll)>.58||Math.abs(state.rivalPitch)>.58;
+          }
         }
         // Surface friction and natural deceleration.
         const playerSurfaceDamping=Math.max(0,1-dt*(.16+playerDrive.mu*.42));
@@ -542,9 +546,11 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
     return()=>{cancelAnimationFrame(frame);ro.disconnect();window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointermove',pointerMove);renderer.domElement.removeEventListener('pointerup',pointerUp);renderer.domElement.removeEventListener('pointercancel',pointerUp);renderer.domElement.removeEventListener('wheel',wheelRotate,true);window.removeEventListener('keydown',rotateKey);controls.dispose();renderer.dispose();scene.traverse(o=>{o.geometry?.dispose?.();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose?.();});if(renderer.domElement.parentNode===el)el.removeChild(renderer.domElement);};
   },[robotClass,rivalRobotClass,arenaDiameterCm,bladeType,rivalBladeType,rivalColor,playerOpponentSensorCount,rivalOpponentSensorCount]);
 
+  const wasRunning=useRef(running);
+  useEffect(()=>{if(wasRunning.current&&!running&&api.current?.state){const st=api.current.state;st.vx=st.vz=st.rvx=st.rvz=st.turn=st.rturn=0;st.playerRollRate=st.playerPitchRate=st.rivalRollRate=st.rivalPitchRate=0;}wasRunning.current=running;},[running]);
   useEffect(()=>{if(api.current){Object.assign(api.current.state,api.current.startState());}},[resetKey,robotClass,rivalRobotClass]);
   useEffect(()=>{if(api.current?.updateRayVisibility)api.current.updateRayVisibility(showIRRays,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm);},[showIRRays,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm]);
-  useEffect(()=>{if(api.current&&!props.current.running){const s=api.current.state;const radius=Math.max(.75,(arenaDiameterCm||80)/40);s.a=(playerHeading*Math.PI)/180;s.ra=(rivalHeading*Math.PI)/180;s.x=(playerPosition?.x??-.52)*radius;s.z=(playerPosition?.z??0)*radius;s.rx=(rivalPosition?.x??.52)*radius;s.rz=(rivalPosition?.z??0)*radius;s.vx=0;s.vz=0;s.rvx=0;s.rvz=0;}},[playerHeading,rivalHeading,playerPosition,rivalPosition,arenaDiameterCm]);
+  useEffect(()=>{if(api.current&&!running){const s=api.current.state;const radius=Math.max(.75,(arenaDiameterCm||80)/40);s.a=(playerHeading*Math.PI)/180;s.ra=(rivalHeading*Math.PI)/180;s.x=(playerPosition?.x??-.52)*radius;s.z=(playerPosition?.z??0)*radius;s.rx=(rivalPosition?.x??.52)*radius;s.rz=(rivalPosition?.z??0)*radius;s.vx=0;s.vz=0;s.rvx=0;s.rvz=0;}},[playerHeading,rivalHeading,playerPosition,rivalPosition,running,arenaDiameterCm]);
   return <div className="arena-canvas" ref={host}>
     <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> PARS SUMOLAB · RC / OTONOM / ARDUINO C++</div>
     <div className="arena-help" style={{pointerEvents:'auto',zIndex:10}}><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> sürüş <span>·</span> Duraklat: robotu sürükle <span>·</span> Boş alan: kamera <span>·</span> <button onClick={onToggleIRRays} style={{pointerEvents:'auto',cursor:'pointer',border:'1px solid #64748b',background:'#172334',color:'#e2e8f0',borderRadius:6,padding:'4px 8px'}}>{showIRRays?'IR ışınlarını kapat':'IR ışınlarını aç'}</button></div>

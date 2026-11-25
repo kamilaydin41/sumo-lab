@@ -1,4 +1,9 @@
-## PARS SUMOLAB v0.22.12
+## v1.0.1
+- Start / Durdur / Devam et tek durumlu buton.
+- Temas yalnızca gerçek geometrik örtüşmede.
+- Bıçak kaldırma ve gövde eğimi sınırlandırıldı.
+
+## PARS SUMOLAB v1.0.1
 
 - Simülasyon duraklatıldığında fizik ve robot hareketi dondurulur; Devam et ile kaldığı yerden sürer.
 - Duraklatma, robot yerleşimini ayarlara göre yeniden eşitleyip konumları sıçratmaz.

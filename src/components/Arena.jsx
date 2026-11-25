@@ -356,7 +356,7 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
             const overlap=Math.min(maxA,maxB)-Math.max(minA,minB);
             // Küçük sayısal boşluklar da temas kabul edilir; kareler arası adım
             // robotların birbirini delip geçmesine veya gözle görülür aralık oluşmasına yol açmasın.
-            if(overlap < -0.075)return null; // 1.5 cm'ye kadar küçük adım boşluğunu fiziksel temas kabul et
+            if(overlap < 0)return null; // Boşluk varsa temas kuvveti yok; yalnızca gerçek örtüşme temas kabul edilir
             if(overlap<minOverlap){minOverlap=overlap;normal={...axis};}
           }
           const ac=A.reduce((v,q)=>({x:v.x+q.x/A.length,z:v.z+q.z/A.length}),{x:0,z:0});

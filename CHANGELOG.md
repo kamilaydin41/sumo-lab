@@ -1,4 +1,10 @@
-## PARS SUMOLAB v0.22.12
+## v1.0.1
+- Başlangıçta Start; çalışan simülasyonda Durdur; duraklatılınca Devam et.
+- Reset başlangıç koordinatlarına dönüşü korur.
+- Temassız itiş toleransı kaldırıldı.
+- Aşırı pitch/lift davranışı azaltıldı.
+
+## PARS SUMOLAB v1.0.1
 
 - Simülasyon duraklatıldığında fizik ve robot hareketi dondurulur; Devam et ile kaldığı yerden sürer.
 - Duraklatma, robot yerleşimini ayarlara göre yeniden eşitleyip konumları sıçratmaz.

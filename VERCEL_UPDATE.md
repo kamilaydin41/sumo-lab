@@ -1,4 +1,9 @@
-## PARS SUMOLAB v0.22.12
+## v1.0.1
+- Start/Durdur/Devam et düğmesi.
+- SAT teması için boşluk toleransı kaldırıldı.
+- Aşırı kama kaldırma ve eğim sınırlandı.
+
+## PARS SUMOLAB v1.0.1
 
 - Simülasyon duraklatıldığında fizik ve robot hareketi dondurulur; Devam et ile kaldığı yerden sürer.
 - Duraklatma, robot yerleşimini ayarlara göre yeniden eşitleyip konumları sıçratmaz.

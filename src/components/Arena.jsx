@@ -516,11 +516,25 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
       if(now-lastTelemetry>140){p.onTelemetry?.({distance:distance.toFixed(2),speed:p.running&&!state.winner?p.speed:0,mode:p.mode,collisions:state.collisions,pushes:state.pushes,edge:state.playerEdge?'UYARI':'GÜVENLİ',lineSensors:state.playerEdge?'SINIR ALGILANDI':'ZEMİN',winner:state.winner,finishReason:state.finishReason,elapsed:state.elapsed.toFixed(1),playerTipped:state.playerTipped,rivalTipped:state.rivalTipped});lastTelemetry=now;}
       controls.update();renderer.render(scene,camera);
     };
-    api.current={state,startState};frame=requestAnimationFrame(tick);
+    const updateRayVisibility=(visible, playerRange, rivalRange)=>{
+      const build=(robot,range)=>robot.userData.opponentSensors.forEach(sensor=>{
+        const len=clamp((range||40)/20,.5,5), halfWidth=Math.PI/12, segments=24, positions=[0,0,0], indices=[], edgePts=[];
+        for(let i=0;i<=segments;i++){const a=sensor.angle-halfWidth+(2*halfWidth*i/segments);positions.push(Math.sin(a)*len,0,Math.cos(a)*len);}
+        for(let i=1;i<=segments;i++)indices.push(0,i,i+1);
+        const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geo.setIndex(indices);geo.computeVertexNormals();
+        sensor.beam.geometry.dispose();sensor.beam.geometry=geo;
+        edgePts.push(new THREE.Vector3(0,0,0),new THREE.Vector3(Math.sin(sensor.angle-halfWidth)*len,0,Math.cos(sensor.angle-halfWidth)*len),new THREE.Vector3(Math.sin(sensor.angle+halfWidth)*len,0,Math.cos(sensor.angle+halfWidth)*len));
+        sensor.beamEdge.geometry.setFromPoints(edgePts);sensor.beam.position.copy(sensor.mesh.position);sensor.beamEdge.position.copy(sensor.mesh.position);
+        sensor.beam.visible=sensor.beamEdge.visible=visible;
+      });
+      build(player,playerRange);build(rival,rivalRange);
+    };
+    api.current={state,startState,player,rival,updateRayVisibility};updateRayVisibility(showIRRaysRef.current,props.current.playerOpponentSensorRangeCm,props.current.rivalOpponentSensorRangeCm);frame=requestAnimationFrame(tick);
     return()=>{cancelAnimationFrame(frame);ro.disconnect();window.removeEventListener('keydown',down);window.removeEventListener('keyup',up);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointermove',pointerMove);renderer.domElement.removeEventListener('pointerup',pointerUp);renderer.domElement.removeEventListener('pointercancel',pointerUp);renderer.domElement.removeEventListener('wheel',wheelRotate,true);window.removeEventListener('keydown',rotateKey);controls.dispose();renderer.dispose();scene.traverse(o=>{o.geometry?.dispose?.();if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material?.dispose?.();});if(renderer.domElement.parentNode===el)el.removeChild(renderer.domElement);};
   },[robotClass,rivalRobotClass,arenaDiameterCm,bladeType,rivalBladeType,rivalColor,playerOpponentSensorCount,rivalOpponentSensorCount]);
 
   useEffect(()=>{if(api.current){Object.assign(api.current.state,api.current.startState());}},[resetKey,robotClass,rivalRobotClass]);
+  useEffect(()=>{if(api.current?.updateRayVisibility)api.current.updateRayVisibility(showIRRays,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm);},[showIRRays,playerOpponentSensorRangeCm,rivalOpponentSensorRangeCm]);
   useEffect(()=>{if(api.current&&!running){const s=api.current.state;const radius=Math.max(.75,(arenaDiameterCm||80)/40);s.a=(playerHeading*Math.PI)/180;s.ra=(rivalHeading*Math.PI)/180;s.x=(playerPosition?.x??-.52)*radius;s.z=(playerPosition?.z??0)*radius;s.rx=(rivalPosition?.x??.52)*radius;s.rz=(rivalPosition?.z??0)*radius;s.vx=0;s.vz=0;s.rvx=0;s.rvz=0;}},[playerHeading,rivalHeading,playerPosition,rivalPosition,running,arenaDiameterCm]);
   return <div className="arena-canvas" ref={host}>
     <div className="arena-hud"><span className={`live-dot ${running?'active':''}`}/>{running?'SİMÜLASYON ÇALIŞIYOR':'SİMÜLASYON HAZIR'}<span className="hud-sep">·</span> PARS SUMOLAB · RC / OTONOM / ARDUINO C++</div>

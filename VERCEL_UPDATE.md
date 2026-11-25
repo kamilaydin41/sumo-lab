@@ -1,3 +1,6 @@
+## v0.22.10
+IR ışınları artık simülasyon durumu bağımsız olarak açılıp kapatılabilir; koniler başlangıçta ve toggle sırasında oluşturulup güncellenir.
+
 ## v0.22.9
 - IR ışınları kontrolü simülasyon toolbarına taşındı; simülasyon öncesi ve esnasında erişilebilir.
 

@@ -1,3 +1,6 @@
+## v0.22.10
+- IR ışınları toggle sorunu düzeltildi: simülasyon dururken/başlamadan geometry oluşturulur ve görünürlük anında güncellenir.
+
 ## v0.22.9
 - IR ışınları için simülasyon araç çubuğunda sürekli erişilebilir Açık/Kapalı kontrolü eklendi. Başlamadan önce veya simülasyon sırasında değiştirilebilir.
 

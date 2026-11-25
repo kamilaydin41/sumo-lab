@@ -1,3 +1,6 @@
+## v0.22.10
+- IR ışınları kontrolü, simülasyon başlamadan önce ve çalışırken anında uygulanır; koniler ilk renderda oluşturulur.
+
 ## v0.22.9
 - IR ışın görünürlüğü simülasyon başlamadan ve çalışma sırasında ana simülasyon araç çubuğundan değiştirilebilir.
 

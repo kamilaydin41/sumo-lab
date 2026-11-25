@@ -260,6 +260,9 @@ export default function Arena({ showIRRays=true, onToggleIRRays, running, speed,
     const tick=now=>{
       frame=requestAnimationFrame(tick);const realDt=Math.min((now-last)/1000,.035);last=now;const p=props.current;const dt=realDt*clamp(Number(p.animationSpeed)||1,.25,2.5);
       if(player.children[0]?.material?.color)player.children[0].material.color.set(p.robotColor);
+      // PAUSE HARD-FREEZE: running=false iken hiçbir fizik, çarpışma,
+      // damping, tilt veya konum entegrasyonu yapılmaz. Sahne yalnızca render edilir.
+      if(!p.running){ controls.update(); renderer.render(scene,camera); return; }
       const cls=CLASS_PRESETS[p.robotClass]||CLASS_PRESETS['Mini Sumo (500 g)'];
       const rivalCls=CLASS_PRESETS[p.rivalRobotClass]||CLASS_PRESETS['Mini Sumo (500 g)'];
       if(p.running&&!state.winner){

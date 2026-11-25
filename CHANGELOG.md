@@ -1,44 +1,48 @@
-## v0.22.15
+## v0.22.16
+- Sıfırlama, tüm fizik ve maç durumlarını temizleyerek başlangıç yerleşimini yeniden uygular.
+- Reset sırasında simülasyon durdurulur.
+
+## v0.22.16
 - Durdaklatmada fizik döngüsünü hard-freeze: konum, yön, temas, eğim, damping ve hız güncellemeleri tamamen durur; yeniden başlatınca devam eder.
 
-## v0.22.15 — Durdur konum koruma düzeltmesi
+## v0.22.16 — Durdur konum koruma düzeltmesi
 - Durdur/duraklat artık robotları başlangıç yerleşimine taşımaz.
 - Simülasyonun çalışması durdurulduğunda mevcut konum ve yön korunur.
 - Yerleşim senkronizasyonu running değişimine bağlanmadı.
 
-## v0.22.15
+## v0.22.16
 - Durdur komutunda simülasyonun fizik güncellemeleri, tilt/self-righting integratörleri dahil tamamen dondurulur; robotlar duruşlarını korur.
 
-## PARS SUMOLAB v0.22.15
+## PARS SUMOLAB v0.22.16
 - Temas noktasına bağlı yaklaşık yaw momenti ve tork etkisi eklendi.
 - Yandan/kama köşesi temasları moment koluyla yön değişimine etki eder.
 - Robot Ayarlarından bıçak tipi seçimi kaldırıldı; tek tip dar hassas bıçak sabitlendi.
 
-## v0.22.15
+## v0.22.16
 - IR ışınları toggle sorunu düzeltildi: simülasyon dururken/başlamadan geometry oluşturulur ve görünürlük anında güncellenir.
 
-## v0.22.15
+## v0.22.16
 - IR ışınları için simülasyon araç çubuğunda sürekli erişilebilir Açık/Kapalı kontrolü eklendi. Başlamadan önce veya simülasyon sırasında değiştirilebilir.
 
-## v0.22.15
+## v0.22.16
 - Temas sırasında yanal bağıl kayma sürtünmeye göre sönümlenir.
 - Burun-burun temasında sürekli pivot dönüş azaltılır, kontrollü manevra korunur.
 - IR ışın görünürlük kodundaki gereksiz koşul temizlendi.
 
-## v0.22.15
+## v0.22.16
 - IR beam toggle hit area and visibility synchronization fixed.
 - Opponent sensor field of view narrowed to a more realistic ~30° cone (±15°).
 - Beam cone geometry now matches detection field angle.
 
-## v0.22.15
+## v0.22.16
 - IR sensor beam visuals changed to translucent, angled cones with outline edges.
 - Cone width and range follow sensor positions and range settings; detection changes color.
 - Version is shown consistently in app and release notes.
 
-## v0.22.15
+## v0.22.16
 - Visualized IR opponent sensor rays for both robots; ray color changes when target detected; toggle in simulation controls.
 
-# PARS SUMOLAB v0.22.15
+# PARS SUMOLAB v0.22.16
 
 ## Temas boşluğu ve başlangıç ayarları
 - SAT çarpışma çözümündeki işaret hatası düzeltildi: küçük negatif örtüşme (gerçek geometrik boşluk) artık robotları ayırmak yerine birbirine yaklaştırıyor.

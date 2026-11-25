@@ -1,4 +1,11 @@
-# PARS SUMOLAB v0.22.3
+# PARS SUMOLAB v0.22.4
+
+- Simülasyon toolbarına iki robotun sensör ışıklarını birlikte açıp kapatan düğme eklendi.
+- Çizgi sensör LEDleri: normal zeminde cyan, dohyo sınırı algılandığında kırmızı.
+- IR rakip sensör LEDleri: algılamada sarı, boşta cyan.
+- LED görünürlüğü iki robot için ortak ve varsayılan açık.
+
+# PARS SUMOLAB v0.22.4
 
 ## Temas boşluğu ve başlangıç ayarları
 - SAT çarpışma çözümündeki işaret hatası düzeltildi: küçük negatif örtüşme (gerçek geometrik boşluk) artık robotları ayırmak yerine birbirine yaklaştırıyor.
